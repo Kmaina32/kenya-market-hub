@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useProperty, useCreatePropertyInquiry } from '@/hooks/useProperties';
@@ -82,8 +81,12 @@ const PropertyDetail = () => {
   }
 
   const primaryImage = property.images?.[0] || '/placeholder.svg';
-  const coordinates = property.location_coordinates ? 
-    [property.location_coordinates.lat, property.location_coordinates.lng] : null;
+  const coordinates = property.location_coordinates && 
+    typeof property.location_coordinates === 'object' && 
+    'lat' in property.location_coordinates && 
+    'lng' in property.location_coordinates
+    ? [property.location_coordinates.lat as number, property.location_coordinates.lng as number] 
+    : null;
 
   return (
     <>
