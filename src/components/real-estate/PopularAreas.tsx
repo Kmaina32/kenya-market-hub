@@ -2,7 +2,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { MapPin } from 'lucide-react';
-import { PropertyFilters } from '@/hooks/useProperties';
 
 interface PopularAreasProps {
   onAreaSelect: (area: string) => void;
