@@ -33,24 +33,77 @@ export interface MedicalProvider {
   };
 }
 
-// Mock data for medical applications since the table doesn't exist yet
 export const useMedicalApplications = () => {
   return useQuery({
     queryKey: ['medical-applications'],
     queryFn: async () => {
-      // Return empty array since table doesn't exist
-      return [] as MedicalApplication[];
+      const { data, error } = await supabase
+        .from('medical_provider_applications')
+        .select(`
+          *,
+          specialization:medical_specializations(name)
+        `);
+
+      if (error) throw error;
+      return data as MedicalApplication[];
     },
   });
 };
 
-// Mock data for medical providers since the table doesn't exist yet
 export const useMedicalProviders = () => {
   return useQuery({
     queryKey: ['medical-providers'],
     queryFn: async () => {
-      // Return empty array since table doesn't exist
-      return [] as MedicalProvider[];
+      const { data, error } = await supabase
+        .from('medical_providers')
+        .select(`
+          *,
+          specialization:medical_specializations(name)
+        `)
+        .eq('is_active', true);
+
+      if (error) throw error;
+      return data as MedicalProvider[];
+    },
+  });
+};
+
+export const useMedicalApplicationStatus = () => {
+  return useQuery({
+    queryKey: ['my-medical-application'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from('medical_provider_applications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('submitted_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+  });
+};
+
+export const useMyMedicalProviderProfile = () => {
+  return useQuery({
+    queryKey: ['my-medical-provider-profile'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from('medical_providers')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
     },
   });
 };
@@ -61,8 +114,12 @@ export const useApproveMedicalApplication = () => {
   
   return useMutation({
     mutationFn: async (applicationId: string) => {
-      // Mock approval since table doesn't exist
-      console.log('Mock approval for application:', applicationId);
+      const { error } = await supabase
+        .from('medical_provider_applications')
+        .update({ status: 'approved' })
+        .eq('id', applicationId);
+
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['medical-applications'] });
@@ -88,8 +145,15 @@ export const useRejectMedicalApplication = () => {
   
   return useMutation({
     mutationFn: async ({ applicationId, notes }: { applicationId: string; notes: string }) => {
-      // Mock rejection since table doesn't exist
-      console.log('Mock rejection for application:', applicationId, 'with notes:', notes);
+      const { error } = await supabase
+        .from('medical_provider_applications')
+        .update({ 
+          status: 'rejected',
+          admin_notes: notes 
+        })
+        .eq('id', applicationId);
+
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['medical-applications'] });
@@ -106,25 +170,5 @@ export const useRejectMedicalApplication = () => {
         variant: "destructive"
       });
     }
-  });
-};
-
-export const useMedicalApplicationStatus = () => {
-  return useQuery({
-    queryKey: ['my-medical-application'],
-    queryFn: async () => {
-      // Return null since table doesn't exist
-      return null;
-    },
-  });
-};
-
-export const useMyMedicalProviderProfile = () => {
-  return useQuery({
-    queryKey: ['my-medical-provider-profile'],
-    queryFn: async () => {
-      // Return null since table doesn't exist
-      return null;
-    },
   });
 };

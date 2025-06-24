@@ -42,7 +42,14 @@ export const useInsurance = () => {
         .order('monthly_premium');
 
       if (error) throw error;
-      setPlans(data || []);
+      
+      // Transform the data to handle the features Json type
+      const transformedPlans = (data || []).map(plan => ({
+        ...plan,
+        features: Array.isArray(plan.features) ? plan.features : []
+      }));
+      
+      setPlans(transformedPlans);
     } catch (err) {
       console.error('Error fetching insurance plans:', err);
       setError('Failed to load insurance plans');
@@ -64,7 +71,17 @@ export const useInsurance = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setUserPolicies(data || []);
+      
+      // Transform the data to handle the nested plan features
+      const transformedPolicies = (data || []).map(policy => ({
+        ...policy,
+        plan: policy.plan ? {
+          ...policy.plan,
+          features: Array.isArray(policy.plan.features) ? policy.plan.features : []
+        } : undefined
+      }));
+      
+      setUserPolicies(transformedPolicies);
     } catch (err) {
       console.error('Error fetching user policies:', err);
       setError('Failed to load your policies');

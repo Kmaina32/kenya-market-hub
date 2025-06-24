@@ -11,6 +11,13 @@ export interface AdminStats {
   totalEvents: number;
   totalJobs: number;
   totalInsurancePlans: number;
+  totalVendors: number;
+  totalProperties: number;
+  totalDrivers: number;
+  totalServiceProviders: number;
+  pendingVendorApplications: number;
+  pendingDriverApprovals: number;
+  pendingServiceProviders: number;
   recentActivity: Array<{
     id: string;
     type: string;
@@ -29,6 +36,13 @@ export const useAdminStats = () => {
     totalEvents: 0,
     totalJobs: 0,
     totalInsurancePlans: 0,
+    totalVendors: 0,
+    totalProperties: 0,
+    totalDrivers: 0,
+    totalServiceProviders: 0,
+    pendingVendorApplications: 0,
+    pendingDriverApprovals: 0,
+    pendingServiceProviders: 0,
     recentActivity: []
   });
   const [loading, setLoading] = useState(true);
@@ -46,7 +60,11 @@ export const useAdminStats = () => {
         restaurantsResult,
         eventsResult,
         jobsResult,
-        insuranceResult
+        insuranceResult,
+        vendorsResult,
+        propertiesResult,
+        driversResult,
+        serviceProvidersResult
       ] = await Promise.all([
         supabase.from('profiles').select('id', { count: 'exact', head: true }),
         supabase.from('products').select('id', { count: 'exact', head: true }),
@@ -54,11 +72,22 @@ export const useAdminStats = () => {
         supabase.from('restaurants').select('id', { count: 'exact', head: true }),
         supabase.from('events').select('id', { count: 'exact', head: true }),
         supabase.from('jobs').select('id', { count: 'exact', head: true }),
-        supabase.from('insurance_plans').select('id', { count: 'exact', head: true })
+        supabase.from('insurance_plans').select('id', { count: 'exact', head: true }),
+        supabase.from('vendors').select('id', { count: 'exact', head: true }),
+        supabase.from('properties').select('id', { count: 'exact', head: true }),
+        supabase.from('drivers').select('id', { count: 'exact', head: true }),
+        supabase.from('service_provider_profiles').select('id', { count: 'exact', head: true })
       ]);
 
       // Calculate total revenue
       const totalRevenue = ordersResult.data?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
+
+      // Get pending applications
+      const [vendorAppsResult, driverAppsResult, serviceAppsResult] = await Promise.all([
+        supabase.from('vendor_applications').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('drivers').select('id', { count: 'exact', head: true }).eq('is_verified', false),
+        supabase.from('service_provider_profiles').select('id', { count: 'exact', head: true }).eq('verification_status', 'pending')
+      ]);
 
       setStats({
         totalUsers: profilesResult.count || 0,
@@ -69,6 +98,13 @@ export const useAdminStats = () => {
         totalEvents: eventsResult.count || 0,
         totalJobs: jobsResult.count || 0,
         totalInsurancePlans: insuranceResult.count || 0,
+        totalVendors: vendorsResult.count || 0,
+        totalProperties: propertiesResult.count || 0,
+        totalDrivers: driversResult.count || 0,
+        totalServiceProviders: serviceProvidersResult.count || 0,
+        pendingVendorApplications: vendorAppsResult.count || 0,
+        pendingDriverApprovals: driverAppsResult.count || 0,
+        pendingServiceProviders: serviceAppsResult.count || 0,
         recentActivity: [] // Will be populated with real activity data later
       });
     } catch (err) {
