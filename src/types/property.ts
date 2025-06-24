@@ -21,7 +21,7 @@ export interface Property {
   virtual_tour_url?: string;
   contact_phone?: string;
   contact_email?: string;
-  status: 'available' | 'sold' | 'rented' | 'draft';
+  status: 'available' | 'sold' | 'rented' | 'draft' | 'pending';
   is_featured: boolean;
   views_count: number;
   available_from?: string;
