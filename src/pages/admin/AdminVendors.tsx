@@ -13,17 +13,17 @@ interface VendorWithProfile {
   id: string;
   user_id: string;
   business_name: string;
-  business_description: string;
-  business_address: string;
-  business_phone: string;
-  business_email: string;
-  business_license: string;
+  business_description: string | null;
+  business_address: string | null;
+  business_phone: string | null;
+  business_email: string | null;
+  business_license: string | null;
   verification_status: string;
   is_active: boolean;
   commission_rate: number;
-  banner_url: string;
-  logo_url: string;
-  website_url: string;
+  banner_url: string | null;
+  logo_url: string | null;
+  website_url: string | null;
   social_media_links: any;
   created_at: string;
   updated_at: string;
@@ -61,14 +61,17 @@ const AdminVendors = () => {
           .select('id, full_name, email')
           .in('id', userIds);
         
-        // Add profile data to vendors
+        // Add profile data to vendors with proper mapping
         return data.map(vendor => ({
           ...vendor,
+          // Ensure social_media_links is always present
+          social_media_links: vendor.social_media_links || {},
           profiles: profiles?.find(p => p.id === vendor.user_id) || null
         })) as VendorWithProfile[];
       }
       
-      return data as VendorWithProfile[] || [];
+      // Return empty array with proper type
+      return [];
     }
   });
 
@@ -121,6 +124,7 @@ const AdminVendors = () => {
       deleteVendor.mutate(id);
     }
   };
+  
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'approved': return 'default';

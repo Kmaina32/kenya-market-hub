@@ -62,14 +62,15 @@ const AdminDrivers = () => {
           .select('id, full_name, email')
           .in('id', userIds);
         
-        // Add profile data to drivers
+        // Add profile data to drivers with proper mapping
         return data.map(driver => ({
           ...driver,
           profiles: profiles?.find(p => p.id === driver.user_id) || null
         })) as DriverWithProfile[];
       }
       
-      return data as DriverWithProfile[] || [];
+      // Return empty array with proper type
+      return [];
     }
   });
 
