@@ -590,6 +590,60 @@ export type Database = {
         }
         Relationships: []
       }
+      events: {
+        Row: {
+          created_at: string | null
+          current_attendees: number | null
+          date: string
+          description: string | null
+          end_date: string | null
+          event_type: string
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          location: string
+          max_attendees: number | null
+          organizer_id: string | null
+          price: number | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_attendees?: number | null
+          date: string
+          description?: string | null
+          end_date?: string | null
+          event_type: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          location: string
+          max_attendees?: number | null
+          organizer_id?: string | null
+          price?: number | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_attendees?: number | null
+          date?: string
+          description?: string | null
+          end_date?: string | null
+          event_type?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          location?: string
+          max_attendees?: number | null
+          organizer_id?: string | null
+          price?: number | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       fare_calculations: {
         Row: {
           base_fare: number
@@ -628,6 +682,41 @@ export type Database = {
           vehicle_type?: Database["public"]["Enums"]["vehicle_type"]
         }
         Relationships: []
+      }
+      featured_products: {
+        Row: {
+          category: string
+          created_at: string | null
+          featured_until: string | null
+          id: string
+          is_active: boolean | null
+          product_id: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          featured_until?: string | null
+          id?: string
+          is_active?: boolean | null
+          product_id?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          featured_until?: string | null
+          id?: string
+          is_active?: boolean | null
+          product_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "featured_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       forum_categories: {
         Row: {
@@ -788,6 +877,131 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      insurance_plans: {
+        Row: {
+          coverage_amount: number | null
+          created_at: string | null
+          description: string | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          monthly_premium: number
+          name: string
+          plan_type: string
+        }
+        Insert: {
+          coverage_amount?: number | null
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          monthly_premium: number
+          name: string
+          plan_type: string
+        }
+        Update: {
+          coverage_amount?: number | null
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          monthly_premium?: number
+          name?: string
+          plan_type?: string
+        }
+        Relationships: []
+      }
+      insurance_policies: {
+        Row: {
+          created_at: string | null
+          end_date: string
+          id: string
+          plan_id: string | null
+          policy_number: string
+          premium_paid: number | null
+          start_date: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          end_date: string
+          id?: string
+          plan_id?: string | null
+          policy_number: string
+          premium_paid?: number | null
+          start_date: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          end_date?: string
+          id?: string
+          plan_id?: string | null
+          policy_number?: string
+          premium_paid?: number | null
+          start_date?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_policies_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jobs: {
+        Row: {
+          category: string
+          company: string | null
+          created_at: string | null
+          description: string
+          id: number
+          job_type: string | null
+          location: string | null
+          posted_by: string | null
+          salary: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          company?: string | null
+          created_at?: string | null
+          description: string
+          id?: number
+          job_type?: string | null
+          location?: string | null
+          posted_by?: string | null
+          salary?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          company?: string | null
+          created_at?: string | null
+          description?: string
+          id?: number
+          job_type?: string | null
+          location?: string | null
+          posted_by?: string | null
+          salary?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       medical_facilities: {
         Row: {
@@ -1011,6 +1225,50 @@ export type Database = {
             columns: ["pharmacy_id"]
             isOneToOne: false
             referencedRelation: "medical_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_items: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          is_available: boolean | null
+          name: string
+          price: number
+          restaurant_id: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_available?: boolean | null
+          name: string
+          price: number
+          restaurant_id?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_available?: boolean | null
+          name?: string
+          price?: number
+          restaurant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_items_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
             referencedColumns: ["id"]
           },
         ]
@@ -1620,6 +1878,63 @@ export type Database = {
           },
         ]
       }
+      restaurants: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          cuisine_type: string
+          delivery_fee: number | null
+          delivery_time_minutes: number | null
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          latitude: number | null
+          longitude: number | null
+          minimum_order: number | null
+          name: string
+          phone: string | null
+          rating: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          cuisine_type: string
+          delivery_fee?: number | null
+          delivery_time_minutes?: number | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
+          minimum_order?: number | null
+          name: string
+          phone?: string | null
+          rating?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          cuisine_type?: string
+          delivery_fee?: number | null
+          delivery_time_minutes?: number | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
+          minimum_order?: number | null
+          name?: string
+          phone?: string | null
+          rating?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           comment: string | null
@@ -1978,6 +2293,39 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           verification_status?: string | null
+        }
+        Relationships: []
+      }
+      shop_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
         }
         Relationships: []
       }

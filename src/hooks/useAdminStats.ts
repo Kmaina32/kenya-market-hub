@@ -1,87 +1,92 @@
 
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface AdminStats {
   totalUsers: number;
   totalProducts: number;
   totalOrders: number;
-  totalVendors: number;
-  totalProperties: number;
-  totalRides: number;
-  totalDrivers: number;
-  totalServiceProviders: number;
   totalRevenue: number;
-  pendingVendorApplications: number;
-  pendingDriverApprovals: number;
-  pendingServiceProviders: number;
-  recentActivity?: Array<{
+  totalRestaurants: number;
+  totalEvents: number;
+  totalJobs: number;
+  totalInsurancePlans: number;
+  recentActivity: Array<{
     id: string;
-    message: string;
+    type: string;
+    description: string;
     timestamp: string;
   }>;
 }
 
 export const useAdminStats = () => {
-  return useQuery({
-    queryKey: ['admin-stats'],
-    queryFn: async (): Promise<AdminStats> => {
+  const [stats, setStats] = useState<AdminStats>({
+    totalUsers: 0,
+    totalProducts: 0,
+    totalOrders: 0,
+    totalRevenue: 0,
+    totalRestaurants: 0,
+    totalEvents: 0,
+    totalJobs: 0,
+    totalInsurancePlans: 0,
+    recentActivity: []
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchStats = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch all stats in parallel
       const [
-        { count: usersCount },
-        { count: productsCount },
-        { count: ordersCount },
-        { count: vendorsCount },
-        { count: propertiesCount },
-        { count: ridesCount },
-        { count: driversCount },
-        { count: serviceProvidersCount },
-        { data: transactions },
-        { data: vendorApplications },
-        { data: pendingDrivers },
-        { data: pendingProviders }
+        profilesResult,
+        productsResult,
+        ordersResult,
+        restaurantsResult,
+        eventsResult,
+        jobsResult,
+        insuranceResult
       ] = await Promise.all([
-        supabase.from('profiles').select('*', { count: 'exact', head: true }),
-        supabase.from('products').select('*', { count: 'exact', head: true }),
-        supabase.from('orders').select('*', { count: 'exact', head: true }),
-        supabase.from('vendors').select('*', { count: 'exact', head: true }),
-        supabase.from('properties').select('*', { count: 'exact', head: true }),
-        supabase.from('rides').select('*', { count: 'exact', head: true }),
-        supabase.from('drivers').select('*', { count: 'exact', head: true }),
-        supabase.from('service_provider_profiles').select('*', { count: 'exact', head: true }),
-        supabase.from('transactions').select('amount'),
-        supabase.from('vendor_applications').select('*').eq('status', 'pending'),
-        supabase.from('drivers').select('*').eq('is_verified', false),
-        supabase.from('service_provider_profiles').select('*').eq('verification_status', 'pending')
+        supabase.from('profiles').select('id', { count: 'exact', head: true }),
+        supabase.from('products').select('id', { count: 'exact', head: true }),
+        supabase.from('orders').select('total_amount'),
+        supabase.from('restaurants').select('id', { count: 'exact', head: true }),
+        supabase.from('events').select('id', { count: 'exact', head: true }),
+        supabase.from('jobs').select('id', { count: 'exact', head: true }),
+        supabase.from('insurance_plans').select('id', { count: 'exact', head: true })
       ]);
 
-      const totalRevenue = transactions?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
+      // Calculate total revenue
+      const totalRevenue = ordersResult.data?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
 
-      return {
-        totalUsers: usersCount || 0,
-        totalProducts: productsCount || 0,
-        totalOrders: ordersCount || 0,
-        totalVendors: vendorsCount || 0,
-        totalProperties: propertiesCount || 0,
-        totalRides: ridesCount || 0,
-        totalDrivers: driversCount || 0,
-        totalServiceProviders: serviceProvidersCount || 0,
+      setStats({
+        totalUsers: profilesResult.count || 0,
+        totalProducts: productsResult.count || 0,
+        totalOrders: ordersResult.data?.length || 0,
         totalRevenue,
-        pendingVendorApplications: vendorApplications?.length || 0,
-        pendingDriverApprovals: pendingDrivers?.length || 0,
-        pendingServiceProviders: pendingProviders?.length || 0,
-        recentActivity: [
-          {
-            id: '1',
-            message: 'New vendor application received',
-            timestamp: new Date().toISOString()
-          },
-          {
-            id: '2',
-            message: 'Order #12345 completed',
-            timestamp: new Date(Date.now() - 3600000).toISOString()
-          }
-        ]
-      };
+        totalRestaurants: restaurantsResult.count || 0,
+        totalEvents: eventsResult.count || 0,
+        totalJobs: jobsResult.count || 0,
+        totalInsurancePlans: insuranceResult.count || 0,
+        recentActivity: [] // Will be populated with real activity data later
+      });
+    } catch (err) {
+      console.error('Error fetching admin stats:', err);
+      setError('Failed to load admin statistics');
+    } finally {
+      setLoading(false);
     }
-  });
+  };
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  return {
+    stats,
+    loading,
+    error,
+    refetch: fetchStats
+  };
 };
