@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,7 +25,7 @@ interface VendorWithProfile {
   banner_url: string | null;
   logo_url: string | null;
   website_url: string | null;
-  social_media_links: any;
+  social_media: any;
   created_at: string;
   updated_at: string;
   profiles: {
@@ -64,8 +65,8 @@ const AdminVendors = () => {
         // Add profile data to vendors with proper mapping
         return data.map(vendor => ({
           ...vendor,
-          // Ensure social_media_links is always present
-          social_media_links: vendor.social_media_links || {},
+          // Ensure social_media is always present
+          social_media: vendor.social_media || {},
           profiles: profiles?.find(p => p.id === vendor.user_id) || null
         })) as VendorWithProfile[];
       }
