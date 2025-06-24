@@ -1,12 +1,14 @@
 
 import React, { useState } from 'react';
-import { UtensilsCrossed, Star, Clock, MapPin } from 'lucide-react';
+import { UtensilsCrossed, Star, Clock, MapPin, Phone, ShoppingCart } from 'lucide-react';
 import FrontendLayout from '@/components/layouts/FrontendLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useRestaurants } from '@/hooks/useRestaurants';
 import HeroSection from '@/components/shared/HeroSection';
 import RestaurantMenuModal from '@/components/RestaurantMenuModal';
+import { toast } from 'sonner';
 
 const FoodDelivery: React.FC = () => {
   const { data: restaurants = [], isLoading } = useRestaurants();
@@ -16,7 +18,22 @@ const FoodDelivery: React.FC = () => {
   const handleRestaurantClick = (restaurant: any) => {
     setSelectedRestaurant(restaurant);
     setIsMenuModalOpen(true);
+    toast.success(`Opening menu for ${restaurant.business_name}`);
     console.log('Opening menu for restaurant:', restaurant);
+  };
+
+  const handleCallRestaurant = (restaurant: any) => {
+    if (restaurant.business_phone) {
+      window.location.href = `tel:${restaurant.business_phone}`;
+      toast.success('Opening phone dialer...');
+    } else {
+      toast.error('Phone number not available');
+    }
+  };
+
+  const handleOrderNow = (restaurant: any) => {
+    toast.success(`Starting order from ${restaurant.business_name}`);
+    // This would typically redirect to cart/order page
   };
 
   return (
@@ -37,13 +54,20 @@ const FoodDelivery: React.FC = () => {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
                 <p className="mt-4 text-gray-600">Loading restaurants...</p>
               </div>
+            ) : restaurants.length === 0 ? (
+              <div className="text-center py-12">
+                <UtensilsCrossed className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">No Restaurants Available</h3>
+                <p className="text-gray-600 mb-6">
+                  Restaurants will be available soon. Check back later!
+                </p>
+              </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {restaurants.map((restaurant) => (
                   <Card 
                     key={restaurant.id}
                     className="cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-2 hover:border-orange-300 bg-white rounded-2xl overflow-hidden group"
-                    onClick={() => handleRestaurantClick(restaurant)}
                   >
                     <div className="aspect-video bg-gray-200 relative overflow-hidden">
                       {restaurant.banner_url ? (
@@ -102,9 +126,28 @@ const FoodDelivery: React.FC = () => {
                             <span className="text-xs text-gray-600">25-35 min</span>
                           </div>
                         </div>
-                        <div className="text-xs font-semibold text-orange-600 bg-orange-50 px-2 py-1 rounded-full">
+                      </div>
+
+                      <div className="flex gap-2 pt-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCallRestaurant(restaurant);
+                          }}
+                          className="flex-1 text-xs bg-white border-orange-200 text-orange-600 hover:bg-orange-50"
+                        >
+                          <Phone className="h-3 w-3 mr-1" />
+                          Call
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => handleRestaurantClick(restaurant)}
+                          className="flex-1 text-xs bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                        >
                           View Menu
-                        </div>
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>

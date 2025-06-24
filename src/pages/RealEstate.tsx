@@ -12,7 +12,9 @@ import {
   Square, 
   Building, 
   Home, 
-  Filter
+  Filter,
+  Phone,
+  Eye
 } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
 import { useQuery } from '@tanstack/react-query';
@@ -20,6 +22,7 @@ import { supabase } from '@/integrations/supabase/client';
 import HeroSection from '@/components/shared/HeroSection';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
 
 interface Property {
   id: string;
@@ -33,6 +36,9 @@ interface Property {
   area_sqm?: number;
   images?: string[];
   status: string;
+  listing_type: string;
+  contact_phone?: string;
+  contact_email?: string;
 }
 
 const RealEstate = () => {
@@ -43,6 +49,8 @@ const RealEstate = () => {
     location: ''
   });
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
   const { data: properties, isLoading } = useQuery({
     queryKey: ['properties'],
@@ -53,7 +61,10 @@ const RealEstate = () => {
         .eq('status', 'available')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching properties:', error);
+        throw error;
+      }
       return data || [];
     }
   });
@@ -67,7 +78,35 @@ const RealEstate = () => {
     return matchesSearch && matchesType && matchesLocation;
   }) || [];
 
-  const propertyTypes = ['Apartment', 'House', 'Commercial', 'Land'];
+  const handleViewDetails = (property: Property) => {
+    toast.success(`Viewing details for ${property.title}`);
+    console.log('Viewing property:', property);
+  };
+
+  const handleContactOwner = (property: Property) => {
+    setSelectedProperty(property);
+    setIsContactModalOpen(true);
+  };
+
+  const handleCall = () => {
+    if (selectedProperty?.contact_phone) {
+      window.location.href = `tel:${selectedProperty.contact_phone}`;
+      toast.success('Opening phone dialer...');
+    } else {
+      toast.error('Phone number not available');
+    }
+  };
+
+  const handleEmail = () => {
+    if (selectedProperty?.contact_email) {
+      window.location.href = `mailto:${selectedProperty.contact_email}?subject=Inquiry about ${selectedProperty.title}`;
+      toast.success('Opening email client...');
+    } else {
+      toast.error('Email not available');
+    }
+  };
+
+  const propertyTypes = ['house', 'apartment', 'land', 'commercial'];
 
   return (
     <MainLayout>
@@ -89,7 +128,7 @@ const RealEstate = () => {
                   placeholder="Search properties by title or location..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 py-3 border-orange-200 focus:border-orange-500 focus:ring-orange-200 rounded-xl shadow-sm"
+                  className="pl-10 py-3 border-orange-200 focus:border-orange-500 focus:ring-orange-200 rounded-xl shadow-sm bg-white"
                 />
               </div>
               
@@ -97,13 +136,13 @@ const RealEstate = () => {
                 <DialogTrigger asChild>
                   <Button
                     variant="outline"
-                    className="border-orange-200 text-orange-600 hover:bg-orange-50 hover:border-orange-300 px-6 py-3 rounded-xl shadow-sm font-medium"
+                    className="border-orange-200 text-orange-600 hover:bg-orange-50 hover:border-orange-300 px-6 py-3 rounded-xl shadow-sm font-medium bg-white"
                   >
                     <Filter className="h-4 w-4 mr-2" />
                     Filters
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-md rounded-2xl">
+                <DialogContent className="sm:max-w-md rounded-2xl bg-white">
                   <DialogHeader>
                     <DialogTitle className="text-xl font-bold text-gray-900">Filter Properties</DialogTitle>
                   </DialogHeader>
@@ -111,13 +150,13 @@ const RealEstate = () => {
                     <div>
                       <label className="text-sm font-semibold mb-3 block text-gray-700">Property Type</label>
                       <Select value={filters.propertyType} onValueChange={(value) => setFilters({...filters, propertyType: value})}>
-                        <SelectTrigger className="border-orange-200 focus:border-orange-500 rounded-lg">
+                        <SelectTrigger className="border-orange-200 focus:border-orange-500 rounded-lg bg-white">
                           <SelectValue placeholder="Select property type" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-white">
                           <SelectItem value="">All Types</SelectItem>
                           {propertyTypes.map(type => (
-                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                            <SelectItem key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -128,7 +167,7 @@ const RealEstate = () => {
                         placeholder="Enter location"
                         value={filters.location}
                         onChange={(e) => setFilters({...filters, location: e.target.value})}
-                        className="border-orange-200 focus:border-orange-500 focus:ring-orange-200 rounded-lg"
+                        className="border-orange-200 focus:border-orange-500 focus:ring-orange-200 rounded-lg bg-white"
                       />
                     </div>
                     <Button 
@@ -215,9 +254,25 @@ const RealEstate = () => {
                         <span className="text-xl font-bold text-orange-600">
                           KSh {property.price.toLocaleString()}
                         </span>
-                        <Button size="sm" className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 px-4 py-2 rounded-lg font-medium shadow-md">
-                          View Details
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleViewDetails(property)}
+                            className="bg-white border-orange-200 text-orange-600 hover:bg-orange-50"
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            View
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 font-medium shadow-md"
+                            onClick={() => handleContactOwner(property)}
+                          >
+                            <Phone className="h-4 w-4 mr-1" />
+                            Contact
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -226,6 +281,34 @@ const RealEstate = () => {
             )}
           </div>
         </div>
+
+        {/* Contact Modal */}
+        <Dialog open={isContactModalOpen} onOpenChange={setIsContactModalOpen}>
+          <DialogContent className="sm:max-w-md bg-white">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold text-gray-900">Contact Property Owner</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-gray-600">How would you like to contact the owner of "{selectedProperty?.title}"?</p>
+              <div className="flex flex-col gap-3">
+                <Button
+                  onClick={handleCall}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Phone className="h-4 w-4 mr-2" />
+                  Call Now
+                </Button>
+                <Button
+                  onClick={handleEmail}
+                  variant="outline"
+                  className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 bg-white"
+                >
+                  Send Email
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </MainLayout>
   );
