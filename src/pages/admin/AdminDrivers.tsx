@@ -5,20 +5,24 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { Plus, Car, Search, Edit, Trash2, Eye, Check, X, Star } from 'lucide-react';
 
 const AdminDrivers = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const queryClient = useQueryClient();
 
-  // Fetch drivers from database
   const { data: drivers, isLoading } = useQuery({
     queryKey: ['admin-drivers', searchTerm],
     queryFn: async () => {
       let query = supabase
         .from('drivers')
-        .select('*')
+        .select(`
+          *,
+          profiles(full_name, email)
+        `)
         .order('created_at', { ascending: false });
 
       if (searchTerm) {
@@ -30,6 +34,56 @@ const AdminDrivers = () => {
       return data;
     }
   });
+
+  const updateDriverVerification = useMutation({
+    mutationFn: async ({ id, verified }: { id: string; verified: boolean }) => {
+      const { error } = await supabase
+        .from('drivers')
+        .update({ is_verified: verified })
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-drivers'] });
+      toast.success('Driver verification updated successfully');
+    },
+    onError: (error) => {
+      toast.error(`Failed to update driver verification: ${error.message}`);
+    }
+  });
+
+  const deleteDriver = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('drivers')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-drivers'] });
+      toast.success('Driver deleted successfully');
+    },
+    onError: (error) => {
+      toast.error(`Failed to delete driver: ${error.message}`);
+    }
+  });
+
+  const handleVerify = (id: string) => {
+    updateDriverVerification.mutate({ id, verified: true });
+  };
+
+  const handleReject = (id: string) => {
+    updateDriverVerification.mutate({ id, verified: false });
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm('Are you sure you want to delete this driver?')) {
+      deleteDriver.mutate(id);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -97,7 +151,7 @@ const AdminDrivers = () => {
                     <TableRow key={driver.id}>
                       <TableCell>
                         <div>
-                          <div className="font-medium">Driver {driver.user_id?.slice(-8)}</div>
+                          <div className="font-medium">{driver.profiles?.full_name || `Driver ${driver.user_id?.slice(-8)}`}</div>
                           <div className="text-sm text-gray-500">
                             {driver.phone_number || 'No phone'}
                           </div>
@@ -133,10 +187,20 @@ const AdminDrivers = () => {
                         <div className="flex gap-2">
                           {!driver.is_verified && (
                             <>
-                              <Button variant="outline" size="sm" className="text-green-600">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="text-green-600"
+                                onClick={() => handleVerify(driver.id)}
+                              >
                                 <Check className="h-4 w-4" />
                               </Button>
-                              <Button variant="outline" size="sm" className="text-red-600">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="text-red-600"
+                                onClick={() => handleReject(driver.id)}
+                              >
                                 <X className="h-4 w-4" />
                               </Button>
                             </>
@@ -147,7 +211,11 @@ const AdminDrivers = () => {
                           <Button variant="outline" size="sm">
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="destructive" size="sm">
+                          <Button 
+                            variant="destructive" 
+                            size="sm"
+                            onClick={() => handleDelete(driver.id)}
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>

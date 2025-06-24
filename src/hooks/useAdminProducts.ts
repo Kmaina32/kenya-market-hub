@@ -3,15 +3,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-export const useAdminUsers = () => {
+export const useAdminProducts = () => {
   return useQuery({
-    queryKey: ['admin-users'],
+    queryKey: ['admin-products'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('products')
         .select(`
           *,
-          user_roles(role)
+          vendors(business_name)
         `)
         .order('created_at', { ascending: false });
       
@@ -21,45 +21,46 @@ export const useAdminUsers = () => {
   });
 };
 
-export const useUpdateUserRole = () => {
+export const useUpdateProduct = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: any }) => {
       const { error } = await supabase
-        .from('user_roles')
-        .upsert({ user_id: userId, role }, { onConflict: 'user_id' });
+        .from('products')
+        .update(updates)
+        .eq('id', id);
       
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      toast.success('User role updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      toast.success('Product updated successfully');
     },
     onError: (error) => {
-      toast.error(`Failed to update user role: ${error.message}`);
+      toast.error(`Failed to update product: ${error.message}`);
     }
   });
 };
 
-export const useDeleteUser = () => {
+export const useDeleteProduct = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (userId: string) => {
+    mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('profiles')
+        .from('products')
         .delete()
-        .eq('id', userId);
+        .eq('id', id);
       
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      toast.success('User deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      toast.success('Product deleted successfully');
     },
     onError: (error) => {
-      toast.error(`Failed to delete user: ${error.message}`);
+      toast.error(`Failed to delete product: ${error.message}`);
     }
   });
 };

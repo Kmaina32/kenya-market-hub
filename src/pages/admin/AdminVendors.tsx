@@ -5,20 +5,24 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { Plus, Store, Search, Edit, Trash2, Eye, Check, X } from 'lucide-react';
 
 const AdminVendors = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const queryClient = useQueryClient();
 
-  // Fetch vendors from database
   const { data: vendors, isLoading } = useQuery({
     queryKey: ['admin-vendors', searchTerm],
     queryFn: async () => {
       let query = supabase
         .from('vendors')
-        .select('*')
+        .select(`
+          *,
+          profiles(full_name, email)
+        `)
         .order('created_at', { ascending: false });
 
       if (searchTerm) {
@@ -30,6 +34,56 @@ const AdminVendors = () => {
       return data;
     }
   });
+
+  const updateVendorStatus = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { error } = await supabase
+        .from('vendors')
+        .update({ verification_status: status })
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-vendors'] });
+      toast.success('Vendor status updated successfully');
+    },
+    onError: (error) => {
+      toast.error(`Failed to update vendor status: ${error.message}`);
+    }
+  });
+
+  const deleteVendor = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('vendors')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-vendors'] });
+      toast.success('Vendor deleted successfully');
+    },
+    onError: (error) => {
+      toast.error(`Failed to delete vendor: ${error.message}`);
+    }
+  });
+
+  const handleApprove = (id: string) => {
+    updateVendorStatus.mutate({ id, status: 'approved' });
+  };
+
+  const handleReject = (id: string) => {
+    updateVendorStatus.mutate({ id, status: 'rejected' });
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm('Are you sure you want to delete this vendor?')) {
+      deleteVendor.mutate(id);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -84,6 +138,7 @@ const AdminVendors = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Business Name</TableHead>
+                    <TableHead>Owner</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Phone</TableHead>
                     <TableHead>Status</TableHead>
@@ -102,7 +157,8 @@ const AdminVendors = () => {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{vendor.business_email || 'Not specified'}</TableCell>
+                      <TableCell>{vendor.profiles?.full_name || 'Unknown'}</TableCell>
+                      <TableCell>{vendor.business_email || vendor.profiles?.email || 'Not specified'}</TableCell>
                       <TableCell>{vendor.business_phone || 'Not specified'}</TableCell>
                       <TableCell>
                         <Badge variant={getStatusColor(vendor.verification_status)}>
@@ -118,10 +174,20 @@ const AdminVendors = () => {
                         <div className="flex gap-2">
                           {vendor.verification_status === 'pending' && (
                             <>
-                              <Button variant="outline" size="sm" className="text-green-600">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="text-green-600"
+                                onClick={() => handleApprove(vendor.id)}
+                              >
                                 <Check className="h-4 w-4" />
                               </Button>
-                              <Button variant="outline" size="sm" className="text-red-600">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="text-red-600"
+                                onClick={() => handleReject(vendor.id)}
+                              >
                                 <X className="h-4 w-4" />
                               </Button>
                             </>
@@ -132,7 +198,11 @@ const AdminVendors = () => {
                           <Button variant="outline" size="sm">
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="destructive" size="sm">
+                          <Button 
+                            variant="destructive" 
+                            size="sm"
+                            onClick={() => handleDelete(vendor.id)}
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>

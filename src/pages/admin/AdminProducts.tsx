@@ -5,72 +5,43 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { Plus, ShoppingBag, Search, Edit, Trash2 } from 'lucide-react';
+import { Package, Search, Edit, Trash2, Eye, Star, TrendingUp } from 'lucide-react';
+import { useAdminProducts, useUpdateProduct, useDeleteProduct } from '@/hooks/useAdminProducts';
 
 const AdminProducts = () => {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
+  const { data: products, isLoading } = useAdminProducts();
+  const updateProduct = useUpdateProduct();
+  const deleteProduct = useDeleteProduct();
 
-  // Fetch products from database
-  const { data: products, isLoading } = useQuery({
-    queryKey: ['admin-products', searchTerm],
-    queryFn: async () => {
-      let query = supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false });
+  const handleFeatureProduct = (id: string, featured: boolean) => {
+    updateProduct.mutate({ id, updates: { is_featured: featured } });
+  };
 
-      if (searchTerm) {
-        query = query.or(`name.ilike.%${searchTerm}%,category.ilike.%${searchTerm}%`);
-      }
+  const handleStockUpdate = (id: string, stock: number) => {
+    updateProduct.mutate({ id, updates: { stock_quantity: stock, in_stock: stock > 0 } });
+  };
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  // Delete product mutation
-  const deleteProduct = useMutation({
-    mutationFn: async (productId: string) => {
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', productId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
-      toast({ title: "Product deleted successfully" });
-    },
-    onError: (error: any) => {
-      toast({ 
-        title: "Error deleting product", 
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  });
-
-  const handleDeleteProduct = (productId: string) => {
+  const handleDeleteProduct = (id: string) => {
     if (confirm('Are you sure you want to delete this product?')) {
-      deleteProduct.mutate(productId);
+      deleteProduct.mutate(id);
     }
   };
+
+  const filteredProducts = products?.filter(product =>
+    product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.category?.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Product Management</h1>
-          <p className="text-gray-600">Manage all products in the marketplace</p>
+          <p className="text-gray-600">Manage all products and inventory</p>
         </div>
         <Button className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
-          <Plus className="h-4 w-4 mr-2" />
+          <Package className="h-4 w-4 mr-2" />
           Add Product
         </Button>
       </div>
@@ -90,8 +61,8 @@ const AdminProducts = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
-            <ShoppingBag className="h-5 w-5 mr-2" />
-            All Products ({products?.length || 0})
+            <Package className="h-5 w-5 mr-2" />
+            All Products ({filteredProducts.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -100,13 +71,14 @@ const AdminProducts = () => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
               <span className="ml-2">Loading products...</span>
             </div>
-          ) : products && products.length > 0 ? (
+          ) : filteredProducts.length > 0 ? (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
+                    <TableHead>Product</TableHead>
                     <TableHead>Category</TableHead>
+                    <TableHead>Vendor</TableHead>
                     <TableHead>Price</TableHead>
                     <TableHead>Stock</TableHead>
                     <TableHead>Rating</TableHead>
@@ -114,39 +86,67 @@ const AdminProducts = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {products.map((product) => (
+                  {filteredProducts.map((product) => (
                     <TableRow key={product.id}>
-                      <TableCell className="font-medium">{product.name}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <img 
+                            src={product.image_url || '/placeholder.svg'} 
+                            alt={product.name}
+                            className="h-10 w-10 rounded object-cover mr-3"
+                          />
+                          <div>
+                            <div className="font-medium">{product.name}</div>
+                            <div className="text-sm text-gray-500 line-clamp-1">
+                              {product.description}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <Badge variant="outline">{product.category}</Badge>
                       </TableCell>
+                      <TableCell>{product.vendors?.business_name || 'Unknown'}</TableCell>
                       <TableCell className="font-semibold text-green-600">
                         KSh {Number(product.price).toLocaleString()}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={product.in_stock ? 'default' : 'destructive'}>
-                          {product.in_stock ? `${product.stock_quantity || 0} in stock` : 'Out of stock'}
-                        </Badge>
+                        <div className="flex items-center">
+                          <Badge variant={product.in_stock ? 'default' : 'destructive'}>
+                            {product.stock_quantity} in stock
+                          </Badge>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center">
-                          <span className="text-yellow-500">★</span>
-                          <span className="ml-1">{Number(product.rating || 0).toFixed(1)}</span>
+                          <Star className="h-4 w-4 text-yellow-500 mr-1" />
+                          <span>{Number(product.rating || 0).toFixed(1)}</span>
                           <span className="text-gray-500 ml-1">({product.reviews_count || 0})</span>
                         </div>
                       </TableCell>
-                      <TableCell className="space-x-2">
-                        <Button variant="outline" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDeleteProduct(product.id)}
-                          disabled={deleteProduct.isPending}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="sm">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleFeatureProduct(product.id, !product.is_featured)}
+                          >
+                            <TrendingUp className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="destructive" 
+                            size="sm"
+                            onClick={() => handleDeleteProduct(product.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -155,10 +155,10 @@ const AdminProducts = () => {
             </div>
           ) : (
             <div className="text-center py-8">
-              <ShoppingBag className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+              <Package className="h-12 w-12 mx-auto text-gray-400 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No Products Found</h3>
               <p className="text-gray-600 mb-4">
-                {searchTerm ? 'No products match your search criteria.' : 'Start by adding your first product.'}
+                {searchTerm ? 'No products match your search criteria.' : 'Products will appear here once they are added to the platform.'}
               </p>
             </div>
           )}
