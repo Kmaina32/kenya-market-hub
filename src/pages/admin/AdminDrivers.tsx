@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,33 @@ import { Input } from '@/components/ui/input';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Plus, Car, Search, Edit, Trash2, Eye, Check, X, Star } from 'lucide-react';
+import { Plus, Car, Search, Edit, Trash2, Eye, Check, X } from 'lucide-react';
+
+interface DriverWithProfile {
+  id: string;
+  user_id: string;
+  phone_number: string;
+  license_number: string;
+  license_plate: string;
+  vehicle_make: string;
+  vehicle_model: string;
+  vehicle_year: number;
+  vehicle_type: string;
+  is_verified: boolean;
+  is_active: boolean;
+  availability_status: string;
+  rating: number;
+  total_rides: number;
+  current_location: any;
+  documents: any;
+  last_location_update: string;
+  created_at: string;
+  profiles: {
+    id: string;
+    full_name: string;
+    email: string;
+  } | null;
+}
 
 const AdminDrivers = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -16,14 +41,14 @@ const AdminDrivers = () => {
 
   const { data: drivers, isLoading } = useQuery({
     queryKey: ['admin-drivers', searchTerm],
-    queryFn: async () => {
+    queryFn: async (): Promise<DriverWithProfile[]> => {
       let query = supabase
         .from('drivers')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (searchTerm) {
-        query = query.or(`license_number.ilike.%${searchTerm}%,license_plate.ilike.%${searchTerm}%,phone_number.ilike.%${searchTerm}%`);
+        query = query.or(`license_number.ilike.%${searchTerm}%,license_plate.ilike.%${searchTerm}%,vehicle_make.ilike.%${searchTerm}%`);
       }
 
       const { data, error } = await query;
@@ -41,10 +66,10 @@ const AdminDrivers = () => {
         return data.map(driver => ({
           ...driver,
           profiles: profiles?.find(p => p.id === driver.user_id) || null
-        }));
+        })) as DriverWithProfile[];
       }
       
-      return data || [];
+      return data as DriverWithProfile[] || [];
     }
   });
 
@@ -112,7 +137,7 @@ const AdminDrivers = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Driver Management</h1>
-          <p className="text-gray-600">Manage all drivers and ride services</p>
+          <p className="text-gray-600">Manage all drivers and their vehicles</p>
         </div>
         <Button className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
           <Plus className="h-4 w-4 mr-2" />
@@ -150,12 +175,13 @@ const AdminDrivers = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Driver Info</TableHead>
+                    <TableHead>Driver</TableHead>
                     <TableHead>Vehicle</TableHead>
                     <TableHead>License</TableHead>
                     <TableHead>Rating</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Verified</TableHead>
+                    <TableHead>Total Rides</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -164,71 +190,45 @@ const AdminDrivers = () => {
                     <TableRow key={driver.id}>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{driver.profiles?.full_name || `Driver ${driver.user_id?.slice(-8)}`}</div>
-                          <div className="text-sm text-gray-500">
-                            {driver.phone_number || 'No phone'}
-                          </div>
+                          <div className="font-medium">{driver.profiles?.full_name || 'Unknown'}</div>
+                          <div className="text-sm text-gray-500">{driver.profiles?.email || 'No email'}</div>
+                          <div className="text-sm text-gray-500">{driver.phone_number}</div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div>
                           <div className="font-medium">{driver.vehicle_make} {driver.vehicle_model}</div>
-                          <div className="text-sm text-gray-500">
-                            {driver.license_plate} • {driver.vehicle_type}
-                          </div>
+                          <div className="text-sm text-gray-500">{driver.license_plate}</div>
+                          <Badge variant="outline">{driver.vehicle_type}</Badge>
                         </div>
                       </TableCell>
                       <TableCell>{driver.license_number}</TableCell>
                       <TableCell>
                         <div className="flex items-center">
-                          <Star className="h-4 w-4 text-yellow-500 mr-1" />
-                          <span>{Number(driver.rating || 0).toFixed(1)}</span>
-                          <span className="text-gray-500 ml-1">({driver.total_rides || 0})</span>
+                          <span className="font-medium">{driver.rating?.toFixed(1) || '0.0'}</span>
+                          <span className="text-gray-500 ml-1">⭐</span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={getStatusColor(driver.status)}>
-                          {driver.status}
+                        <Badge variant={driver.availability_status === 'available' ? 'default' : 'secondary'}>
+                          {driver.availability_status}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={driver.is_verified ? 'default' : 'secondary'}>
+                        <Badge variant={driver.is_verified ? 'default' : 'destructive'}>
                           {driver.is_verified ? 'Verified' : 'Pending'}
                         </Badge>
                       </TableCell>
+                      <TableCell>{driver.total_rides || 0}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          {!driver.is_verified && (
-                            <>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="text-green-600"
-                                onClick={() => handleVerify(driver.id)}
-                              >
-                                <Check className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="text-red-600"
-                                onClick={() => handleReject(driver.id)}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
                           <Button variant="outline" size="sm">
                             <Eye className="h-4 w-4" />
                           </Button>
                           <Button variant="outline" size="sm">
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            variant="destructive" 
-                            size="sm"
-                            onClick={() => handleDelete(driver.id)}
-                          >
+                          <Button variant="destructive" size="sm">
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -243,7 +243,7 @@ const AdminDrivers = () => {
               <Car className="h-12 w-12 mx-auto text-gray-400 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No Drivers Found</h3>
               <p className="text-gray-600 mb-4">
-                {searchTerm ? 'No drivers match your search criteria.' : 'Drivers will appear here once they register for ride services.'}
+                {searchTerm ? 'No drivers match your search criteria.' : 'Drivers will appear here once they register.'}
               </p>
             </div>
           )}

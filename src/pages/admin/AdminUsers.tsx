@@ -6,8 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, Search, Edit, Trash2, Eye, UserCheck } from 'lucide-react';
 import { useAdminUsers, useUpdateUserRole, useDeleteUser } from '@/hooks/useAdminUsers';
+import { Users, Search, Edit, Trash2, Eye } from 'lucide-react';
 
 const AdminUsers = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -15,8 +15,8 @@ const AdminUsers = () => {
   const updateUserRole = useUpdateUserRole();
   const deleteUser = useDeleteUser();
 
-  const handleRoleChange = (userId: string, newRole: string) => {
-    updateUserRole.mutate({ userId, role: newRole });
+  const handleRoleChange = (userId: string, role: 'admin' | 'customer' | 'vendor' | 'driver' | 'property_owner' | 'rider' | 'service_provider') => {
+    updateUserRole.mutate({ userId, role });
   };
 
   const handleDeleteUser = (userId: string) => {
@@ -30,7 +30,7 @@ const AdminUsers = () => {
     user.email?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
-  const getRoleBadgeVariant = (role: string) => {
+  const getRoleColor = (role: string) => {
     switch (role) {
       case 'admin': return 'destructive';
       case 'vendor': return 'default';
@@ -44,12 +44,8 @@ const AdminUsers = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-          <p className="text-gray-600">Manage all platform users and their roles</p>
+          <p className="text-gray-600">Manage all users and their roles</p>
         </div>
-        <Button className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
-          <UserCheck className="h-4 w-4 mr-2" />
-          Add User
-        </Button>
       </div>
 
       <div className="flex items-center space-x-4">
@@ -85,7 +81,6 @@ const AdminUsers = () => {
                     <TableHead>User</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Phone</TableHead>
-                    <TableHead>Location</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Joined</TableHead>
                     <TableHead>Actions</TableHead>
@@ -95,22 +90,19 @@ const AdminUsers = () => {
                   {filteredUsers.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell>
-                        <div className="flex items-center">
-                          <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center mr-3">
-                            <span className="text-orange-600 font-medium text-sm">
-                              {user.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
-                            </span>
-                          </div>
-                          <span className="font-medium">{user.full_name || 'Unknown User'}</span>
+                        <div>
+                          <div className="font-medium">{user.full_name || 'Unknown'}</div>
+                          <div className="text-sm text-gray-500">{user.city}, {user.country}</div>
                         </div>
                       </TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{user.phone || 'Not provided'}</TableCell>
-                      <TableCell>{user.city || 'Not specified'}</TableCell>
                       <TableCell>
                         <Select
                           value={user.user_roles?.[0]?.role || 'customer'}
-                          onValueChange={(value) => handleRoleChange(user.id, value)}
+                          onValueChange={(role: 'admin' | 'customer' | 'vendor' | 'driver' | 'property_owner' | 'rider' | 'service_provider') => 
+                            handleRoleChange(user.id, role)
+                          }
                         >
                           <SelectTrigger className="w-32">
                             <SelectValue />
@@ -120,11 +112,14 @@ const AdminUsers = () => {
                             <SelectItem value="vendor">Vendor</SelectItem>
                             <SelectItem value="driver">Driver</SelectItem>
                             <SelectItem value="admin">Admin</SelectItem>
+                            <SelectItem value="property_owner">Property Owner</SelectItem>
+                            <SelectItem value="service_provider">Service Provider</SelectItem>
+                            <SelectItem value="rider">Rider</SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>
-                      <TableCell>
-                        {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown'}
+                      <TableCell className="text-sm text-gray-500">
+                        {new Date(user.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
@@ -153,7 +148,7 @@ const AdminUsers = () => {
               <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No Users Found</h3>
               <p className="text-gray-600 mb-4">
-                {searchTerm ? 'No users match your search criteria.' : 'Users will appear here once they register on the platform.'}
+                {searchTerm ? 'No users match your search criteria.' : 'Users will appear here once they register.'}
               </p>
             </div>
           )}

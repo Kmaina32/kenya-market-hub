@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import FrontendLayout from '@/components/layouts/FrontendLayout';
 import HeroSection from '@/components/shared/HeroSection';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -12,14 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { 
   Search, 
   MapPin, 
-  Calendar, 
   DollarSign, 
   Briefcase, 
   Building,
-  Clock,
-  Users,
-  TrendingUp,
-  Filter
+  Clock
 } from 'lucide-react';
 
 const Jobs: React.FC = () => {
@@ -27,23 +23,20 @@ const Jobs: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
 
-  // Mock data for jobs - replace with real data from your backend
-  const jobs = [
-    {
-      id: 1,
-      title: 'Software Engineer',
-      company: 'Tech Solutions Ltd',
-      location: 'Nairobi',
-      type: 'Full-time',
-      salary: 'KSh 150,000 - 250,000',
-      category: 'Technology',
-      postedDate: '2 days ago',
-      description: 'We are looking for a skilled software engineer to join our dynamic team...',
-      requirements: ['Bachelor\'s degree in Computer Science', '3+ years experience', 'React, Node.js'],
-      logo: '/company-logos/tech-solutions.png'
-    },
-    // Add more mock jobs here
-  ];
+  // Fetch jobs from database
+  const { data: jobs, isLoading } = useQuery({
+    queryKey: ['jobs'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('*')
+        .eq('status', 'open')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    }
+  });
 
   const categories = [
     'Technology',
@@ -66,13 +59,13 @@ const Jobs: React.FC = () => {
     'Malindi'
   ];
 
-  const filteredJobs = jobs.filter(job => {
-    const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         job.company.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredJobs = jobs?.filter(job => {
+    const matchesSearch = job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         job.company?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || job.category === selectedCategory;
     const matchesLocation = selectedLocation === 'all' || job.location === selectedLocation;
     return matchesSearch && matchesCategory && matchesLocation;
-  });
+  }) || [];
 
   return (
     <FrontendLayout>
@@ -125,41 +118,14 @@ const Jobs: React.FC = () => {
             </div>
           </div>
 
-          {/* Job Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card>
-              <CardContent className="p-6 text-center">
-                <Briefcase className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-gray-900">1,234</div>
-                <div className="text-sm text-gray-600">Active Jobs</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6 text-center">
-                <Building className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-gray-900">567</div>
-                <div className="text-sm text-gray-600">Companies</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6 text-center">
-                <Users className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-gray-900">12,345</div>
-                <div className="text-sm text-gray-600">Job Seekers</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6 text-center">
-                <TrendingUp className="h-8 w-8 text-orange-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-gray-900">89%</div>
-                <div className="text-sm text-gray-600">Success Rate</div>
-              </CardContent>
-            </Card>
-          </div>
-
           {/* Jobs Grid */}
           <div className="space-y-6">
-            {filteredJobs.length > 0 ? (
+            {isLoading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading jobs...</p>
+              </div>
+            ) : filteredJobs.length > 0 ? (
               filteredJobs.map((job) => (
                 <Card key={job.id} className="hover:shadow-lg transition-all duration-300">
                   <CardContent className="p-6">
@@ -172,22 +138,22 @@ const Jobs: React.FC = () => {
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <h3 className="text-xl font-semibold text-gray-900">{job.title}</h3>
-                              <Badge variant="outline">{job.type}</Badge>
+                              <Badge variant="outline">{job.job_type}</Badge>
                             </div>
                             <p className="text-lg text-blue-600 font-medium mb-2">{job.company}</p>
                             
                             <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-3">
                               <div className="flex items-center gap-1">
                                 <MapPin className="h-4 w-4" />
-                                <span>{job.location}</span>
+                                <span>{job.location || 'Remote'}</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <DollarSign className="h-4 w-4" />
-                                <span>{job.salary}</span>
+                                <span>{job.salary || 'Negotiable'}</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <Clock className="h-4 w-4" />
-                                <span>{job.postedDate}</span>
+                                <span>{new Date(job.created_at).toLocaleDateString()}</span>
                               </div>
                             </div>
                             

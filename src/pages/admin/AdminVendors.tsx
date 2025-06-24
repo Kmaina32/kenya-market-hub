@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,13 +9,38 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Plus, Store, Search, Edit, Trash2, Eye, Check, X } from 'lucide-react';
 
+interface VendorWithProfile {
+  id: string;
+  user_id: string;
+  business_name: string;
+  business_description: string;
+  business_address: string;
+  business_phone: string;
+  business_email: string;
+  business_license: string;
+  verification_status: string;
+  is_active: boolean;
+  commission_rate: number;
+  banner_url: string;
+  logo_url: string;
+  website_url: string;
+  social_media_links: any;
+  created_at: string;
+  updated_at: string;
+  profiles: {
+    id: string;
+    full_name: string;
+    email: string;
+  } | null;
+}
+
 const AdminVendors = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const queryClient = useQueryClient();
 
   const { data: vendors, isLoading } = useQuery({
     queryKey: ['admin-vendors', searchTerm],
-    queryFn: async () => {
+    queryFn: async (): Promise<VendorWithProfile[]> => {
       let query = supabase
         .from('vendors')
         .select('*')
@@ -41,10 +65,10 @@ const AdminVendors = () => {
         return data.map(vendor => ({
           ...vendor,
           profiles: profiles?.find(p => p.id === vendor.user_id) || null
-        }));
+        })) as VendorWithProfile[];
       }
       
-      return data || [];
+      return data as VendorWithProfile[] || [];
     }
   });
 
@@ -97,7 +121,6 @@ const AdminVendors = () => {
       deleteVendor.mutate(id);
     }
   };
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'approved': return 'default';
