@@ -11,7 +11,6 @@ export const useAdminOrders = () => {
         .from('orders')
         .select(`
           *,
-          profiles(full_name, email),
           order_items(
             quantity,
             unit_price,
@@ -22,7 +21,23 @@ export const useAdminOrders = () => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data;
+      
+      // Fetch user profiles separately to avoid relation issues
+      if (data && data.length > 0) {
+        const userIds = [...new Set(data.map(order => order.user_id))];
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', userIds);
+        
+        // Add profile data to orders
+        return data.map(order => ({
+          ...order,
+          profiles: profiles?.find(p => p.id === order.user_id) || null
+        }));
+      }
+      
+      return data || [];
     }
   });
 };

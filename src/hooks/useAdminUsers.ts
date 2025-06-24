@@ -25,7 +25,7 @@ export const useUpdateUserRole = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+    mutationFn: async ({ userId, role }: { userId: string; role: 'admin' | 'customer' | 'vendor' | 'driver' | 'property_owner' | 'rider' | 'service_provider' }) => {
       const { error } = await supabase
         .from('user_roles')
         .upsert({ user_id: userId, role }, { onConflict: 'user_id' });

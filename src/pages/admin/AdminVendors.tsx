@@ -19,10 +19,7 @@ const AdminVendors = () => {
     queryFn: async () => {
       let query = supabase
         .from('vendors')
-        .select(`
-          *,
-          profiles(full_name, email)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (searchTerm) {
@@ -31,7 +28,23 @@ const AdminVendors = () => {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+      
+      // Fetch user profiles separately
+      if (data && data.length > 0) {
+        const userIds = [...new Set(data.map(vendor => vendor.user_id).filter(Boolean))];
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', userIds);
+        
+        // Add profile data to vendors
+        return data.map(vendor => ({
+          ...vendor,
+          profiles: profiles?.find(p => p.id === vendor.user_id) || null
+        }));
+      }
+      
+      return data || [];
     }
   });
 

@@ -15,7 +15,8 @@ const AdminProducts = () => {
   const deleteProduct = useDeleteProduct();
 
   const handleFeatureProduct = (id: string, featured: boolean) => {
-    updateProduct.mutate({ id, updates: { is_featured: featured } });
+    // Since is_featured doesn't exist in the current schema, we'll skip this for now
+    console.log('Feature product functionality not available in current schema');
   };
 
   const handleStockUpdate = (id: string, stock: number) => {
@@ -131,13 +132,6 @@ const AdminProducts = () => {
                           </Button>
                           <Button variant="outline" size="sm">
                             <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleFeatureProduct(product.id, !product.is_featured)}
-                          >
-                            <TrendingUp className="h-4 w-4" />
                           </Button>
                           <Button 
                             variant="destructive" 

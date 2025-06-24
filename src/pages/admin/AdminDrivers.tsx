@@ -19,10 +19,7 @@ const AdminDrivers = () => {
     queryFn: async () => {
       let query = supabase
         .from('drivers')
-        .select(`
-          *,
-          profiles(full_name, email)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (searchTerm) {
@@ -31,7 +28,23 @@ const AdminDrivers = () => {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+      
+      // Fetch user profiles separately
+      if (data && data.length > 0) {
+        const userIds = [...new Set(data.map(driver => driver.user_id))];
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', userIds);
+        
+        // Add profile data to drivers
+        return data.map(driver => ({
+          ...driver,
+          profiles: profiles?.find(p => p.id === driver.user_id) || null
+        }));
+      }
+      
+      return data || [];
     }
   });
 
