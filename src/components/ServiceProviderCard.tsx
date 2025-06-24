@@ -22,9 +22,10 @@ interface ServiceProvider {
 
 interface ServiceProviderCardProps {
   provider: ServiceProvider;
+  onApply?: (providerType: string) => void;
 }
 
-const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({ provider }) => {
+const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({ provider, onApply }) => {
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
 

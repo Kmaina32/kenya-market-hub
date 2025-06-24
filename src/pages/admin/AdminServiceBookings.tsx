@@ -20,11 +20,11 @@ const AdminServiceBookings = () => {
         .from('service_bookings')
         .select(`
           *,
-          profiles!service_bookings_user_id_fkey (
+          customer:profiles!service_bookings_customer_id_fkey (
             full_name,
             email
           ),
-          service_provider_profiles!service_bookings_provider_id_fkey (
+          provider:service_provider_profiles!service_bookings_provider_id_fkey (
             business_name,
             provider_type
           )
@@ -45,7 +45,7 @@ const AdminServiceBookings = () => {
     switch (status) {
       case 'confirmed': return 'default';
       case 'pending': return 'secondary';
-      case 'completed': return 'bg-green-100 text-green-800';
+      case 'completed': return 'default';
       case 'cancelled': return 'destructive';
       default: return 'outline';
     }
@@ -107,11 +107,11 @@ const AdminServiceBookings = () => {
                           <div className="flex items-center">
                             <User className="h-3 w-3 mr-1 text-gray-400" />
                             <span className="font-medium">
-                              {booking.profiles?.full_name || 'Unknown Customer'}
+                              {booking.customer?.full_name || 'Unknown Customer'}
                             </span>
                           </div>
                           <div className="text-sm text-gray-500">
-                            {booking.profiles?.email || 'No email'}
+                            {booking.customer?.email || 'No email'}
                           </div>
                         </div>
                       </TableCell>
@@ -119,17 +119,17 @@ const AdminServiceBookings = () => {
                         <div>
                           <div className="font-medium">{booking.service_type}</div>
                           <div className="text-sm text-gray-500 line-clamp-1">
-                            {booking.service_description}
+                            {booking.description}
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div>
                           <div className="font-medium">
-                            {booking.service_provider_profiles?.business_name || 'Unknown Provider'}
+                            {booking.provider?.business_name || 'Unknown Provider'}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {booking.service_provider_profiles?.provider_type}
+                            {booking.provider?.provider_type}
                           </div>
                         </div>
                       </TableCell>
@@ -144,7 +144,7 @@ const AdminServiceBookings = () => {
                       <TableCell>
                         <div className="flex items-center text-sm">
                           <MapPin className="h-3 w-3 mr-1 text-gray-400" />
-                          <span className="truncate max-w-32">{booking.service_address || 'Provider location'}</span>
+                          <span className="truncate max-w-32">{booking.booking_address || 'Provider location'}</span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -153,7 +153,7 @@ const AdminServiceBookings = () => {
                         </Badge>
                       </TableCell>
                       <TableCell className="font-semibold text-green-600">
-                        {booking.total_cost ? `KSh ${Number(booking.total_cost).toLocaleString()}` : 'TBD'}
+                        {booking.total_amount ? `KSh ${Number(booking.total_amount).toLocaleString()}` : 'TBD'}
                       </TableCell>
                     </TableRow>
                   ))}
