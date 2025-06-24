@@ -43,10 +43,12 @@ export const useInsurance = () => {
 
       if (error) throw error;
       
-      // Transform the data to handle the features Json type
+      // Transform the data to handle the features Json type properly
       const transformedPlans = (data || []).map(plan => ({
         ...plan,
-        features: Array.isArray(plan.features) ? plan.features : []
+        features: Array.isArray(plan.features) 
+          ? plan.features.filter((feature): feature is string => typeof feature === 'string')
+          : []
       }));
       
       setPlans(transformedPlans);
@@ -72,12 +74,14 @@ export const useInsurance = () => {
 
       if (error) throw error;
       
-      // Transform the data to handle the nested plan features
+      // Transform the data to handle the nested plan features properly
       const transformedPolicies = (data || []).map(policy => ({
         ...policy,
         plan: policy.plan ? {
           ...policy.plan,
-          features: Array.isArray(policy.plan.features) ? policy.plan.features : []
+          features: Array.isArray(policy.plan.features) 
+            ? policy.plan.features.filter((feature): feature is string => typeof feature === 'string')
+            : []
         } : undefined
       }));
       
