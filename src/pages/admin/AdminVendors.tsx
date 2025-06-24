@@ -1,12 +1,45 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Store, Search } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Plus, Store, Search, Edit, Trash2, Eye, Check, X } from 'lucide-react';
 
 const AdminVendors = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Fetch vendors from database
+  const { data: vendors, isLoading } = useQuery({
+    queryKey: ['admin-vendors', searchTerm],
+    queryFn: async () => {
+      let query = supabase
+        .from('vendors')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (searchTerm) {
+        query = query.or(`business_name.ilike.%${searchTerm}%,business_email.ilike.%${searchTerm}%`);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'approved': return 'default';
+      case 'pending': return 'secondary';
+      case 'rejected': return 'destructive';
+      default: return 'outline';
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -23,7 +56,12 @@ const AdminVendors = () => {
       <div className="flex items-center space-x-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input placeholder="Search vendors..." className="pl-10" />
+          <Input 
+            placeholder="Search vendors..." 
+            className="pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
       </div>
 
@@ -31,16 +69,88 @@ const AdminVendors = () => {
         <CardHeader>
           <CardTitle className="flex items-center">
             <Store className="h-5 w-5 mr-2" />
-            All Vendors
+            All Vendors ({vendors?.length || 0})
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8">
-            <Store className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Vendors Found</h3>
-            <p className="text-gray-600 mb-4">Vendors will appear here once they register on the platform.</p>
-            <Badge variant="secondary">Ready for API Integration</Badge>
-          </div>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+              <span className="ml-2">Loading vendors...</span>
+            </div>
+          ) : vendors && vendors.length > 0 ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Business Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Active</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {vendors.map((vendor) => (
+                    <TableRow key={vendor.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{vendor.business_name}</div>
+                          <div className="text-sm text-gray-500 line-clamp-1">
+                            {vendor.business_description}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{vendor.business_email || 'Not specified'}</TableCell>
+                      <TableCell>{vendor.business_phone || 'Not specified'}</TableCell>
+                      <TableCell>
+                        <Badge variant={getStatusColor(vendor.verification_status)}>
+                          {vendor.verification_status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={vendor.is_active ? 'default' : 'secondary'}>
+                          {vendor.is_active ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          {vendor.verification_status === 'pending' && (
+                            <>
+                              <Button variant="outline" size="sm" className="text-green-600">
+                                <Check className="h-4 w-4" />
+                              </Button>
+                              <Button variant="outline" size="sm" className="text-red-600">
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                          <Button variant="outline" size="sm">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="sm">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="destructive" size="sm">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Store className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Vendors Found</h3>
+              <p className="text-gray-600 mb-4">
+                {searchTerm ? 'No vendors match your search criteria.' : 'Vendors will appear here once they register on the platform.'}
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -1,161 +1,236 @@
 
 import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/AuthContext';
+import { useAllServiceProviderProfiles } from '@/hooks/useServiceProviders';
 import { 
-  Store, 
+  Wrench, 
   Car, 
-  Building, 
-  Wrench,
-  Stethoscope
+  Hammer, 
+  Scissors, 
+  Home, 
+  Laptop, 
+  Camera,
+  Search,
+  Plus,
+  CheckCircle,
+  Clock,
+  XCircle
 } from 'lucide-react';
-import MainLayout from '@/components/MainLayout';
-import { useServiceProviderProfile } from '@/hooks/useServiceProviders';
-import { useMyVendorProfile } from '@/hooks/useVendors';
-import { useNavigate } from 'react-router-dom';
-import VendorApplicationModal from '@/components/VendorApplicationModal';
 import ServiceProviderCard from '@/components/ServiceProviderCard';
-import { useMedicalApplicationStatus, useMyMedicalProviderProfile } from '@/hooks/useMedical';
+
+const SERVICE_CATEGORIES = [
+  {
+    id: 'plumbing',
+    title: 'Plumbing Services',
+    description: 'Water, drainage, and pipe repairs',
+    icon: Wrench,
+    color: 'bg-blue-500',
+    dashboardUrl: '/service-provider/plumbing'
+  },
+  {
+    id: 'automotive',
+    title: 'Automotive Services',
+    description: 'Car repairs and maintenance',
+    icon: Car,
+    color: 'bg-red-500',
+    dashboardUrl: '/service-provider/automotive'
+  },
+  {
+    id: 'construction',
+    title: 'Construction & Repair',
+    description: 'Building and renovation services',
+    icon: Hammer,
+    color: 'bg-orange-500',
+    dashboardUrl: '/service-provider/construction'
+  },
+  {
+    id: 'beauty',
+    title: 'Beauty & Wellness',
+    description: 'Hair, nails, and spa services',
+    icon: Scissors,
+    color: 'bg-pink-500',
+    dashboardUrl: '/service-provider/beauty'
+  },
+  {
+    id: 'cleaning',
+    title: 'Cleaning Services',
+    description: 'House and office cleaning',
+    icon: Home,
+    color: 'bg-green-500',
+    dashboardUrl: '/service-provider/cleaning'
+  },
+  {
+    id: 'tech',
+    title: 'Tech Support',
+    description: 'Computer and device repairs',
+    icon: Laptop,
+    color: 'bg-purple-500',
+    dashboardUrl: '/service-provider/tech'
+  },
+  {
+    id: 'photography',
+    title: 'Photography',
+    description: 'Event and portrait photography',
+    icon: Camera,
+    color: 'bg-indigo-500',
+    dashboardUrl: '/service-provider/photography'
+  }
+];
 
 const ServiceProviderHub = () => {
-  console.log('🏠 ServiceProviderHub component rendering...');
-  
   const { user } = useAuth();
-  const navigate = useNavigate();
-  const [isVendorModalOpen, setIsVendorModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   
-  // Check each service provider type
-  const { data: vendorProfile } = useMyVendorProfile();
-  const { data: driverProfile } = useServiceProviderProfile('driver');
-  const { data: propertyOwnerProfile } = useServiceProviderProfile('property_owner');
-  const { data: serviceProviderProfile } = useServiceProviderProfile('service_provider');
-  const { data: medicalProviderProfile } = useMyMedicalProviderProfile();
-  const { data: medicalApplication } = useMedicalApplicationStatus();
+  const { data: myProfiles, isLoading: profilesLoading } = useAllServiceProviderProfiles();
 
-  console.log('📊 ServiceProviderHub data:', {
-    vendorProfile,
-    driverProfile,
-    propertyOwnerProfile,
-    serviceProviderProfile,
-    medicalProviderProfile,
-    medicalApplication
-  });
+  const handleApplyAsProvider = (providerType: string) => {
+    console.log('Apply as provider for:', providerType);
+    // Navigate to application form
+  };
 
-  const medicalProfile = medicalProviderProfile
-    ? { verification_status: 'approved' }
-    : medicalApplication
-    ? { verification_status: medicalApplication.status }
-    : null;
-
-  const serviceProviderTypes = [
-    {
-      id: 'vendor',
-      title: 'Vendor Portal',
-      description: 'Sell products online and manage your e-commerce business',
-      icon: Store,
-      color: 'from-orange-500 to-orange-600',
-      dashboardUrl: '/vendor',
-      profile: vendorProfile
-    },
-    {
-      id: 'driver',
-      title: 'Driver Portal',
-      description: 'Provide transportation services and earn money driving',
-      icon: Car,
-      color: 'from-orange-500 to-orange-600',
-      dashboardUrl: '/driver',
-      profile: driverProfile
-    },
-    {
-      id: 'property_owner',
-      title: 'Property Owner Portal',
-      description: 'List and manage your real estate properties',
-      icon: Building,
-      color: 'from-orange-500 to-orange-600',
-      dashboardUrl: '/property-owner',
-      profile: propertyOwnerProfile
-    },
-    {
-      id: 'service_provider',
-      title: 'Services Portal',
-      description: 'Offer professional services and manage bookings',
-      icon: Wrench,
-      color: 'from-orange-500 to-orange-600',
-      dashboardUrl: '/services-app',
-      profile: serviceProviderProfile
-    },
-    {
-      id: 'medical_provider',
-      title: 'Medical Provider Portal',
-      description: 'Offer medical services and connect with patients',
-      icon: Stethoscope,
-      color: 'from-orange-500 to-orange-600',
-      dashboardUrl: '/medical-provider-dashboard',
-      profile: medicalProfile,
-    }
-  ];
-
-  const handleApply = (providerType: string) => {
-    if (providerType === 'vendor') {
-      setIsVendorModalOpen(true);
-    } else {
-      navigate(`/service-provider-registration?type=${providerType}`);
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'pending':
+        return <Clock className="h-4 w-4 text-yellow-500" />;
+      case 'rejected':
+        return <XCircle className="h-4 w-4 text-red-500" />;
+      default:
+        return null;
     }
   };
 
+  const filteredCategories = SERVICE_CATEGORIES.filter(category => 
+    selectedCategory === 'all' || category.id === selectedCategory
+  ).filter(category =>
+    category.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    category.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <MainLayout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="space-y-8">
-          {/* Header */}
-          <div className="text-center">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Service Provider Hub
-            </h1>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Join thousands of service providers across Kenya. Choose your service type below to get started 
-              or access your existing dashboard.
-            </p>
-          </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Service Provider Hub</h1>
+          <p className="text-gray-600">Discover opportunities and manage your service provider profiles</p>
+        </div>
 
-          {/* Service Provider Types Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {serviceProviderTypes.map((provider) => (
-              <ServiceProviderCard
-                key={provider.id}
-                {...provider}
-                onApply={handleApply}
-              />
-            ))}
-          </div>
-
-          {/* Help Section */}
-          <Card className="bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200">
-            <CardContent className="p-8 text-center">
-              <h3 className="text-xl font-semibold text-orange-900 mb-3">
-                Need Help Getting Started?
-              </h3>
-              <p className="text-orange-700 mb-6 max-w-2xl mx-auto">
-                Our support team is here to help you through the application process and answer any questions you may have.
-              </p>
-              <Button 
-                variant="outline" 
-                size="lg"
-                className="border-orange-500 text-orange-600 hover:bg-orange-50 hover:border-orange-600"
-              >
-                Contact Support
-              </Button>
+        {/* User's Service Provider Profiles */}
+        {user && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <CheckCircle className="h-5 w-5 mr-2 text-green-500" />
+                My Service Provider Profiles
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {profilesLoading ? (
+                <div className="flex items-center justify-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500"></div>
+                  <span className="ml-2">Loading your profiles...</span>
+                </div>
+              ) : myProfiles && myProfiles.length > 0 ? (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {myProfiles.map((profile) => {
+                    const category = SERVICE_CATEGORIES.find(cat => cat.id === profile.provider_type);
+                    return (
+                      <Card key={profile.id} className="border-l-4 border-l-orange-500">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-semibold">{profile.provider_type}</h3>
+                            {getStatusIcon(profile.verification_status)}
+                          </div>
+                          <p className="text-sm text-gray-600 mb-2">
+                            {profile.business_name || 'No business name set'}
+                          </p>
+                          <Badge variant="outline" className="text-xs">
+                            {profile.verification_status}
+                          </Badge>
+                          <Button 
+                            size="sm" 
+                            className="w-full mt-3"
+                            onClick={() => window.location.href = category?.dashboardUrl || '#'}
+                          >
+                            Manage Profile
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <p className="text-gray-500 mb-4">You haven't applied for any service provider categories yet.</p>
+                  <p className="text-sm text-gray-400">Browse the categories below to get started!</p>
+                </div>
+              )}
             </CardContent>
           </Card>
+        )}
+
+        {/* Search and Filter */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search service categories..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+          >
+            <option value="all">All Categories</option>
+            {SERVICE_CATEGORIES.map(category => (
+              <option key={category.id} value={category.id}>
+                {category.title}
+              </option>
+            ))}
+          </select>
         </div>
+
+        {/* Service Categories Grid */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {filteredCategories.map((category) => {
+            const hasProfile = myProfiles?.some(profile => profile.provider_type === category.id);
+            return (
+              <ServiceProviderCard
+                key={category.id}
+                provider={{
+                  id: category.id,
+                  business_name: category.title,
+                  provider_type: category.id,
+                  business_description: category.description,
+                  is_verified: hasProfile || false,
+                  is_active: true
+                }}
+                onApply={handleApplyAsProvider}
+              />
+            );
+          })}
+        </div>
+
+        {filteredCategories.length === 0 && (
+          <div className="text-center py-12">
+            <Search className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No categories found</h3>
+            <p className="text-gray-600">Try adjusting your search terms or filters.</p>
+          </div>
+        )}
       </div>
-      
-      <VendorApplicationModal 
-        open={isVendorModalOpen} 
-        onOpenChange={setIsVendorModalOpen} 
-      />
-    </MainLayout>
+    </div>
   );
 };
 

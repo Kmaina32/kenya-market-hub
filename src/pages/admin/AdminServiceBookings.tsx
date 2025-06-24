@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Calendar, Search, User, Phone, MapPin } from 'lucide-react';
+import { Calendar, Search, User, Phone, MapPin, Edit, Trash2, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 
 const AdminServiceBookings = () => {
@@ -18,17 +19,7 @@ const AdminServiceBookings = () => {
     queryFn: async () => {
       let query = supabase
         .from('service_bookings')
-        .select(`
-          *,
-          customer:profiles!service_bookings_customer_id_fkey (
-            full_name,
-            email
-          ),
-          provider:service_provider_profiles!service_bookings_provider_id_fkey (
-            business_name,
-            provider_type
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (searchTerm) {
@@ -97,6 +88,7 @@ const AdminServiceBookings = () => {
                     <TableHead>Location</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Total</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -106,12 +98,10 @@ const AdminServiceBookings = () => {
                         <div>
                           <div className="flex items-center">
                             <User className="h-3 w-3 mr-1 text-gray-400" />
-                            <span className="font-medium">
-                              {booking.customer?.full_name || 'Unknown Customer'}
-                            </span>
+                            <span className="font-medium">Customer {booking.customer_id?.slice(-8)}</span>
                           </div>
                           <div className="text-sm text-gray-500">
-                            {booking.customer?.email || 'No email'}
+                            No email available
                           </div>
                         </div>
                       </TableCell>
@@ -125,11 +115,9 @@ const AdminServiceBookings = () => {
                       </TableCell>
                       <TableCell>
                         <div>
-                          <div className="font-medium">
-                            {booking.provider?.business_name || 'Unknown Provider'}
-                          </div>
+                          <div className="font-medium">Provider {booking.provider_id?.slice(-8)}</div>
                           <div className="text-sm text-gray-500">
-                            {booking.provider?.provider_type}
+                            Service Provider
                           </div>
                         </div>
                       </TableCell>
@@ -154,6 +142,19 @@ const AdminServiceBookings = () => {
                       </TableCell>
                       <TableCell className="font-semibold text-green-600">
                         {booking.total_amount ? `KSh ${Number(booking.total_amount).toLocaleString()}` : 'TBD'}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="sm">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="destructive" size="sm">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
