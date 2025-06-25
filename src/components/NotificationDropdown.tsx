@@ -1,155 +1,124 @@
 
-import React from 'react';
-import { Bell, X, CheckCircle, Clock, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import React, { useState } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { useNotifications } from '@/hooks/useNotifications';
-import { formatDistanceToNow } from 'date-fns';
-import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Bell, Check, X } from 'lucide-react';
+import { useAdminNotifications } from '@/hooks/useAdminData';
+import { cn } from '@/lib/utils';
 
 const NotificationDropdown = () => {
-  const {
-    notifications,
-    isLoading,
-    unreadCount,
-    markAsRead,
-    markAllAsRead,
-    deleteNotification,
-    isMarkingAsRead,
-    isMarkingAllAsRead,
-    isDeletingNotification
-  } = useNotifications();
-
-  const handleMarkAsRead = (notificationId: string) => {
-    markAsRead(notificationId);
-  };
-
-  const handleMarkAllAsRead = () => {
-    markAllAsRead();
-    toast.success('All notifications marked as read');
-  };
-
-  const handleDeleteNotification = (notificationId: string) => {
-    deleteNotification(notificationId);
-    toast.success('Notification deleted');
-  };
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useAdminNotifications();
+  const [isOpen, setIsOpen] = useState(false);
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'success':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
+        return '✅';
       case 'warning':
-        return <AlertCircle className="h-4 w-4 text-yellow-500" />;
+        return '⚠️';
       case 'error':
-        return <AlertCircle className="h-4 w-4 text-red-500" />;
+        return '❌';
       default:
-        return <Clock className="h-4 w-4 text-blue-500" />;
+        return 'ℹ️';
     }
   };
 
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    return date.toLocaleDateString();
+  };
+
   return (
-    <DropdownMenu>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative hover:bg-gray-100">
+        <Button variant="ghost" size="sm" className="relative hover:bg-gray-100">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
             <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-red-500 text-white">
-              {unreadCount > 99 ? '99+' : unreadCount}
+              {unreadCount > 9 ? '9+' : unreadCount}
             </Badge>
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-80 bg-white border border-gray-200 shadow-lg" align="end">
-        <DropdownMenuLabel className="flex items-center justify-between">
-          <span className="font-semibold">Notifications</span>
-          {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleMarkAllAsRead}
-              disabled={isMarkingAllAsRead}
-              className="text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-            >
-              Mark all read
-            </Button>
-          )}
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        
-        {isLoading ? (
-          <div className="p-4 text-center text-gray-500">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500 mx-auto"></div>
-            <p className="mt-2 text-sm">Loading notifications...</p>
+      <DropdownMenuContent 
+        align="end" 
+        className="w-80 bg-white border shadow-lg max-h-96 overflow-y-auto"
+      >
+        <div className="p-3 border-b">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-gray-900">Notifications</h3>
+            {unreadCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={markAllAsRead}
+                className="text-xs text-blue-600 hover:text-blue-800"
+              >
+                Mark all read
+              </Button>
+            )}
           </div>
-        ) : notifications.length === 0 ? (
+        </div>
+
+        {notifications.length === 0 ? (
           <div className="p-4 text-center text-gray-500">
-            <Bell className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-            <p className="text-sm">No notifications yet</p>
+            No notifications
           </div>
         ) : (
-          <div className="max-h-96 overflow-y-auto">
+          <>
             {notifications.slice(0, 10).map((notification) => (
               <DropdownMenuItem
                 key={notification.id}
-                className={`p-4 cursor-pointer hover:bg-gray-50 ${
-                  !notification.is_read ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
-                }`}
-                onClick={() => {
-                  if (!notification.is_read) {
-                    handleMarkAsRead(notification.id);
-                  }
-                  if (notification.action_url) {
-                    window.open(notification.action_url, '_blank');
-                  }
-                }}
+                className={cn(
+                  "p-3 cursor-pointer hover:bg-gray-50 border-b last:border-b-0",
+                  !notification.is_read && "bg-blue-50"
+                )}
+                onClick={() => markAsRead(notification.id)}
               >
                 <div className="flex items-start space-x-3 w-full">
-                  <div className="flex-shrink-0">
+                  <span className="text-lg flex-shrink-0 mt-1">
                     {getNotificationIcon(notification.type)}
-                  </div>
-                  <div className="flex-grow min-w-0">
-                    <p className="font-medium text-sm text-gray-900 truncate">
-                      {notification.title}
-                    </p>
-                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <p className="font-medium text-sm text-gray-900 truncate">
+                        {notification.title}
+                      </p>
+                      {!notification.is_read && (
+                        <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 ml-2" />
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-600 mt-1 line-clamp-2">
                       {notification.message}
                     </p>
                     <p className="text-xs text-gray-400 mt-1">
-                      {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                      {formatTime(notification.created_at)}
                     </p>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteNotification(notification.id);
-                    }}
-                    disabled={isDeletingNotification}
-                    className="flex-shrink-0 p-1 h-auto hover:bg-red-100 hover:text-red-600"
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
                 </div>
               </DropdownMenuItem>
             ))}
-          </div>
-        )}
-        
-        {notifications.length > 10 && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-center text-blue-600 hover:text-blue-800 hover:bg-blue-50 cursor-pointer">
-              View all notifications
-            </DropdownMenuItem>
+            
+            {notifications.length > 10 && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-center text-sm text-blue-600 hover:text-blue-800">
+                  View all notifications
+                </DropdownMenuItem>
+              </>
+            )}
           </>
         )}
       </DropdownMenuContent>
