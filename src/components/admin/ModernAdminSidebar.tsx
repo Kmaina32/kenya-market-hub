@@ -126,29 +126,27 @@ const ModernAdminSidebar = ({ isMobileOpen, onMobileClose }: ModernAdminSidebarP
     </SidebarGroup>
   );
 
-  const sidebarContent = (
-    <Sidebar 
-      variant="inset" 
-      className="border-r border-orange-200/50 bg-white shadow-xl"
-    >
-      <SidebarHeader className="border-b border-orange-200/50 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 flex items-center justify-center shadow-lg overflow-hidden">
-              <img 
-                alt="Sokko Sasa Logo" 
-                src="/lovable-uploads/563ee6fb-f94f-43f3-a4f3-a61873a1b491.png" 
-                className="w-full h-full object-contain" 
-              />
+  return (
+    <>
+      <Sidebar 
+        variant="inset" 
+        className={`border-r border-orange-200/50 bg-white/95 backdrop-blur-md shadow-xl ${
+          isMobileOpen ? 'translate-x-0' : ''
+        } lg:translate-x-0 transition-transform duration-300 ease-in-out z-50`}
+      >
+        <SidebarHeader className="border-b border-orange-200/50 p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 flex items-center justify-center shadow-lg">
+                <LayoutDashboard className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-gray-900">Admin Panel</h1>
+                <p className="text-sm text-gray-600">Soko Smart</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-lg font-bold text-gray-900">Admin Panel</h1>
-              <p className="text-sm text-gray-600">Sokko Sasa</p>
-            </div>
-          </div>
-          
-          {/* Mobile Close Button */}
-          {isMobileOpen && (
+            
+            {/* Mobile Close Button */}
             <Button
               variant="ghost"
               size="sm"
@@ -157,42 +155,24 @@ const ModernAdminSidebar = ({ isMobileOpen, onMobileClose }: ModernAdminSidebarP
             >
               <X className="h-4 w-4" />
             </Button>
-          )}
-        </div>
-      </SidebarHeader>
+          </div>
+        </SidebarHeader>
 
-      <SidebarContent className="py-4 space-y-4">
-        <SidebarSection title="Main" items={mainItems} />
-        <SidebarSection title="Business Partners" items={businessItems} />
-        <SidebarSection title="Services & Modules" items={servicesItems} />
-        <SidebarSection title="System" items={systemItems} />
-      </SidebarContent>
+        <SidebarContent className="py-4 space-y-4">
+          <SidebarSection title="Main" items={mainItems} />
+          <SidebarSection title="Business Partners" items={businessItems} />
+          <SidebarSection title="Services & Modules" items={servicesItems} />
+          <SidebarSection title="System" items={systemItems} />
+        </SidebarContent>
 
-      <SidebarFooter className="border-t border-orange-200/50 p-4">
-        <div className="text-xs text-gray-500 text-center">
-          © 2024 Sokko Sasa Admin
-        </div>
-      </SidebarFooter>
-    </Sidebar>
+        <SidebarFooter className="border-t border-orange-200/50 p-4">
+          <div className="text-xs text-gray-500 text-center">
+            © 2024 Soko Smart Admin
+          </div>
+        </SidebarFooter>
+      </Sidebar>
+    </>
   );
-
-  // For mobile, render in a fixed overlay
-  if (isMobileOpen) {
-    return (
-      <div className="fixed inset-0 z-50 lg:hidden">
-        <div 
-          className="absolute inset-0 bg-black/50"
-          onClick={onMobileClose}
-        />
-        <div className="absolute left-0 top-0 h-full w-80 bg-white">
-          {sidebarContent}
-        </div>
-      </div>
-    );
-  }
-
-  // For desktop, render normally
-  return sidebarContent;
 };
 
 export default ModernAdminSidebar;

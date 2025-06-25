@@ -1,108 +1,65 @@
 
-import React, { useState } from 'react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
-import { Menu, User, LogOut } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { WifiOff } from 'lucide-react';
 import AppSidebar from './AppSidebar';
-import NotificationDropdown from './NotificationDropdown';
-import { useAuth } from '@/contexts/AuthContext';
+import UserNav from './UserNav';
+import GlobalSearch from './GlobalSearch';
+import Footer from './Footer';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
 interface MainLayoutProps {
   children: React.ReactNode;
 }
 
 const MainLayout = ({ children }: MainLayoutProps) => {
-  const { user, signOut } = useAuth();
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const isOnline = useOnlineStatus();
 
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gray-50">
-        {/* Desktop Sidebar */}
-        <div className="hidden lg:block">
-          <AppSidebar />
-        </div>
-
-        {/* Mobile Sidebar Overlay */}
-        {isMobileSidebarOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden">
-            <div 
-              className="absolute inset-0 bg-black bg-opacity-50"
-              onClick={() => setIsMobileSidebarOpen(false)}
-            />
-            <div className="relative w-80 h-full">
-              <AppSidebar />
-            </div>
-          </div>
-        )}
-
-        {/* Main Content */}
-        <main className="flex-1 flex flex-col min-w-0">
-          {/* Header */}
-          <header className="bg-white shadow-sm border-b border-gray-200 h-16 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-40">
-            <div className="flex items-center">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsMobileSidebarOpen(true)}
-                className="lg:hidden hover:bg-gray-100"
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
-              <SidebarTrigger className="hidden lg:flex hover:bg-orange-50 hover:text-orange-600" />
-              <div className="flex items-center space-x-2 sm:space-x-3 lg:hidden ml-2">
+        <AppSidebar />
+        <main className="flex-1 flex flex-col">
+          <div className="sticky top-0 z-40 flex items-center justify-between border-b border-gray-200 bg-white px-3 sm:px-6 py-3 shadow-sm">
+            <div className="flex items-center gap-2 sm:gap-4 flex-1">
+              <SidebarTrigger className="hover:bg-orange-50 hover:text-orange-600" />
+              <div className="flex items-center space-x-2 sm:space-x-3 md:hidden">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg overflow-hidden flex-shrink-0">
                   <img 
-                    alt="Sokko Sasa Logo" 
+                    alt="Soko Smart Logo" 
                     src="/lovable-uploads/563ee6fb-f94f-43f3-a4f3-a61873a1b491.png" 
                     className="w-full h-full object-contain" 
                   />
                 </div>
                 <div>
-                  <h1 className="text-sm sm:text-lg font-bold text-gray-900">Sokko Sasa</h1>
+                  <h1 className="text-sm sm:text-lg font-bold text-gray-900">Soko Smart</h1>
+                  <p className="text-xs text-gray-600 hidden sm:block">Kenya's Marketplace</p>
                 </div>
               </div>
+              
+              {/* Global Search - Hidden on small screens */}
+              <div className="hidden md:flex flex-1 max-w-2xl">
+                <GlobalSearch />
+              </div>
             </div>
-
-            <div className="flex items-center space-x-4">
-              {/* Notifications */}
-              <NotificationDropdown />
-
-              {/* User Menu */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="hover:bg-gray-100">
-                    <User className="h-5 w-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-white">
-                  <DropdownMenuItem className="font-medium">
-                    {user?.email || 'User'}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    onClick={() => signOut()} 
-                    className="text-red-600 hover:bg-red-50 cursor-pointer"
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sign Out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </header>
-
-          {/* Page Content */}
+            <UserNav />
+          </div>
+          
+          {!isOnline && (
+            <Alert className="m-4 border-yellow-200 bg-yellow-50">
+              <WifiOff className="h-4 w-4" />
+              <AlertDescription>
+                You're currently offline. Some features may not be available.
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <div className="flex-1">
             {children}
           </div>
+          
+          {/* Footer only in MainLayout */}
+          <Footer />
         </main>
       </div>
     </SidebarProvider>

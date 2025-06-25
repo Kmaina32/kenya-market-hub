@@ -72,13 +72,13 @@ const AppSidebar = () => {
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-orange-500 to-red-500 flex items-center justify-center shadow-lg overflow-hidden flex-shrink-0">
             <img 
-              alt="Sokko Sasa Logo" 
+              alt="Soko Smart Logo" 
               src="/lovable-uploads/563ee6fb-f94f-43f3-a4f3-a61873a1b491.png" 
               className="w-full h-full object-contain" 
             />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-gray-900">Sokko Sasa</h1>
+            <h1 className="text-lg font-bold text-gray-900">Soko Smart</h1>
             <p className="text-sm text-gray-600">Kenya's Marketplace</p>
           </div>
         </div>
@@ -109,7 +109,7 @@ const AppSidebar = () => {
           <SidebarMenuItem>
             <SidebarMenuButton>
               <span className="text-sm text-gray-600">
-                © 2025 Sokko Sasa by Milleast.tech. All rights reserved.
+                © 2025 Sokko Smart by Milleast.tech. All rights reserved.
               </span>
             </SidebarMenuButton>
           </SidebarMenuItem>

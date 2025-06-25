@@ -15,9 +15,7 @@ import {
   DollarSign, 
   Briefcase, 
   Building,
-  Clock,
-  Bookmark,
-  Eye
+  Clock
 } from 'lucide-react';
 
 const Jobs: React.FC = () => {
@@ -77,10 +75,10 @@ const Jobs: React.FC = () => {
           subtitle="Thousands of opportunities await"
           description="Connect with top employers across Kenya and advance your career"
           imageUrl="photo-1521737604893-d14cc237f11d"
-          className="mb-8 mx-6 sm:mx-8 lg:mx-12 mt-6"
+          className="mb-8"
         />
 
-        <div className="container mx-auto px-6 sm:px-8 lg:px-12 pb-8">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 pb-8">
           {/* Search and Filters */}
           <div className="bg-white p-6 rounded-lg shadow-lg mb-8">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -121,7 +119,7 @@ const Jobs: React.FC = () => {
           </div>
 
           {/* Jobs Grid */}
-          <div className="space-y-4">
+          <div className="space-y-6">
             {isLoading ? (
               <div className="text-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -129,63 +127,48 @@ const Jobs: React.FC = () => {
               </div>
             ) : filteredJobs.length > 0 ? (
               filteredJobs.map((job) => (
-                <Card key={job.id} className="hover:shadow-lg transition-all duration-300 border border-gray-200">
+                <Card key={job.id} className="hover:shadow-lg transition-all duration-300">
                   <CardContent className="p-6">
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-start gap-4">
-                          <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <Building className="h-8 w-8 text-blue-600" />
+                          <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <Building className="h-6 w-6 text-gray-600" />
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="text-xl font-bold text-gray-900 truncate">{job.title}</h3>
-                              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                                {job.job_type}
-                              </Badge>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="text-xl font-semibold text-gray-900">{job.title}</h3>
+                              <Badge variant="outline">{job.job_type}</Badge>
                             </div>
-                            <p className="text-lg text-blue-600 font-semibold mb-3">{job.company}</p>
+                            <p className="text-lg text-blue-600 font-medium mb-2">{job.company}</p>
                             
-                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-4">
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-3">
                               <div className="flex items-center gap-1">
-                                <MapPin className="h-4 w-4 text-blue-500" />
+                                <MapPin className="h-4 w-4" />
                                 <span>{job.location || 'Remote'}</span>
                               </div>
                               <div className="flex items-center gap-1">
-                                <DollarSign className="h-4 w-4 text-green-500" />
-                                <span className="font-medium">{job.salary || 'Negotiable'}</span>
+                                <DollarSign className="h-4 w-4" />
+                                <span>{job.salary || 'Negotiable'}</span>
                               </div>
                               <div className="flex items-center gap-1">
-                                <Clock className="h-4 w-4 text-gray-500" />
+                                <Clock className="h-4 w-4" />
                                 <span>{new Date(job.created_at).toLocaleDateString()}</span>
                               </div>
                             </div>
                             
-                            <p className="text-gray-700 text-sm line-clamp-2 mb-4">{job.description}</p>
-                            
-                            <div className="flex flex-wrap gap-2">
-                              {job.category && (
-                                <Badge variant="secondary" className="bg-gray-100 text-gray-700">
-                                  {job.category}
-                                </Badge>
-                              )}
-                            </div>
+                            <p className="text-gray-700 text-sm line-clamp-2">{job.description}</p>
                           </div>
                         </div>
                       </div>
                       
-                      <div className="flex flex-col gap-3 lg:ml-6 lg:w-40">
-                        <Button className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-medium">
+                      <div className="mt-4 md:mt-0 md:ml-6 flex flex-col gap-2">
+                        <Button className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600">
                           Apply Now
                         </Button>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm" className="flex-1 hover:bg-gray-50">
-                            <Bookmark className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="sm" className="flex-1 hover:bg-gray-50">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <Button variant="outline" size="sm">
+                          Save Job
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
@@ -193,19 +176,8 @@ const Jobs: React.FC = () => {
               ))
             ) : (
               <div className="text-center py-12">
-                <Briefcase className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">No Jobs Found</h3>
-                <p className="text-gray-600 mb-6">No jobs found matching your criteria.</p>
-                <Button 
-                  onClick={() => {
-                    setSearchTerm('');
-                    setSelectedCategory('all');
-                    setSelectedLocation('all');
-                  }}
-                  className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
-                >
-                  Clear Filters
-                </Button>
+                <Briefcase className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600">No jobs found matching your criteria.</p>
               </div>
             )}
           </div>
