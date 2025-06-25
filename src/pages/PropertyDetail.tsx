@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useProperty, useCreatePropertyInquiry } from '@/hooks/useProperties';
@@ -33,6 +34,11 @@ const PropertyDetail = () => {
   
   const { data: property, isLoading, error } = useProperty(id!);
   const createInquiry = useCreatePropertyInquiry();
+
+  console.log('PropertyDetail - ID:', id);
+  console.log('PropertyDetail - Property:', property);
+  console.log('PropertyDetail - Loading:', isLoading);
+  console.log('PropertyDetail - Error:', error);
 
   const handleShare = async () => {
     if (navigator.share) {

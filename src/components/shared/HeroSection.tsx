@@ -21,7 +21,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   className = ''
 }) => {
   return (
-    <div className={`relative h-80 overflow-hidden bg-gradient-to-r from-orange-600 to-red-600 rounded-b-3xl mx-4 sm:mx-6 lg:mx-8 ${className}`}>
+    <div className={`relative h-80 overflow-hidden bg-gradient-to-r from-orange-600 to-red-600 rounded-b-3xl mx-4 sm:mx-6 lg:mx-8 mt-4 ${className}`}>
       {/* Background Image */}
       <div 
         className="absolute inset-0 bg-cover bg-center opacity-20 rounded-b-3xl"
@@ -32,7 +32,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       <div className="absolute inset-0 bg-black bg-opacity-40 rounded-b-3xl" />
       
       {/* Content */}
-      <div className="relative z-10 flex items-center justify-center h-full px-6 sm:px-8 lg:px-12">
+      <div className="relative z-10 flex items-center justify-center h-full px-8 sm:px-12 lg:px-16">
         <div className="text-center text-white max-w-3xl mx-auto">
           {subtitle && (
             <p className="text-orange-200 text-sm font-medium mb-2">

@@ -107,6 +107,7 @@ export const useProperties = () => {
   return useQuery({
     queryKey: ['properties'],
     queryFn: async () => {
+      console.log('Fetching properties...');
       try {
         const { data, error } = await supabase
           .from('properties')
@@ -124,6 +125,7 @@ export const useProperties = () => {
           return seedProperties;
         }
 
+        console.log('Successfully fetched properties from database:', data.length);
         return data;
       } catch (error) {
         console.log('Error fetching properties, using seed data:', error);
@@ -137,6 +139,7 @@ export const useProperty = (id: string) => {
   return useQuery({
     queryKey: ['property', id],
     queryFn: async () => {
+      console.log('Fetching property with ID:', id);
       try {
         const { data, error } = await supabase
           .from('properties')
@@ -147,15 +150,22 @@ export const useProperty = (id: string) => {
         if (error) {
           console.log('Database error, checking seed data:', error);
           const seedProperty = seedProperties.find(p => p.id === id);
-          if (seedProperty) return seedProperty;
+          if (seedProperty) {
+            console.log('Found property in seed data:', seedProperty);
+            return seedProperty;
+          }
           throw error;
         }
 
+        console.log('Successfully fetched property from database:', data);
         return data;
       } catch (error) {
         console.log('Error fetching property, checking seed data:', error);
         const seedProperty = seedProperties.find(p => p.id === id);
-        if (seedProperty) return seedProperty;
+        if (seedProperty) {
+          console.log('Found property in seed data:', seedProperty);
+          return seedProperty;
+        }
         throw error;
       }
     },
@@ -175,13 +185,19 @@ export const useCreatePropertyInquiry = () => {
       inquirer_phone: string;
       message: string;
     }) => {
+      console.log('Creating property inquiry:', inquiryData);
       const { data, error } = await supabase
         .from('property_inquiries')
         .insert([inquiryData])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating property inquiry:', error);
+        throw error;
+      }
+      
+      console.log('Property inquiry created successfully:', data);
       return data;
     },
     onSuccess: () => {

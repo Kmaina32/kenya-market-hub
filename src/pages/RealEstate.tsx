@@ -17,12 +17,12 @@ import {
   Eye
 } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useProperties } from '@/hooks/useProperties';
 import HeroSection from '@/components/shared/HeroSection';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface Property {
   id: string;
@@ -42,6 +42,7 @@ interface Property {
 }
 
 const RealEstate = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     propertyType: '',
@@ -52,22 +53,11 @@ const RealEstate = () => {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
-  const { data: properties, isLoading } = useQuery({
-    queryKey: ['properties'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('properties')
-        .select('*')
-        .eq('status', 'available')
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error('Error fetching properties:', error);
-        throw error;
-      }
-      return data || [];
-    }
-  });
+  const { data: properties = [], isLoading, error } = useProperties();
+
+  console.log('Properties data:', properties);
+  console.log('Loading:', isLoading);
+  console.log('Error:', error);
 
   const filteredProperties = properties?.filter(property => {
     const matchesSearch = property.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -79,11 +69,13 @@ const RealEstate = () => {
   }) || [];
 
   const handleViewDetails = (property: Property) => {
+    console.log('Viewing property details:', property);
+    navigate(`/property/${property.id}`);
     toast.success(`Viewing details for ${property.title}`);
-    console.log('Viewing property:', property);
   };
 
   const handleContactOwner = (property: Property) => {
+    console.log('Contacting owner for property:', property);
     setSelectedProperty(property);
     setIsContactModalOpen(true);
   };
