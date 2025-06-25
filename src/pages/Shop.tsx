@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -160,9 +159,20 @@ const Shop = () => {
   return (
     <FrontendLayout>
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        {/* Hero Section */}
-        <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white py-12 rounded-b-2xl mb-8">
-          <div className="max-w-4xl mx-auto px-4 text-center">
+        {/* Hero Section with Background Image */}
+        <div 
+          className="relative bg-gradient-to-r from-orange-500 to-red-500 text-white py-16 rounded-b-2xl mb-8 mx-4 sm:mx-6 lg:mx-8 mt-4 px-8 sm:px-12 lg:px-16"
+          style={{
+            backgroundImage: 'url(https://images.unsplash.com/photo-1472851294608-062f824d29cc?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
+        >
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-black bg-opacity-40 rounded-b-2xl" />
+          
+          {/* Content */}
+          <div className="relative z-10 max-w-4xl mx-auto text-center">
             <div className="mb-4">
               <ShoppingBag className="h-10 w-10 mx-auto mb-3 text-white" />
             </div>
@@ -173,7 +183,7 @@ const Shop = () => {
           </div>
         </div>
 
-        <div className="max-w-6xl mx-auto px-4 pb-8">
+        <div className="max-w-6xl mx-auto px-8 sm:px-12 lg:px-16 pb-8">
           {/* Categories - Mobile Dropdown, Desktop Pills */}
           <div className="mb-6">
             <h2 className="text-xl font-bold text-gray-900 mb-3">Shop by Category</h2>

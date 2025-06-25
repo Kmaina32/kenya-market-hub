@@ -15,8 +15,8 @@ const HomeHeroSection = () => {
   };
 
   return (
-    <div className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white mt-4 mx-4 sm:mx-6 lg:mx-8 rounded-b-3xl">
-      <div className="max-w-7xl mx-auto px-8 sm:px-12 lg:px-16 py-20">
+    <div className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white mt-4 mx-4 sm:mx-6 lg:mx-8 rounded-b-3xl px-8 sm:px-12 lg:px-16 pt-8">
+      <div className="max-w-7xl mx-auto py-20">
         <div className="text-center">
           <h1 className="text-4xl md:text-6xl font-bold mb-6">
             Everything You Need,

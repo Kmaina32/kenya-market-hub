@@ -139,7 +139,7 @@ const ModernAdminSidebar = ({ isMobileOpen, onMobileClose }: ModernAdminSidebarP
             </div>
             <div>
               <h1 className="text-lg font-bold text-gray-900">Admin Panel</h1>
-              <p className="text-sm text-gray-600">Soko Smart</p>
+              <p className="text-sm text-gray-600">Sokko Sasa</p>
             </div>
           </div>
           
@@ -166,7 +166,7 @@ const ModernAdminSidebar = ({ isMobileOpen, onMobileClose }: ModernAdminSidebarP
 
       <SidebarFooter className="border-t border-orange-200/50 p-4">
         <div className="text-xs text-gray-500 text-center">
-          © 2024 Soko Smart Admin
+          © 2024 Sokko Sasa Admin
         </div>
       </SidebarFooter>
     </Sidebar>

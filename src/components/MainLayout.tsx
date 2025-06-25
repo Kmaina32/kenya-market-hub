@@ -58,7 +58,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
               </Button>
               <SidebarTrigger className="hidden lg:flex hover:bg-orange-50 hover:text-orange-600" />
               <h1 className="text-xl font-semibold text-gray-900 ml-2 lg:ml-0">
-                Soko Smart
+                Sokko Sasa
               </h1>
             </div>
 
