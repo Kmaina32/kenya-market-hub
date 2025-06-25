@@ -57,9 +57,18 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                 <Menu className="h-5 w-5" />
               </Button>
               <SidebarTrigger className="hidden lg:flex hover:bg-orange-50 hover:text-orange-600" />
-              <h1 className="text-xl font-semibold text-gray-900 ml-2 lg:ml-0">
-                Soko Smart
-              </h1>
+              <div className="flex items-center space-x-2 sm:space-x-3 lg:hidden ml-2">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg overflow-hidden flex-shrink-0">
+                  <img 
+                    alt="Sokko Sasa Logo" 
+                    src="/lovable-uploads/563ee6fb-f94f-43f3-a4f3-a61873a1b491.png" 
+                    className="w-full h-full object-contain" 
+                  />
+                </div>
+                <div>
+                  <h1 className="text-sm sm:text-lg font-bold text-gray-900">Sokko Sasa</h1>
+                </div>
+              </div>
             </div>
 
             <div className="flex items-center space-x-4">

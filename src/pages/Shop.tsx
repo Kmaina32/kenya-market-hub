@@ -160,9 +160,16 @@ const Shop = () => {
   return (
     <FrontendLayout>
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        {/* Hero Section */}
-        <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white py-12 rounded-b-2xl mb-8">
-          <div className="max-w-4xl mx-auto px-4 text-center">
+        {/* Hero Section with Background */}
+        <div 
+          className="relative bg-gradient-to-r from-orange-500 to-red-500 text-white py-12 mx-6 sm:mx-8 lg:mx-12 mt-6 rounded-b-2xl mb-8"
+          style={{
+            backgroundImage: `linear-gradient(rgba(249, 115, 22, 0.8), rgba(239, 68, 68, 0.8)), url('https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
+        >
+          <div className="max-w-4xl mx-auto px-8 sm:px-12 lg:px-16 text-center">
             <div className="mb-4">
               <ShoppingBag className="h-10 w-10 mx-auto mb-3 text-white" />
             </div>
@@ -173,7 +180,7 @@ const Shop = () => {
           </div>
         </div>
 
-        <div className="max-w-6xl mx-auto px-4 pb-8">
+        <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 pb-8">
           {/* Categories - Mobile Dropdown, Desktop Pills */}
           <div className="mb-6">
             <h2 className="text-xl font-bold text-gray-900 mb-3">Shop by Category</h2>

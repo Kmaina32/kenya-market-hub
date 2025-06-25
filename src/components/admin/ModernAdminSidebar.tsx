@@ -134,12 +134,16 @@ const ModernAdminSidebar = ({ isMobileOpen, onMobileClose }: ModernAdminSidebarP
       <SidebarHeader className="border-b border-orange-200/50 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 flex items-center justify-center shadow-lg">
-              <LayoutDashboard className="h-6 w-6 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 flex items-center justify-center shadow-lg overflow-hidden">
+              <img 
+                alt="Sokko Sasa Logo" 
+                src="/lovable-uploads/563ee6fb-f94f-43f3-a4f3-a61873a1b491.png" 
+                className="w-full h-full object-contain" 
+              />
             </div>
             <div>
               <h1 className="text-lg font-bold text-gray-900">Admin Panel</h1>
-              <p className="text-sm text-gray-600">Soko Smart</p>
+              <p className="text-sm text-gray-600">Sokko Sasa</p>
             </div>
           </div>
           
@@ -166,7 +170,7 @@ const ModernAdminSidebar = ({ isMobileOpen, onMobileClose }: ModernAdminSidebarP
 
       <SidebarFooter className="border-t border-orange-200/50 p-4">
         <div className="text-xs text-gray-500 text-center">
-          © 2024 Soko Smart Admin
+          © 2024 Sokko Sasa Admin
         </div>
       </SidebarFooter>
     </Sidebar>
