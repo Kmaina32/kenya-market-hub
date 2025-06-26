@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Search, ShoppingBag, Filter, Grid, List } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
-import ProductCard from '@/components/ProductCard';
+import OptimizedProductCard from '@/components/OptimizedProductCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -133,7 +133,7 @@ const Shop: React.FC = () => {
                 : 'grid-cols-1'
             }`}>
               {filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <OptimizedProductCard key={product.id} product={product} />
               ))}
             </div>
           ) : (
