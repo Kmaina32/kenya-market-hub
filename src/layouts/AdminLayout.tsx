@@ -23,31 +23,29 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gray-50">
+        {/* Mobile Sidebar Overlay */}
+        {isMobileSidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+            onClick={() => setIsMobileSidebarOpen(false)}
+          />
+        )}
+
         {/* Desktop Sidebar */}
         <div className="hidden lg:block">
           <ModernAdminSidebar />
         </div>
 
-        {/* Mobile Sidebar Overlay */}
-        {isMobileSidebarOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden">
-            <div 
-              className="absolute inset-0 bg-black bg-opacity-50"
-              onClick={() => setIsMobileSidebarOpen(false)}
-            />
-            <div className="relative w-80 h-full">
-              <ModernAdminSidebar 
-                isMobileOpen={isMobileSidebarOpen}
-                onMobileClose={() => setIsMobileSidebarOpen(false)}
-              />
-            </div>
-          </div>
-        )}
+        {/* Mobile Sidebar */}
+        <ModernAdminSidebar 
+          isMobileOpen={isMobileSidebarOpen}
+          onMobileClose={() => setIsMobileSidebarOpen(false)}
+        />
 
         {/* Main Content */}
         <main className="flex-1 flex flex-col min-w-0">
           {/* Header */}
-          <header className="bg-white shadow-sm border-b border-gray-200 h-16 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-40">
+          <header className="bg-white shadow-sm border-b border-gray-200 h-16 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30">
             <div className="flex items-center">
               <Button
                 variant="ghost"
@@ -91,7 +89,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           </header>
 
           {/* Page Content */}
-          <div className="flex-1 p-6">
+          <div className="flex-1 p-4 lg:p-6 overflow-auto">
             {children}
           </div>
         </main>

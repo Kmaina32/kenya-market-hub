@@ -92,7 +92,7 @@ const ModernAdminSidebar = ({ isMobileOpen, onMobileClose }: ModernAdminSidebarP
 
   const SidebarSection = ({ title, items }: { title: string; items: any[] }) => (
     <SidebarGroup>
-      <SidebarGroupLabel className="text-orange-600 font-semibold text-xs uppercase tracking-wider">
+      <SidebarGroupLabel className="text-orange-600 font-semibold text-xs uppercase tracking-wider px-3">
         {title}
       </SidebarGroupLabel>
       <SidebarGroupContent>
@@ -102,7 +102,7 @@ const ModernAdminSidebar = ({ isMobileOpen, onMobileClose }: ModernAdminSidebarP
               <SidebarMenuButton
                 onClick={() => handleNavigation(item.path)}
                 isActive={isActive(item.path)}
-                className={`group relative hover:bg-gradient-to-r hover:from-orange-50 hover:to-red-50 hover:text-orange-700 transition-all duration-200 ${
+                className={`group relative hover:bg-gradient-to-r hover:from-orange-50 hover:to-red-50 hover:text-orange-700 transition-all duration-200 w-full ${
                   isActive(item.path) 
                     ? 'bg-gradient-to-r from-orange-100 to-red-100 text-orange-700 border-r-2 border-orange-500 font-medium' 
                     : ''
@@ -127,47 +127,53 @@ const ModernAdminSidebar = ({ isMobileOpen, onMobileClose }: ModernAdminSidebarP
   );
 
   return (
-    <Sidebar 
-      variant="inset" 
-      className="border-r border-orange-200/50 bg-white/95 backdrop-blur-md shadow-xl"
-    >
-      <SidebarHeader className="border-b border-orange-200/50 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 flex items-center justify-center shadow-lg">
-              <LayoutDashboard className="h-6 w-6 text-white" />
+    <div className={`fixed inset-y-0 left-0 z-50 w-80 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+      isMobileOpen ? 'translate-x-0' : '-translate-x-full'
+    } lg:block`}>
+      <Sidebar 
+        variant="inset" 
+        className="border-r border-orange-200/50 bg-white shadow-xl h-full"
+      >
+        <SidebarHeader className="border-b border-orange-200/50 p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 flex items-center justify-center shadow-lg">
+                <LayoutDashboard className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-gray-900">Admin Panel</h1>
+                <p className="text-sm text-gray-600">Sokko Sasa</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-lg font-bold text-gray-900">Admin Panel</h1>
-              <p className="text-sm text-gray-600">Sokko Sasa</p>
-            </div>
+            
+            {/* Mobile Close Button */}
+            {isMobileOpen && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="lg:hidden p-2"
+                onClick={onMobileClose}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
-          
-          {/* Mobile Close Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="lg:hidden p-2"
-            onClick={onMobileClose}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-      </SidebarHeader>
+        </SidebarHeader>
 
-      <SidebarContent className="py-4 space-y-4">
-        <SidebarSection title="Main" items={mainItems} />
-        <SidebarSection title="Business Partners" items={businessItems} />
-        <SidebarSection title="Services & Modules" items={servicesItems} />
-        <SidebarSection title="System" items={systemItems} />
-      </SidebarContent>
+        <SidebarContent className="py-4 space-y-4 overflow-y-auto">
+          <SidebarSection title="Main" items={mainItems} />
+          <SidebarSection title="Business Partners" items={businessItems} />
+          <SidebarSection title="Services & Modules" items={servicesItems} />
+          <SidebarSection title="System" items={systemItems} />
+        </SidebarContent>
 
-      <SidebarFooter className="border-t border-orange-200/50 p-4">
-        <div className="text-xs text-gray-500 text-center">
-          © 2024 Sokko Sasa Admin
-        </div>
-      </SidebarFooter>
-    </Sidebar>
+        <SidebarFooter className="border-t border-orange-200/50 p-4">
+          <div className="text-xs text-gray-500 text-center">
+            © 2025 Sokko Sasa Admin
+          </div>
+        </SidebarFooter>
+      </Sidebar>
+    </div>
   );
 };
 

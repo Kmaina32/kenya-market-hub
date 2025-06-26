@@ -29,7 +29,16 @@ const ModernAdminLayout = ({ children }: ModernAdminLayoutProps) => {
           />
         )}
         
-        <ModernAdminSidebar isMobileOpen={isMobileMenuOpen} onMobileClose={() => setIsMobileMenuOpen(false)} />
+        {/* Desktop Sidebar */}
+        <div className="hidden lg:block">
+          <ModernAdminSidebar />
+        </div>
+
+        {/* Mobile Sidebar */}
+        <ModernAdminSidebar 
+          isMobileOpen={isMobileMenuOpen} 
+          onMobileClose={() => setIsMobileMenuOpen(false)} 
+        />
         
         <main className="flex-1 flex flex-col min-w-0">
           {/* Header */}
@@ -48,13 +57,13 @@ const ModernAdminLayout = ({ children }: ModernAdminLayoutProps) => {
               {/* Desktop Sidebar Trigger */}
               <SidebarTrigger className="hidden lg:flex hover:bg-orange-50 hover:text-orange-600" />
               
-              <div className="hidden sm:flex items-center space-x-3">
+              <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg">
                   <span className="text-white font-bold text-sm">A</span>
                 </div>
-                <div>
+                <div className="hidden sm:block">
                   <h1 className="text-lg font-bold text-gray-900">Admin Panel</h1>
-                  <p className="text-sm text-gray-600 hidden md:block">Soko Smart Management</p>
+                  <p className="text-sm text-gray-600 hidden md:block">Sokko Sasa Management</p>
                 </div>
               </div>
             </div>
