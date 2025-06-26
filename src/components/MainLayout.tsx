@@ -4,6 +4,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { WifiOff } from 'lucide-react';
 import AppSidebar from './AppSidebar';
 import UserNav from './UserNav';
+import NotificationDropdown from './NotificationDropdown';
 import GlobalSearch from './GlobalSearch';
 import Footer from './Footer';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
@@ -42,7 +43,11 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                 <GlobalSearch />
               </div>
             </div>
-            <UserNav />
+            
+            <div className="flex items-center gap-2">
+              <NotificationDropdown />
+              <UserNav />
+            </div>
           </div>
           
           {!isOnline && (

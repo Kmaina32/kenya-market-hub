@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
+import NotificationDropdown from '@/components/NotificationDropdown';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -56,15 +57,13 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                 <Menu className="h-5 w-5" />
               </Button>
               <h1 className="text-xl font-semibold text-gray-900 ml-2 lg:ml-0">
-                Admin Dashboard
+                Sokko Sasa Admin
               </h1>
             </div>
 
             <div className="flex items-center space-x-4">
               {/* Notifications */}
-              <Button variant="ghost" size="icon" className="hover:bg-gray-100">
-                <Bell className="h-5 w-5" />
-              </Button>
+              <NotificationDropdown />
 
               {/* User Menu */}
               <DropdownMenu>

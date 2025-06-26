@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import ModernAdminSidebar from './ModernAdminSidebar';
 import UserNav from '../UserNav';
+import NotificationDropdown from '../NotificationDropdown';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
 interface ModernAdminLayoutProps {
@@ -62,8 +63,8 @@ const ModernAdminLayout = ({ children }: ModernAdminLayoutProps) => {
                   <span className="text-white font-bold text-sm">A</span>
                 </div>
                 <div className="hidden sm:block">
-                  <h1 className="text-lg font-bold text-gray-900">Admin Panel</h1>
-                  <p className="text-sm text-gray-600 hidden md:block">Sokko Sasa Management</p>
+                  <h1 className="text-lg font-bold text-gray-900">Sokko Sasa Admin</h1>
+                  <p className="text-sm text-gray-600 hidden md:block">Management Dashboard</p>
                 </div>
               </div>
             </div>
@@ -82,12 +83,7 @@ const ModernAdminLayout = ({ children }: ModernAdminLayoutProps) => {
             {/* Right Actions */}
             <div className="flex items-center gap-2">
               {/* Notifications */}
-              <Button variant="ghost" size="sm" className="relative">
-                <Bell className="h-5 w-5" />
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-red-500">
-                  3
-                </Badge>
-              </Button>
+              <NotificationDropdown />
               
               <UserNav />
             </div>
