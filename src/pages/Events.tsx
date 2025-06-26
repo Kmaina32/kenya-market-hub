@@ -41,20 +41,28 @@ const Events: React.FC = () => {
   return (
     <FrontendLayout>
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        {/* Hero Section */}
-        <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white py-16 rounded-b-2xl mb-8">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-3xl mx-auto">
+        {/* Hero Section with Background Image */}
+        <div 
+          className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-500 to-red-500 rounded-b-3xl mx-4 sm:mx-6 lg:mx-8 mt-4"
+          style={{
+            backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1492684223066-81342ee5ff30?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
+        >
+          <div className="absolute inset-0 bg-black bg-opacity-40 rounded-b-3xl" />
+          <div className="relative z-10 flex items-center justify-center h-full px-6 sm:px-8 lg:px-12">
+            <div className="text-center text-white max-w-3xl mx-auto">
               <Calendar className="h-16 w-16 mx-auto mb-4" />
-              <h1 className="text-4xl font-bold mb-4">Events & Experiences</h1>
-              <p className="text-xl text-orange-100 mb-8">
+              <h1 className="text-3xl md:text-4xl font-bold mb-4">Events & Experiences</h1>
+              <p className="text-lg text-orange-100 mb-6">
                 Discover amazing events and purchase tickets from verified organizers
               </p>
             </div>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Search and Filters */}
           <div className="bg-white p-6 rounded-xl shadow-lg mb-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
