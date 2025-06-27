@@ -40,19 +40,24 @@ const AdminServiceProviders = () => {
         .from('service_provider_profiles')
         .select(`
           *,
-          profiles!inner(full_name, email, phone)
+          profiles(full_name, email, phone)
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return data?.map(provider => ({
+        ...provider,
+        profile_name: provider.profiles?.full_name || 'Unknown',
+        profile_email: provider.profiles?.email || provider.email || 'No email',
+        profile_phone: provider.profiles?.phone || provider.phone_number || 'No phone'
+      })) || [];
     }
   });
 
   const filteredProviders = providers?.filter(provider => {
     const matchesFilter = filter === 'all' || provider.verification_status === filter;
     const matchesSearch = provider.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         provider.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
+                         provider.profile_name?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesFilter && matchesSearch;
   }) || [];
 
@@ -169,13 +174,13 @@ const AdminServiceProviders = () => {
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-3">
                         <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center text-white font-bold">
-                          {provider.business_name?.charAt(0) || provider.profiles?.full_name?.charAt(0) || 'S'}
+                          {provider.business_name?.charAt(0) || provider.profile_name?.charAt(0) || 'S'}
                         </div>
                         <div>
                           <h3 className="text-xl font-semibold text-gray-900">
                             {provider.business_name || 'No Business Name'}
                           </h3>
-                          <p className="text-lg text-gray-600">{provider.profiles?.full_name}</p>
+                          <p className="text-lg text-gray-600">{provider.profile_name}</p>
                           <div className="flex items-center gap-4 mt-2">
                             {getStatusBadge(provider.verification_status)}
                             <Badge variant="outline">{provider.provider_type}</Badge>
@@ -186,11 +191,11 @@ const AdminServiceProviders = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
                         <div className="flex items-center gap-2">
                           <Mail className="h-4 w-4" />
-                          <span>{provider.email || provider.profiles?.email || 'No email'}</span>
+                          <span>{provider.profile_email}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Phone className="h-4 w-4" />
-                          <span>{provider.phone_number || provider.profiles?.phone || 'No phone'}</span>
+                          <span>{provider.profile_phone}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <MapPin className="h-4 w-4" />
@@ -232,15 +237,15 @@ const AdminServiceProviders = () => {
                                 </div>
                                 <div>
                                   <label className="font-medium">Full Name:</label>
-                                  <p>{selectedProvider.profiles?.full_name || 'N/A'}</p>
+                                  <p>{selectedProvider.profile_name}</p>
                                 </div>
                                 <div>
                                   <label className="font-medium">Email:</label>
-                                  <p>{selectedProvider.email || selectedProvider.profiles?.email || 'N/A'}</p>
+                                  <p>{selectedProvider.profile_email}</p>
                                 </div>
                                 <div>
                                   <label className="font-medium">Phone:</label>
-                                  <p>{selectedProvider.phone_number || selectedProvider.profiles?.phone || 'N/A'}</p>
+                                  <p>{selectedProvider.profile_phone}</p>
                                 </div>
                                 <div>
                                   <label className="font-medium">Status:</label>

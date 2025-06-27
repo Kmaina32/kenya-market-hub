@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle, Activity, Clock, TrendingUp, Users, Eye, DollarSign, Package, Car, Building } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAdminStats } from '@/hooks/useAdminStatsReal';
-import ModernAdminLayout from '@/components/admin/ModernAdminLayout';
+import AdminLayout from '@/components/admin/AdminLayout';
 import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
 import BulkOperations from '@/components/admin/BulkOperations';
 import NotificationCenter from '@/components/admin/NotificationCenter';
@@ -16,19 +15,19 @@ const ModernAdminDashboard = () => {
 
   if (error) {
     return (
-      <ModernAdminLayout>
+      <AdminLayout>
         <div className="flex items-center justify-center min-h-96">
           <div className="text-center">
             <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
             <p className="text-red-600">Error loading dashboard data</p>
           </div>
         </div>
-      </ModernAdminLayout>
+      </AdminLayout>
     );
   }
 
   return (
-    <ModernAdminLayout>
+    <AdminLayout>
       <div className="space-y-6 lg:space-y-8 animate-fade-in">
         {/* Header */}
         <div className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white p-6 lg:p-8 rounded-2xl shadow-2xl">
@@ -347,7 +346,7 @@ const ModernAdminDashboard = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </ModernAdminLayout>
+    </AdminLayout>
   );
 };
 

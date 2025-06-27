@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
 import { useVendorApproval } from '@/hooks/useApprovalActions/useVendorApproval';
 import { 
   Store, 
@@ -44,7 +43,12 @@ const AdminVendors = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return data?.map(vendor => ({
+        ...vendor,
+        profile_name: vendor.profiles?.full_name || 'Unknown',
+        profile_email: vendor.profiles?.email || vendor.business_email || 'No email',
+        profile_phone: vendor.profiles?.phone || vendor.business_phone || 'No phone'
+      })) || [];
     }
   });
 
@@ -61,7 +65,11 @@ const AdminVendors = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return data?.map(app => ({
+        ...app,
+        profile_name: app.profiles?.full_name || 'Unknown',
+        application_date: app.created_at
+      })) || [];
     }
   });
 
@@ -150,8 +158,8 @@ const AdminVendors = () => {
                   <div key={app.id} className="flex items-center justify-between p-4 bg-orange-50 rounded-lg">
                     <div>
                       <h4 className="font-semibold">{app.business_name}</h4>
-                      <p className="text-sm text-gray-600">{app.profiles?.full_name}</p>
-                      <p className="text-sm text-gray-500">Applied: {new Date(app.created_at).toLocaleDateString()}</p>
+                      <p className="text-sm text-gray-600">{app.profile_name}</p>
+                      <p className="text-sm text-gray-500">Applied: {new Date(app.application_date).toLocaleDateString()}</p>
                     </div>
                     <div className="flex gap-2">
                       <Button 
@@ -233,7 +241,7 @@ const AdminVendors = () => {
                           <h3 className="text-xl font-semibold text-gray-900">
                             {vendor.business_name}
                           </h3>
-                          <p className="text-lg text-gray-600">{vendor.profiles?.full_name}</p>
+                          <p className="text-lg text-gray-600">{vendor.profile_name}</p>
                           <div className="flex items-center gap-4 mt-2">
                             {getStatusBadge(vendor.verification_status)}
                             <Badge variant={vendor.is_active ? 'default' : 'secondary'}>
@@ -246,11 +254,11 @@ const AdminVendors = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
                         <div className="flex items-center gap-2">
                           <Mail className="h-4 w-4" />
-                          <span>{vendor.business_email || vendor.profiles?.email || 'No email'}</span>
+                          <span>{vendor.profile_email}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Phone className="h-4 w-4" />
-                          <span>{vendor.business_phone || vendor.profiles?.phone || 'No phone'}</span>
+                          <span>{vendor.profile_phone}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <MapPin className="h-4 w-4" />
@@ -288,15 +296,15 @@ const AdminVendors = () => {
                                 </div>
                                 <div>
                                   <label className="font-medium">Owner:</label>
-                                  <p>{selectedVendor.profiles?.full_name || 'N/A'}</p>
+                                  <p>{selectedVendor.profile_name}</p>
                                 </div>
                                 <div>
                                   <label className="font-medium">Email:</label>
-                                  <p>{selectedVendor.business_email || selectedVendor.profiles?.email || 'N/A'}</p>
+                                  <p>{selectedVendor.profile_email}</p>
                                 </div>
                                 <div>
                                   <label className="font-medium">Phone:</label>
-                                  <p>{selectedVendor.business_phone || selectedVendor.profiles?.phone || 'N/A'}</p>
+                                  <p>{selectedVendor.profile_phone}</p>
                                 </div>
                                 <div>
                                   <label className="font-medium">Status:</label>
@@ -328,7 +336,7 @@ const AdminVendors = () => {
                         value={vendor.verification_status} 
                         onValueChange={(value) => handleUpdateStatus(vendor.id, value)}
                       >
-                        <SelectTrigger size="sm">
+                        <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

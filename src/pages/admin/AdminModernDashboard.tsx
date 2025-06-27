@@ -1,10 +1,9 @@
-
 import React from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useAdminStatsReal } from '@/hooks/useAdminStatsReal';
+import { useAdminStats } from '@/hooks/useAdminStatsReal';
 import { 
   Users, 
   ShoppingBag, 
@@ -16,7 +15,7 @@ import {
 } from 'lucide-react';
 
 const AdminModernDashboard = () => {
-  const { data: stats, isLoading } = useAdminStatsReal();
+  const { data: stats, isLoading } = useAdminStats();
 
   const statsCards = [
     {
