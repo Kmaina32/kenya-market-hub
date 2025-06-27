@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { 
   Search, 
   MapPin, 
@@ -19,6 +21,7 @@ import {
 } from 'lucide-react';
 
 const Jobs: React.FC = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
@@ -66,6 +69,18 @@ const Jobs: React.FC = () => {
     const matchesLocation = selectedLocation === 'all' || job.location === selectedLocation;
     return matchesSearch && matchesCategory && matchesLocation;
   }) || [];
+
+  const handleApplyNow = (jobId: string, jobTitle: string) => {
+    toast.success(`Application submitted for ${jobTitle}!`);
+    // Here you would typically navigate to application form or handle the application
+    console.log(`Applying for job: ${jobId}`);
+  };
+
+  const handleSaveJob = (jobId: string, jobTitle: string) => {
+    toast.success(`${jobTitle} saved to your favorites!`);
+    // Here you would typically save to user's saved jobs
+    console.log(`Saving job: ${jobId}`);
+  };
 
   return (
     <FrontendLayout>
@@ -122,7 +137,7 @@ const Jobs: React.FC = () => {
           <div className="space-y-6">
             {isLoading ? (
               <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto mb-4"></div>
                 <p className="text-gray-600">Loading jobs...</p>
               </div>
             ) : filteredJobs.length > 0 ? (
@@ -140,7 +155,7 @@ const Jobs: React.FC = () => {
                               <h3 className="text-xl font-semibold text-gray-900">{job.title}</h3>
                               <Badge variant="outline">{job.job_type}</Badge>
                             </div>
-                            <p className="text-lg text-blue-600 font-medium mb-2">{job.company}</p>
+                            <p className="text-lg text-orange-600 font-medium mb-2">{job.company}</p>
                             
                             <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-3">
                               <div className="flex items-center gap-1">
@@ -163,10 +178,17 @@ const Jobs: React.FC = () => {
                       </div>
                       
                       <div className="mt-4 md:mt-0 md:ml-6 flex flex-col gap-2">
-                        <Button className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600">
+                        <Button 
+                          onClick={() => handleApplyNow(job.id, job.title)}
+                          className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                        >
                           Apply Now
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleSaveJob(job.id, job.title)}
+                        >
                           Save Job
                         </Button>
                       </div>

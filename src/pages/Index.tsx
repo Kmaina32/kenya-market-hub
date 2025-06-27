@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -222,16 +223,16 @@ const Index = () => {
   return (
     <FrontendLayout>
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        {/* Hero Section with Slideshow */}
-        <div className="relative h-[70vh] min-h-[500px] overflow-hidden rounded-b-3xl">
+        {/* Hero Section with Slideshow - Added proper padding */}
+        <div className="relative h-[70vh] min-h-[500px] overflow-hidden mx-4 sm:mx-6 lg:mx-8 rounded-b-3xl">
           {/* Background Image with Overlay */}
           <div 
-            className="absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out"
+            className="absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out rounded-b-3xl"
             style={{ 
               backgroundImage: `url(https://images.unsplash.com/${currentSlideData.image})`,
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent rounded-b-3xl" />
           
           {/* Navigation Controls */}
           <button
@@ -261,7 +262,7 @@ const Index = () => {
             <div className="text-center text-white max-w-4xl mx-auto">
               {/* Brand Name */}
               <h1 className="text-3xl md:text-5xl font-bold mb-3 animate-fade-in">
-                Sokko Smart
+                Sokko Sasa
               </h1>
 
               {/* Slide Content */}
