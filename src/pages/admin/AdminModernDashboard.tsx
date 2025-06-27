@@ -12,7 +12,7 @@ import BulkOperations from '@/components/admin/BulkOperations';
 import NotificationCenter from '@/components/admin/NotificationCenter';
 
 const AdminModernDashboard = () => {
-  const { data: stats, isLoading, error } = useAdminStats();
+  const { stats, loading, error } = useAdminStats();
 
   if (error) {
     return (
@@ -63,7 +63,7 @@ const AdminModernDashboard = () => {
         </div>
 
         {/* Stats Grid */}
-        {isLoading ? (
+        {loading ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {[...Array(8)].map((_, i) => (
               <Card key={i} className="shadow-lg border-0">

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import FrontendLayout from '@/components/layouts/FrontendLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,7 +20,7 @@ import {
   Mail,
   Clock,
   Award,
-  Compare,
+  ArrowLeftRight,
   Eye
 } from 'lucide-react';
 
@@ -120,7 +119,7 @@ const Insurance: React.FC = () => {
   return (
     <FrontendLayout>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-        {/* Hero Section - Fixed height and spacing */}
+        {/* Hero Section */}
         <div className="relative overflow-hidden">
           <div 
             className="h-80 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-b-3xl mx-4 mt-4"
@@ -157,7 +156,7 @@ const Insurance: React.FC = () => {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 py-12 space-y-16">
-          {/* Insurance Types - Fixed card heights and button positioning */}
+          {/* Insurance Types */}
           <section>
             <div className="text-center mb-12">
               <h2 className="text-4xl font-bold text-gray-900 mb-4">Insurance Coverage</h2>
@@ -201,7 +200,7 @@ const Insurance: React.FC = () => {
             </div>
           </section>
 
-          {/* Insurance Plans - Fixed overlapping issues */}
+          {/* Insurance Plans */}
           <section>
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold text-gray-900 mb-4">Available Plans</h2>
@@ -255,7 +254,6 @@ const Insurance: React.FC = () => {
                         </ul>
                       )}
 
-                      {/* Fixed button layout - no overlapping */}
                       <div className="space-y-3 mt-auto">
                         <div className="grid grid-cols-2 gap-3">
                           <Button 
@@ -269,7 +267,7 @@ const Insurance: React.FC = () => {
                             className="border-blue-200 text-blue-600 hover:bg-blue-50 text-sm py-2 rounded-xl"
                             onClick={() => handleComparePlans(plan.id)}
                           >
-                            <Compare className="h-4 w-4 mr-1" />
+                            <ArrowLeftRight className="h-4 w-4 mr-1" />
                             Compare
                           </Button>
                         </div>
@@ -308,7 +306,7 @@ const Insurance: React.FC = () => {
             )}
           </section>
 
-          {/* Features Section - Fixed spacing */}
+          {/* Features Section */}
           <section>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               <Card className="text-center p-6 hover:shadow-lg transition-shadow h-full">
