@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import AdminLayout from '@/components/admin/AdminLayout';
+import AdminLayout from '@/layouts/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';

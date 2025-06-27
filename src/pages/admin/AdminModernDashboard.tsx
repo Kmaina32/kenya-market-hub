@@ -1,9 +1,10 @@
+
 import React from 'react';
-import AdminLayout from '@/components/admin/AdminLayout';
+import ModernAdminLayout from '@/components/admin/ModernAdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useAdminStats } from '@/hooks/useAdminStatsReal';
+import { useAdminStats } from '@/hooks/useAdminStats';
 import { 
   Users, 
   ShoppingBag, 
@@ -21,13 +22,13 @@ const AdminModernDashboard = () => {
     {
       title: 'Total Users',
       value: stats?.totalUsers || 0,
-      change: `+${stats?.userGrowthPercentage || 0}%`,
+      change: '+12%',
       changeType: 'positive' as const,
       icon: Users,
       color: 'text-blue-600'
     },
     {
-      title: 'Total Products',
+      title: 'Active Products',
       value: stats?.totalProducts || 0,
       change: '+8%',
       changeType: 'positive' as const,
@@ -37,14 +38,14 @@ const AdminModernDashboard = () => {
     {
       title: 'Total Revenue',
       value: `KSh ${(stats?.totalRevenue || 0).toLocaleString()}`,
-      change: `+${stats?.revenueGrowthPercentage || 0}%`,
+      change: '+15%',
       changeType: 'positive' as const,
       icon: DollarSign,
       color: 'text-orange-600'
     },
     {
-      title: 'Order Growth',
-      value: `${stats?.orderGrowthPercentage || 0}%`,
+      title: 'Growth Rate',
+      value: '12%',
       change: '+2.5%',
       changeType: 'positive' as const,
       icon: TrendingUp,
@@ -54,16 +55,16 @@ const AdminModernDashboard = () => {
 
   if (isLoading) {
     return (
-      <AdminLayout>
+      <ModernAdminLayout>
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
         </div>
-      </AdminLayout>
+      </ModernAdminLayout>
     );
   }
 
   return (
-    <AdminLayout>
+    <ModernAdminLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -115,36 +116,27 @@ const AdminModernDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {stats?.recentActivity?.slice(0, 3).map((activity, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium">{activity.message}</p>
-                      <p className="text-sm text-gray-600">
-                        {new Date(activity.timestamp).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <Badge variant={activity.type === 'order' ? 'default' : 'outline'}>
-                      {activity.type}
-                    </Badge>
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-medium">New user registration</p>
+                    <p className="text-sm text-gray-600">2 minutes ago</p>
                   </div>
-                )) || (
-                  <>
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <p className="font-medium">New user registration</p>
-                        <p className="text-sm text-gray-600">2 minutes ago</p>
-                      </div>
-                      <Badge>New</Badge>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <p className="font-medium">Product approved</p>
-                        <p className="text-sm text-gray-600">15 minutes ago</p>
-                      </div>
-                      <Badge variant="outline">Approved</Badge>
-                    </div>
-                  </>
-                )}
+                  <Badge>New</Badge>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-medium">Product approved</p>
+                    <p className="text-sm text-gray-600">15 minutes ago</p>
+                  </div>
+                  <Badge variant="outline">Approved</Badge>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-medium">Order completed</p>
+                    <p className="text-sm text-gray-600">1 hour ago</p>
+                  </div>
+                  <Badge className="bg-green-100 text-green-800">Completed</Badge>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -156,27 +148,27 @@ const AdminModernDashboard = () => {
             <CardContent>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Total Orders</span>
-                  <span className="font-semibold">{stats?.totalOrders || 0}</span>
+                  <span className="text-gray-600">Active Sessions</span>
+                  <span className="font-semibold">1,234</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Pending Orders</span>
-                  <span className="font-semibold">{stats?.pendingOrders || 0}</span>
+                  <span className="font-semibold">56</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Completed Orders</span>
-                  <span className="font-semibold">{stats?.completedOrders || 0}</span>
+                  <span className="text-gray-600">Revenue Today</span>
+                  <span className="font-semibold">KSh 45,230</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Total Vendors</span>
-                  <span className="font-semibold">{stats?.totalVendors || 0}</span>
+                  <span className="text-gray-600">Conversion Rate</span>
+                  <span className="font-semibold">3.2%</span>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
-    </AdminLayout>
+    </ModernAdminLayout>
   );
 };
 

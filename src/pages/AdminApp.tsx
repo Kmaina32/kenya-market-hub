@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import AdminLayout from '@/components/admin/AdminLayout';
+import ModernAdminLayout from '@/components/admin/ModernAdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import ProtectedAdminRoute from '@/components/ProtectedAdminRoute';
@@ -49,7 +49,7 @@ const AdminApp = () => {
 
   return (
     <ProtectedAdminRoute>
-      <AdminLayout>
+      <ModernAdminLayout>
         <Routes>
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<AdminModernDashboard />} />
@@ -75,7 +75,7 @@ const AdminApp = () => {
           <Route path="settings" element={<AdminSettings />} />
           <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
         </Routes>
-      </AdminLayout>
+      </ModernAdminLayout>
     </ProtectedAdminRoute>
   );
 };
