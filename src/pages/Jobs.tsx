@@ -70,15 +70,13 @@ const Jobs: React.FC = () => {
     return matchesSearch && matchesCategory && matchesLocation;
   }) || [];
 
-  const handleApplyNow = (jobId: string, jobTitle: string) => {
+  const handleApplyNow = (jobId: string | number, jobTitle: string) => {
     toast.success(`Application submitted for ${jobTitle}!`);
-    // Here you would typically navigate to application form or handle the application
     console.log(`Applying for job: ${jobId}`);
   };
 
-  const handleSaveJob = (jobId: string, jobTitle: string) => {
+  const handleSaveJob = (jobId: string | number, jobTitle: string) => {
     toast.success(`${jobTitle} saved to your favorites!`);
-    // Here you would typically save to user's saved jobs
     console.log(`Saving job: ${jobId}`);
   };
 
