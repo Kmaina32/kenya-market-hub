@@ -1,236 +1,327 @@
 
 import React, { useState } from 'react';
+import ServicesLayout from '@/components/layouts/ServicesLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/contexts/AuthContext';
-import { useAllServiceProviderProfiles } from '@/hooks/useServiceProviders';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Wrench, 
-  Car, 
-  Hammer, 
-  Scissors, 
-  Home, 
-  Laptop, 
-  Camera,
-  Search,
+  Calendar, 
+  Clock, 
+  DollarSign, 
+  MapPin, 
+  User, 
+  Settings,
   Plus,
+  TrendingUp,
   CheckCircle,
-  Clock,
-  XCircle
+  AlertCircle,
+  Eye
 } from 'lucide-react';
-import ServiceProviderCard from '@/components/ServiceProviderCard';
+import { useProviderBookings } from '@/hooks/useServiceBookings';
+import { useAuth } from '@/contexts/AuthContext';
 
-const SERVICE_CATEGORIES = [
-  {
-    id: 'plumbing',
-    title: 'Plumbing Services',
-    description: 'Water, drainage, and pipe repairs',
-    icon: Wrench,
-    color: 'bg-blue-500',
-    dashboardUrl: '/service-provider/plumbing'
-  },
-  {
-    id: 'automotive',
-    title: 'Automotive Services',
-    description: 'Car repairs and maintenance',
-    icon: Car,
-    color: 'bg-red-500',
-    dashboardUrl: '/service-provider/automotive'
-  },
-  {
-    id: 'construction',
-    title: 'Construction & Repair',
-    description: 'Building and renovation services',
-    icon: Hammer,
-    color: 'bg-orange-500',
-    dashboardUrl: '/service-provider/construction'
-  },
-  {
-    id: 'beauty',
-    title: 'Beauty & Wellness',
-    description: 'Hair, nails, and spa services',
-    icon: Scissors,
-    color: 'bg-pink-500',
-    dashboardUrl: '/service-provider/beauty'
-  },
-  {
-    id: 'cleaning',
-    title: 'Cleaning Services',
-    description: 'House and office cleaning',
-    icon: Home,
-    color: 'bg-green-500',
-    dashboardUrl: '/service-provider/cleaning'
-  },
-  {
-    id: 'tech',
-    title: 'Tech Support',
-    description: 'Computer and device repairs',
-    icon: Laptop,
-    color: 'bg-purple-500',
-    dashboardUrl: '/service-provider/tech'
-  },
-  {
-    id: 'photography',
-    title: 'Photography',
-    description: 'Event and portrait photography',
-    icon: Camera,
-    color: 'bg-indigo-500',
-    dashboardUrl: '/service-provider/photography'
-  }
-];
-
-const ServiceProviderHub = () => {
+const ServiceProviderHub: React.FC = () => {
   const { user } = useAuth();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  
-  const { data: myProfiles, isLoading: profilesLoading } = useAllServiceProviderProfiles();
+  const { data: bookings = [], isLoading } = useProviderBookings();
+  const [selectedTab, setSelectedTab] = useState('dashboard');
 
-  const handleApplyAsProvider = (providerType: string) => {
-    console.log('Apply as provider for:', providerType);
-    // Navigate to application form
-  };
+  const pendingBookings = bookings.filter(booking => booking.status === 'pending');
+  const completedBookings = bookings.filter(booking => booking.status === 'completed');
+  const totalEarnings = completedBookings.reduce((sum, booking) => sum + booking.total_amount, 0);
 
-  const getStatusIcon = (status: string) => {
+  const stats = [
+    {
+      title: "Total Bookings",
+      value: bookings.length.toString(),
+      icon: Calendar,
+      color: "text-blue-600",
+      bgColor: "bg-blue-50"
+    },
+    {
+      title: "Pending Requests",
+      value: pendingBookings.length.toString(),
+      icon: Clock,
+      color: "text-orange-600",
+      bgColor: "bg-orange-50"
+    },
+    {
+      title: "Completed Jobs",
+      value: completedBookings.length.toString(),
+      icon: CheckCircle,
+      color: "text-green-600",
+      bgColor: "bg-green-50"
+    },
+    {
+      title: "Total Earnings",
+      value: `KSh ${totalEarnings.toLocaleString()}`,
+      icon: DollarSign,
+      color: "text-purple-600",
+      bgColor: "bg-purple-50"
+    }
+  ];
+
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'approved':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'pending':
-        return <Clock className="h-4 w-4 text-yellow-500" />;
-      case 'rejected':
-        return <XCircle className="h-4 w-4 text-red-500" />;
-      default:
-        return null;
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'confirmed': return 'bg-blue-100 text-blue-800';
+      case 'in_progress': return 'bg-orange-100 text-orange-800';
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const filteredCategories = SERVICE_CATEGORIES.filter(category => 
-    selectedCategory === 'all' || category.id === selectedCategory
-  ).filter(category =>
-    category.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    category.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  if (isLoading) {
+    return (
+      <ServicesLayout>
+        <div className="flex items-center justify-center min-h-96">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+        </div>
+      </ServicesLayout>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
+    <ServicesLayout>
+      <div className="space-y-6">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Service Provider Hub</h1>
-          <p className="text-gray-600">Discover opportunities and manage your service provider profiles</p>
-        </div>
-
-        {/* User's Service Provider Profiles */}
-        {user && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <CheckCircle className="h-5 w-5 mr-2 text-green-500" />
-                My Service Provider Profiles
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {profilesLoading ? (
-                <div className="flex items-center justify-center py-4">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500"></div>
-                  <span className="ml-2">Loading your profiles...</span>
-                </div>
-              ) : myProfiles && myProfiles.length > 0 ? (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {myProfiles.map((profile) => {
-                    const category = SERVICE_CATEGORIES.find(cat => cat.id === profile.provider_type);
-                    return (
-                      <Card key={profile.id} className="border-l-4 border-l-orange-500">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <h3 className="font-semibold">{profile.provider_type}</h3>
-                            {getStatusIcon(profile.verification_status)}
-                          </div>
-                          <p className="text-sm text-gray-600 mb-2">
-                            {profile.business_name || 'No business name set'}
-                          </p>
-                          <Badge variant="outline" className="text-xs">
-                            {profile.verification_status}
-                          </Badge>
-                          <Button 
-                            size="sm" 
-                            className="w-full mt-3"
-                            onClick={() => window.location.href = category?.dashboardUrl || '#'}
-                          >
-                            Manage Profile
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-6">
-                  <p className="text-gray-500 mb-4">You haven't applied for any service provider categories yet.</p>
-                  <p className="text-sm text-gray-400">Browse the categories below to get started!</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Search and Filter */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search service categories..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+        <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white p-6 rounded-2xl shadow-lg">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Service Provider Dashboard</h1>
+              <p className="text-orange-100">
+                Welcome back! Manage your services and bookings from here.
+              </p>
+            </div>
+            <div className="mt-4 md:mt-0 flex gap-3">
+              <Button 
+                variant="secondary" 
+                className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Service
+              </Button>
+              <Button 
+                variant="outline" 
+                className="bg-transparent hover:bg-white/10 text-white border-white/30"
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Settings
+              </Button>
+            </div>
           </div>
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-          >
-            <option value="all">All Categories</option>
-            {SERVICE_CATEGORIES.map(category => (
-              <option key={category.id} value={category.id}>
-                {category.title}
-              </option>
-            ))}
-          </select>
         </div>
 
-        {/* Service Categories Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredCategories.map((category) => {
-            const hasProfile = myProfiles?.some(profile => profile.provider_type === category.id);
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {stats.map((stat, index) => {
+            const IconComponent = stat.icon;
             return (
-              <ServiceProviderCard
-                key={category.id}
-                provider={{
-                  id: category.id,
-                  business_name: category.title,
-                  provider_type: category.id,
-                  business_description: category.description,
-                  is_verified: hasProfile || false,
-                  is_active: true
-                }}
-                onApply={handleApplyAsProvider}
-              />
+              <Card key={index} className="hover:shadow-lg transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600 mb-1">
+                        {stat.title}
+                      </p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {stat.value}
+                      </p>
+                    </div>
+                    <div className={`p-3 rounded-full ${stat.bgColor}`}>
+                      <IconComponent className={`h-6 w-6 ${stat.color}`} />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             );
           })}
         </div>
 
-        {filteredCategories.length === 0 && (
-          <div className="text-center py-12">
-            <Search className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No categories found</h3>
-            <p className="text-gray-600">Try adjusting your search terms or filters.</p>
-          </div>
-        )}
+        {/* Main Content */}
+        <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="bookings">Bookings</TabsTrigger>
+            <TabsTrigger value="services">My Services</TabsTrigger>
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dashboard">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Recent Bookings */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-orange-600" />
+                    Recent Bookings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {bookings.slice(0, 3).map((booking) => (
+                      <div key={booking.id} className="p-4 border rounded-lg hover:bg-gray-50">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium">{booking.service_type}</h4>
+                          <Badge className={getStatusColor(booking.status)}>
+                            {booking.status}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">
+                          {booking.service_description}
+                        </p>
+                        <div className="flex items-center justify-between text-sm text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-4 w-4" />
+                            {booking.booking_address}
+                          </span>
+                          <span className="font-medium text-green-600">
+                            KSh {booking.total_amount.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                    {bookings.length === 0 && (
+                      <div className="text-center py-8 text-gray-500">
+                        <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                        <p>No bookings yet</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Quick Actions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-orange-600" />
+                    Quick Actions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <Button className="w-full justify-start" variant="outline">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add New Service
+                    </Button>
+                    <Button className="w-full justify-start" variant="outline">
+                      <Eye className="h-4 w-4 mr-2" />
+                      View All Bookings
+                    </Button>
+                    <Button className="w-full justify-start" variant="outline">
+                      <Settings className="h-4 w-4 mr-2" />
+                      Update Profile
+                    </Button>
+                    <Button className="w-full justify-start" variant="outline">
+                      <DollarSign className="h-4 w-4 mr-2" />
+                      View Earnings
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="bookings">
+            <Card>
+              <CardHeader>
+                <CardTitle>All Bookings</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {bookings.map((booking) => (
+                    <div key={booking.id} className="p-4 border rounded-lg">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h4 className="font-medium">{booking.service_type}</h4>
+                          <p className="text-sm text-gray-600">
+                            {booking.customer?.full_name || 'Unknown Customer'}
+                          </p>
+                        </div>
+                        <Badge className={getStatusColor(booking.status)}>
+                          {booking.status}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-3">
+                        {booking.service_description}
+                      </p>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-500">Date:</span>
+                          <p className="font-medium">
+                            {new Date(booking.booking_date).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Time:</span>
+                          <p className="font-medium">{booking.booking_time}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Location:</span>
+                          <p className="font-medium">{booking.booking_address}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Amount:</span>
+                          <p className="font-medium text-green-600">
+                            KSh {booking.total_amount.toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                      {booking.status === 'pending' && (
+                        <div className="flex gap-2 mt-3">
+                          <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                            Accept
+                          </Button>
+                          <Button size="sm" variant="outline">
+                            Decline
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {bookings.length === 0 && (
+                    <div className="text-center py-12 text-gray-500">
+                      <AlertCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                      <p>No bookings found</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="services">
+            <Card>
+              <CardHeader>
+                <CardTitle>My Services</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12 text-gray-500">
+                  <Settings className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>Service management coming soon</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="profile">
+            <Card>
+              <CardHeader>
+                <CardTitle>Profile Settings</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12 text-gray-500">
+                  <User className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>Profile management coming soon</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
-    </div>
+    </ServicesLayout>
   );
 };
 

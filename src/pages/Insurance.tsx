@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import FrontendLayout from '@/components/layouts/FrontendLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -120,42 +121,35 @@ const Insurance: React.FC = () => {
     <FrontendLayout>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
         {/* Hero Section */}
-        <div className="relative overflow-hidden">
-          <div 
-            className="h-80 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-b-3xl mx-4 mt-4"
-            style={{
-              backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1450101499163-c8848c66ca85?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center'
-            }}
-          >
-            <div className="relative z-10 flex items-center justify-center h-full px-6">
-              <div className="text-center text-white max-w-4xl mx-auto">
-                <Shield className="h-16 w-16 mx-auto mb-6" />
-                <h1 className="text-4xl font-bold mb-6">
-                  Protect What Matters Most
-                </h1>
-                <p className="text-xl mb-8 opacity-90 max-w-3xl mx-auto">
-                  Find and compare comprehensive insurance plans from Kenya's most trusted providers. 
-                  Get the coverage you need with competitive rates and excellent service.
-                </p>
-                <div className="max-w-lg mx-auto">
-                  <div className="relative">
-                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <Input
-                      placeholder="Search insurance plans..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-12 py-4 text-lg bg-white/95 border-0 text-gray-900 placeholder-gray-500 rounded-xl shadow-lg"
-                    />
-                  </div>
+        <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <div className="text-center">
+              <Shield className="h-16 w-16 mx-auto mb-6 text-blue-200" />
+              <h1 className="text-4xl md:text-6xl font-bold mb-6">
+                Protect What Matters Most
+              </h1>
+              <p className="text-xl mb-8 opacity-90 max-w-3xl mx-auto">
+                Find and compare comprehensive insurance plans from Kenya's most trusted providers. 
+                Get the coverage you need with competitive rates and excellent service.
+              </p>
+              
+              {/* Search Bar */}
+              <div className="max-w-2xl mx-auto">
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Input
+                    placeholder="Search insurance plans..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-12 py-4 text-lg bg-white/95 border-0 text-gray-900 placeholder-gray-500 rounded-xl shadow-lg"
+                  />
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 py-12 space-y-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
           {/* Insurance Types */}
           <section>
             <div className="text-center mb-12">
@@ -167,16 +161,16 @@ const Insurance: React.FC = () => {
               {insuranceTypes.map((type) => {
                 const TypeIcon = type.icon;
                 return (
-                  <Card key={type.id} className="group hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 hover:border-blue-300 overflow-hidden h-full flex flex-col">
+                  <Card key={type.id} className="group hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 hover:border-blue-300 overflow-hidden">
                     <div className={`h-2 bg-gradient-to-r ${type.gradient}`}></div>
-                    <CardHeader className="text-center pb-4 flex-grow">
+                    <CardHeader className="text-center pb-4">
                       <div className={`mx-auto p-4 rounded-full bg-gradient-to-r ${type.gradient} w-20 h-20 flex items-center justify-center mb-4 shadow-lg`}>
                         <TypeIcon className="h-10 w-10 text-white" />
                       </div>
                       <CardTitle className="text-2xl text-gray-900 mb-2">{type.title}</CardTitle>
                       <p className="text-base text-gray-600 mb-4">{type.description}</p>
                       
-                      <ul className="space-y-3 text-left">
+                      <ul className="space-y-3 text-left mb-6">
                         {type.features.map((feature, index) => (
                           <li key={index} className="flex items-center gap-3 text-sm">
                             <CheckCircle className={`h-5 w-5 text-${type.color}-500 flex-shrink-0`} />
@@ -215,7 +209,7 @@ const Insurance: React.FC = () => {
             ) : filteredPlans.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filteredPlans.map((plan) => (
-                  <Card key={plan.id} className="hover:shadow-xl transition-all duration-300 border-2 hover:border-blue-300 h-full flex flex-col">
+                  <Card key={plan.id} className="hover:shadow-xl transition-all duration-300 border-2 hover:border-blue-300 flex flex-col">
                     <CardHeader className="pb-4">
                       <div className="flex items-center justify-between mb-2">
                         <Badge variant="outline" className="text-blue-600 border-blue-200">
@@ -255,29 +249,30 @@ const Insurance: React.FC = () => {
                       )}
 
                       <div className="space-y-3 mt-auto">
+                        <Button 
+                          className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white py-3 rounded-xl font-semibold"
+                          onClick={() => handleSelectPlan(plan.id)}
+                        >
+                          Select Plan
+                        </Button>
+                        
                         <div className="grid grid-cols-2 gap-3">
                           <Button 
-                            className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white py-2 rounded-xl font-semibold text-sm"
-                            onClick={() => handleSelectPlan(plan.id)}
-                          >
-                            Select Plan
-                          </Button>
-                          <Button 
                             variant="outline" 
-                            className="border-blue-200 text-blue-600 hover:bg-blue-50 text-sm py-2 rounded-xl"
+                            className="border-blue-200 text-blue-600 hover:bg-blue-50 py-2 rounded-xl"
                             onClick={() => handleComparePlans(plan.id)}
                           >
                             <ArrowLeftRight className="h-4 w-4 mr-1" />
                             Compare
                           </Button>
+                          <Button 
+                            variant="outline" 
+                            className="border-gray-200 text-gray-600 hover:bg-gray-50 py-2 rounded-xl"
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            Details
+                          </Button>
                         </div>
-                        <Button 
-                          variant="outline" 
-                          className="w-full border-gray-200 text-gray-600 hover:bg-gray-50 text-sm py-2 rounded-xl"
-                        >
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Details
-                        </Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -309,28 +304,28 @@ const Insurance: React.FC = () => {
           {/* Features Section */}
           <section>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              <Card className="text-center p-6 hover:shadow-lg transition-shadow h-full">
+              <Card className="text-center p-6 hover:shadow-lg transition-shadow">
                 <Shield className="h-12 w-12 text-blue-600 mx-auto mb-4" />
                 <h3 className="font-semibold text-lg mb-2">Trusted Coverage</h3>
                 <p className="text-gray-600 text-sm">
                   Comprehensive protection from Kenya's leading insurers
                 </p>
               </Card>
-              <Card className="text-center p-6 hover:shadow-lg transition-shadow h-full">
+              <Card className="text-center p-6 hover:shadow-lg transition-shadow">
                 <Clock className="h-12 w-12 text-green-600 mx-auto mb-4" />
                 <h3 className="font-semibold text-lg mb-2">Quick Claims</h3>
                 <p className="text-gray-600 text-sm">
                   Fast and efficient claims processing
                 </p>
               </Card>
-              <Card className="text-center p-6 hover:shadow-lg transition-shadow h-full">
+              <Card className="text-center p-6 hover:shadow-lg transition-shadow">
                 <Phone className="h-12 w-12 text-orange-600 mx-auto mb-4" />
                 <h3 className="font-semibold text-lg mb-2">24/7 Support</h3>
                 <p className="text-gray-600 text-sm">
                   Round-the-clock customer support
                 </p>
               </Card>
-              <Card className="text-center p-6 hover:shadow-lg transition-shadow h-full">
+              <Card className="text-center p-6 hover:shadow-lg transition-shadow">
                 <Award className="h-12 w-12 text-purple-600 mx-auto mb-4" />
                 <h3 className="font-semibold text-lg mb-2">Expert Advice</h3>
                 <p className="text-gray-600 text-sm">

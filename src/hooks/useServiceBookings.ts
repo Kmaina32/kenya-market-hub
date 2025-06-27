@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -29,6 +28,65 @@ export interface ServiceBooking {
     business_name?: string;
   };
 }
+
+// Create service booking with proper provider validation
+export const useCreateServiceBooking = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (bookingData: {
+      service_type: string;
+      service_description: string;
+      booking_date: string;
+      booking_time: string;
+      booking_address: string;
+      total_amount: number;
+      provider_id?: string;
+    }) => {
+      if (!user) throw new Error('User not authenticated');
+
+      // If no provider_id is provided, create booking without provider
+      const booking = {
+        customer_id: user.id,
+        provider_id: bookingData.provider_id || null,
+        service_type: bookingData.service_type,
+        service_description: bookingData.service_description,
+        booking_date: bookingData.booking_date,
+        booking_time: bookingData.booking_time,
+        booking_address: bookingData.booking_address,
+        total_amount: bookingData.total_amount,
+        status: 'pending' as const,
+        payment_status: 'pending' as const
+      };
+
+      const { data, error } = await supabase
+        .from('service_bookings')
+        .insert(booking)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-bookings'] });
+      toast({
+        title: 'Booking Created',
+        description: 'Your service booking has been created successfully.'
+      });
+    },
+    onError: (error: any) => {
+      console.error('Booking error:', error);
+      toast({
+        title: 'Booking Failed',
+        description: 'Failed to create booking. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  });
+};
 
 // Get user's bookings (as customer)
 export const useMyBookings = () => {

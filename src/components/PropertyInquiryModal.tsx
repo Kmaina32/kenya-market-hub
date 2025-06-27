@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -37,8 +38,18 @@ const PropertyInquiryModal: React.FC<PropertyInquiryModalProps> = ({
     e.preventDefault();
     if (!property) return;
 
+    // Ensure we have a valid UUID for property_id
+    const propertyId = property.id;
+    console.log('Creating property inquiry:', {
+      property_id: propertyId,
+      inquirer_name: formData.inquirer_name,
+      inquirer_email: formData.inquirer_email,
+      inquirer_phone: formData.inquirer_phone,
+      message: formData.message
+    });
+
     createInquiry.mutate({
-      property_id: property.id,
+      property_id: propertyId,
       inquirer_name: formData.inquirer_name,
       inquirer_email: formData.inquirer_email,
       inquirer_phone: formData.inquirer_phone,
