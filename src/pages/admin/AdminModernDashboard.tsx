@@ -5,14 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle, Activity, Clock, TrendingUp, Users, Eye, DollarSign, Package, Car, Building } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useAdminStats } from '@/hooks/useAdminStats';
+import { useAdminStats } from '@/hooks/useAdminStatsReal';
 import AdminLayout from '@/components/admin/AdminLayout';
 import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
 import BulkOperations from '@/components/admin/BulkOperations';
 import NotificationCenter from '@/components/admin/NotificationCenter';
 
 const AdminModernDashboard = () => {
-  const { stats, loading, error } = useAdminStats();
+  const { data: stats, isLoading: loading, error } = useAdminStats();
 
   if (error) {
     return (
