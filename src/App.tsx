@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -43,6 +42,7 @@ import Events from './pages/Events';
 import CityLandingPage from '@/components/seo/CityLandingPage';
 import AdvancedSitemapGenerator from '@/components/seo/AdvancedSitemapGenerator';
 import PerformanceOptimizer from '@/components/seo/PerformanceOptimizer';
+import ServicesDashboard from './pages/ServicesDashboard';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -78,6 +78,7 @@ function App() {
                 <Route path="/shop/*" element={<Shop />} />
                 <Route path="/rides/*" element={<Rides />} />
                 <Route path="/services/*" element={<Services />} />
+                <Route path="/services-dashboard" element={<ServicesDashboard />} />
                 <Route path="/service-provider-hub" element={<ServiceProviderHub />} />
                 <Route path="/service-hub" element={<ServiceHubUnified />} />
                 <Route path="/chat-forums" element={<ChatForums />} />
