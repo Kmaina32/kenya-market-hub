@@ -18,12 +18,13 @@ import {
   AlertCircle,
   Eye
 } from 'lucide-react';
-import { useProviderBookings } from '@/hooks/useServiceBookings';
+import { useProviderBookings, useUpdateBookingStatus } from '@/hooks/useServiceBookings';
 import { useAuth } from '@/contexts/AuthContext';
 
 const ServiceProviderHub: React.FC = () => {
   const { user } = useAuth();
   const { data: bookings = [], isLoading } = useProviderBookings();
+  const updateBookingStatus = useUpdateBookingStatus();
   const [selectedTab, setSelectedTab] = useState('dashboard');
 
   const pendingBookings = bookings.filter(booking => booking.status === 'pending');
@@ -70,6 +71,22 @@ const ServiceProviderHub: React.FC = () => {
       case 'cancelled': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const handleAcceptBooking = (bookingId: string) => {
+    updateBookingStatus.mutate({
+      bookingId,
+      status: 'confirmed',
+      notes: 'Booking accepted by service provider'
+    });
+  };
+
+  const handleDeclineBooking = (bookingId: string) => {
+    updateBookingStatus.mutate({
+      bookingId,
+      status: 'rejected',
+      notes: 'Booking declined by service provider'
+    });
   };
 
   if (isLoading) {
@@ -271,10 +288,20 @@ const ServiceProviderHub: React.FC = () => {
                       </div>
                       {booking.status === 'pending' && (
                         <div className="flex gap-2 mt-3">
-                          <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                          <Button 
+                            size="sm" 
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={() => handleAcceptBooking(booking.id)}
+                            disabled={updateBookingStatus.isPending}
+                          >
                             Accept
                           </Button>
-                          <Button size="sm" variant="outline">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleDeclineBooking(booking.id)}
+                            disabled={updateBookingStatus.isPending}
+                          >
                             Decline
                           </Button>
                         </div>
