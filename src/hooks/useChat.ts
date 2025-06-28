@@ -1,86 +1,127 @@
 
-import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
-export const useChat = () => {
+export interface ChatConversation {
+  id: string;
+  participant1_id: string;
+  participant2_id: string;
+  created_at: string;
+  last_message?: string;
+  last_message_at?: string;
+  participant1?: {
+    id: string;
+    full_name: string;
+    avatar_url?: string;
+    email: string;
+  };
+  participant2?: {
+    id: string;
+    full_name: string;
+    avatar_url?: string;
+    email: string;
+  };
+}
+
+// Get user's conversations
+export const useConversations = () => {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['conversations', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+
+      console.log('Fetching conversations...');
+      
+      // Get conversations where user is a participant
+      const { data: conversations, error } = await supabase
+        .from('chat_conversations')
+        .select('*')
+        .or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`)
+        .order('last_message_at', { ascending: false, nullsFirst: false });
+
+      if (error) {
+        console.error('Error fetching conversations:', error);
+        throw error;
+      }
+
+      if (!conversations || conversations.length === 0) return [];
+
+      // Get unique participant IDs (excluding current user)
+      const participantIds = new Set<string>();
+      conversations.forEach(conv => {
+        if (conv.participant1_id !== user.id) participantIds.add(conv.participant1_id);
+        if (conv.participant2_id !== user.id) participantIds.add(conv.participant2_id);
+      });
+
+      // Fetch participant profiles
+      let participantProfiles: any[] = [];
+      if (participantIds.size > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url, email')
+          .in('id', Array.from(participantIds));
+        participantProfiles = profiles || [];
+      }
+
+      // Combine the data
+      return conversations.map(conv => ({
+        ...conv,
+        participant1: participantProfiles.find(p => p.id === conv.participant1_id),
+        participant2: participantProfiles.find(p => p.id === conv.participant2_id)
+      })) as ChatConversation[];
+    },
+    enabled: !!user,
+  });
+};
+
+// Create a new conversation
+export const useCreateConversation = () => {
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  // Get or create conversation with improved error handling
-  const createOrGetConversation = async (otherUserId: string) => {
-    if (!user) throw new Error('User not authenticated');
+  return useMutation({
+    mutationFn: async (otherUserId: string) => {
+      if (!user) throw new Error('User not authenticated');
 
-    // First, try to find existing conversation
-    const { data: existingConversation, error: findError } = await supabase
-      .from('chat_conversations')
-      .select('*')
-      .or(`and(participant1_id.eq.${user.id},participant2_id.eq.${otherUserId}),and(participant1_id.eq.${otherUserId},participant2_id.eq.${user.id})`)
-      .maybeSingle();
+      // Check if conversation already exists
+      const { data: existing } = await supabase
+        .from('chat_conversations')
+        .select('id')
+        .or(`and(participant1_id.eq.${user.id},participant2_id.eq.${otherUserId}),and(participant1_id.eq.${otherUserId},participant2_id.eq.${user.id})`)
+        .single();
 
-    if (findError) {
-      console.error('Error finding conversation:', findError);
-      throw findError;
-    }
-
-    if (existingConversation) {
-      return existingConversation;
-    }
-
-    // If no existing conversation, create a new one with conflict handling
-    const conversationData = {
-      participant1_id: user.id,
-      participant2_id: otherUserId,
-    };
-
-    const { data: newConversation, error: createError } = await supabase
-      .from('chat_conversations')
-      .insert([conversationData])
-      .select()
-      .single();
-
-    if (createError) {
-      // If we get a duplicate key error, try to fetch the conversation again
-      if (createError.code === '23505') {
-        const { data: retryConversation, error: retryError } = await supabase
-          .from('chat_conversations')
-          .select('*')
-          .or(`and(participant1_id.eq.${user.id},participant2_id.eq.${otherUserId}),and(participant1_id.eq.${otherUserId},participant2_id.eq.${user.id})`)
-          .single();
-
-        if (retryError) throw retryError;
-        return retryConversation;
+      if (existing) {
+        return existing;
       }
-      throw createError;
-    }
 
-    return newConversation;
-  };
+      // Create new conversation
+      const { data, error } = await supabase
+        .from('chat_conversations')
+        .insert({
+          participant1_id: user.id,
+          participant2_id: otherUserId
+        })
+        .select()
+        .single();
 
-  const startConversationMutation = useMutation({
-    mutationFn: createOrGetConversation,
-    onSuccess: (data) => {
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      toast({
-        title: 'Conversation Started',
-        description: 'You can now chat with this user.'
-      });
     },
     onError: (error: any) => {
-      console.error('Error starting conversation:', error);
+      console.error('Conversation creation error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to start conversation. Please try again.',
-        variant: 'destructive'
+        description: 'Failed to create conversation. Please try again.',
+        variant: 'destructive',
       });
-    }
+    },
   });
-
-  return {
-    startConversation: startConversationMutation.mutate,
-    isStartingConversation: startConversationMutation.isPending
-  };
 };
