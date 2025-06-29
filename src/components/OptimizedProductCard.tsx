@@ -1,189 +1,176 @@
 
-import React, { memo } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, Heart, Star } from 'lucide-react';
-import LazyImage from './LazyImage';
-import ProductPreviewModal from './ProductPreviewModal';
-import { useCart } from '@/contexts/CartContext';
-import { useWishlist } from '@/hooks/useWishlist';
-import { useAuth } from '@/contexts/AuthContext';
-import { cn } from '@/lib/utils';
+import { Heart, ShoppingCart, Star, Eye } from 'lucide-react';
+import { useCartContext } from '@/contexts/CartContext';
+import { toast } from 'sonner';
 
 interface Product {
   id: string;
   name: string;
   price: number;
   image_url?: string;
-  description?: string;
-  category?: string;
+  category: string;
   rating?: number;
   reviews_count?: number;
-  discount_percentage?: number;
+  in_stock?: boolean;
+  vendor?: string;
+  description?: string;
 }
 
 interface OptimizedProductCardProps {
   product: Product;
-  className?: string;
-  showQuickActions?: boolean;
+  onViewDetails?: (product: Product) => void;
 }
 
-const OptimizedProductCard = memo<OptimizedProductCardProps>(({ 
+const OptimizedProductCard: React.FC<OptimizedProductCardProps> = ({ 
   product, 
-  className,
-  showQuickActions = true 
+  onViewDetails 
 }) => {
-  const { user } = useAuth();
-  const { addToCart } = useCart();
-  const { addToWishlist, isInWishlist } = useWishlist();
-  const [showPreview, setShowPreview] = React.useState(false);
+  const { addToCart, isLoading } = useCartContext();
+  const [isWishlisted, setIsWishlisted] = useState(false);
 
-  const discountedPrice = product.discount_percentage 
-    ? product.price * (1 - product.discount_percentage / 100)
-    : product.price;
-
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: discountedPrice,
-      image: product.image_url || '/placeholder.svg',
-      vendor: 'Unknown Vendor'
-    });
+    
+    if (!product.in_stock) {
+      toast.error('This product is out of stock');
+      return;
+    }
+
+    try {
+      addToCart(product.id, 1);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    }
   };
 
-  const handleToggleWishlist = (e: React.MouseEvent) => {
+  const handleWishlistToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
-    addToWishlist(product);
+    setIsWishlisted(!isWishlisted);
+    toast.success(isWishlisted ? 'Removed from wishlist' : 'Added to wishlist');
   };
 
-  const handleCardClick = () => {
-    setShowPreview(true);
+  const handleViewDetails = () => {
+    if (onViewDetails) {
+      onViewDetails(product);
+    }
   };
-
-  const renderStars = (rating: number) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star
-        key={i}
-        className={cn(
-          'h-3 w-3',
-          i < Math.floor(rating) 
-            ? 'text-yellow-500 fill-yellow-500' 
-            : 'text-gray-300'
-        )}
-      />
-    ));
-  };
-
-  const productIsInWishlist = isInWishlist(product.id);
 
   return (
-    <>
-      <Card className={cn(
-        'group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer border-orange-100 hover:border-orange-200',
-        className
-      )} onClick={handleCardClick}>
-        <CardContent className="p-4">
-          <div className="relative">
-            <div className="aspect-square mb-3 overflow-hidden rounded-lg bg-gray-100">
-              <LazyImage
-                src={product.image_url || '/placeholder.svg'}
-                alt={product.name}
-                className="w-full h-full group-hover:scale-105 transition-transform duration-300"
-              />
+    <Card className="group hover:shadow-lg transition-all duration-300 border-orange-100 hover:border-orange-200 bg-white rounded-2xl overflow-hidden">
+      <div className="relative">
+        <div className="aspect-square bg-gradient-to-br from-orange-50 to-orange-100 overflow-hidden">
+          {product.image_url ? (
+            <img
+              src={product.image_url}
+              alt={product.name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <ShoppingCart className="h-12 w-12 text-orange-300" />
             </div>
-            
-            {product.discount_percentage && (
-              <Badge className="absolute top-2 left-2 bg-red-500 text-white">
-                -{product.discount_percentage}%
-              </Badge>
-            )}
-            
-            {showQuickActions && (
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col gap-1">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="h-8 w-8 p-0 bg-white/90 hover:bg-white"
-                  onClick={handleToggleWishlist}
-                >
-                  <Heart 
-                    className={cn(
-                      'h-4 w-4',
-                      productIsInWishlist ? 'fill-red-500 text-red-500' : ''
-                    )} 
+          )}
+        </div>
+        
+        {/* Wishlist button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="absolute top-2 right-2 w-8 h-8 p-0 bg-white/80 hover:bg-white rounded-full"
+          onClick={handleWishlistToggle}
+        >
+          <Heart 
+            className={`h-4 w-4 ${
+              isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-500'
+            }`} 
+          />
+        </Button>
+
+        {/* Stock status badge */}
+        {!product.in_stock && (
+          <Badge 
+            variant="destructive" 
+            className="absolute top-2 left-2 text-xs"
+          >
+            Out of Stock
+          </Badge>
+        )}
+      </div>
+
+      <CardContent className="p-4">
+        <div className="space-y-2">
+          {/* Category badge */}
+          <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 text-xs">
+            {product.category}
+          </Badge>
+
+          {/* Product name */}
+          <h3 className="font-semibold text-gray-900 line-clamp-2 text-sm group-hover:text-orange-600 transition-colors">
+            {product.name}
+          </h3>
+
+          {/* Vendor */}
+          {product.vendor && (
+            <p className="text-xs text-gray-500">by {product.vendor}</p>
+          )}
+
+          {/* Rating */}
+          {product.rating && (
+            <div className="flex items-center space-x-1">
+              <div className="flex items-center">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`h-3 w-3 ${
+                      i < Math.floor(product.rating || 0)
+                        ? 'fill-yellow-400 text-yellow-400'
+                        : 'text-gray-300'
+                    }`}
                   />
-                </Button>
+                ))}
               </div>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <h3 className="font-semibold text-sm line-clamp-2 min-h-[2.5rem]">
-              {product.name}
-            </h3>
-            
-            {product.description && (
-              <p className="text-xs text-gray-600 line-clamp-2">
-                {product.description}
-              </p>
-            )}
-
-            {product.rating && product.reviews_count && (
-              <div className="flex items-center gap-2">
-                <div className="flex items-center">
-                  {renderStars(product.rating)}
-                </div>
-                <span className="text-xs text-gray-500">
-                  ({product.reviews_count})
-                </span>
-              </div>
-            )}
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-orange-600">
-                  KSh {discountedPrice.toLocaleString()}
-                </span>
-                {product.discount_percentage && (
-                  <span className="text-xs text-gray-500 line-through">
-                    KSh {product.price.toLocaleString()}
-                  </span>
-                )}
-              </div>
-              
-              {showQuickActions && (
-                <Button
-                  size="sm"
-                  onClick={handleAddToCart}
-                  className="h-8 px-3 text-xs bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
-                >
-                  <ShoppingCart className="h-3 w-3 mr-1" />
-                  Add
-                </Button>
-              )}
+              <span className="text-xs text-gray-500">
+                ({product.reviews_count || 0})
+              </span>
             </div>
+          )}
 
-            {product.category && (
-              <Badge variant="outline" className="text-xs border-orange-200 text-orange-600">
-                {product.category}
-              </Badge>
-            )}
+          {/* Price */}
+          <div className="flex items-center justify-between">
+            <span className="text-lg font-bold text-orange-600">
+              KSH {Number(product.price).toLocaleString()}
+            </span>
           </div>
-        </CardContent>
-      </Card>
 
-      <ProductPreviewModal
-        open={showPreview}
-        onOpenChange={setShowPreview}
-        product={product}
-      />
-    </>
+          {/* Action buttons */}
+          <div className="flex space-x-2 pt-2">
+            <Button
+              onClick={handleViewDetails}
+              variant="outline"
+              size="sm"
+              className="flex-1 border-orange-200 text-orange-600 hover:bg-orange-50 text-xs"
+            >
+              <Eye className="h-3 w-3 mr-1" />
+              View
+            </Button>
+            <Button
+              onClick={handleAddToCart}
+              disabled={!product.in_stock || isLoading}
+              size="sm"
+              className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white text-xs"
+            >
+              <ShoppingCart className="h-3 w-3 mr-1" />
+              {isLoading ? 'Adding...' : 'Add'}
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
-});
-
-OptimizedProductCard.displayName = 'OptimizedProductCard';
+};
 
 export default OptimizedProductCard;

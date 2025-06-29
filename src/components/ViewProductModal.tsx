@@ -1,113 +1,87 @@
 
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Star } from 'lucide-react';
 
-const ViewProductModal = ({ open, onOpenChange, product }) => {
+interface ViewProductModalProps {
+  open: boolean;
+  product: any;
+  onOpenChange: (open: boolean) => void;
+}
+
+const ViewProductModal: React.FC<ViewProductModalProps> = ({ 
+  open, 
+  product, 
+  onOpenChange 
+}) => {
   if (!product) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Product Details</DialogTitle>
+          <DialogTitle>{product.name}</DialogTitle>
+          <DialogDescription>Product Details</DialogDescription>
         </DialogHeader>
+        
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <strong>Name:</strong> {product.name}
+          {product.image_url && (
+            <div className="w-full h-48 bg-gray-100 rounded-lg overflow-hidden">
+              <img 
+                src={product.image_url} 
+                alt={product.name}
+                className="w-full h-full object-cover"
+              />
             </div>
-            <div>
-              <strong>Category:</strong> 
-              <Badge variant="outline" className="ml-2">{product.category}</Badge>
-            </div>
-          </div>
+          )}
           
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <strong>Price:</strong> KSH {Number(product.price).toLocaleString()}
-              {product.original_price && (
-                <span className="text-gray-500 line-through ml-2">
-                  KSH {Number(product.original_price).toLocaleString()}
-                </span>
-              )}
+              <p className="text-sm font-medium text-gray-500">Category</p>
+              <Badge variant="outline">{product.category}</Badge>
             </div>
+            
             <div>
-              <strong>Stock:</strong> 
-              <Badge variant={product.in_stock ? 'default' : 'destructive'} className="ml-2">
+              <p className="text-sm font-medium text-gray-500">Brand</p>
+              <p className="text-sm">{product.brand || 'N/A'}</p>
+            </div>
+            
+            <div>
+              <p className="text-sm font-medium text-gray-500">Price</p>
+              <p className="text-lg font-bold text-green-600">
+                KSH {Number(product.price).toLocaleString()}
+              </p>
+            </div>
+            
+            <div>
+              <p className="text-sm font-medium text-gray-500">Stock</p>
+              <Badge variant={product.in_stock ? 'default' : 'destructive'}>
                 {product.in_stock ? `${product.stock_quantity} in stock` : 'Out of stock'}
               </Badge>
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+            
             <div>
-              <strong>Condition:</strong> 
-              <Badge variant="secondary" className="ml-2">{product.condition || 'new'}</Badge>
+              <p className="text-sm font-medium text-gray-500">Rating</p>
+              <p className="text-sm">{product.rating}/5 ({product.reviews_count} reviews)</p>
             </div>
+            
             <div>
-              <strong>Rating:</strong>
-              <div className="flex items-center ml-2">
-                {[...Array(5)].map((_, i) => (
-                  <Star 
-                    key={i} 
-                    className={`h-4 w-4 ${
-                      i < Math.floor(product.rating || 0) 
-                        ? 'fill-yellow-400 text-yellow-400' 
-                        : 'text-gray-300'
-                    }`} 
-                  />
-                ))}
-                <span className="text-sm text-gray-600 ml-1">
-                  ({product.reviews_count || 0} reviews)
-                </span>
-              </div>
+              <p className="text-sm font-medium text-gray-500">Created</p>
+              <p className="text-sm">{new Date(product.created_at).toLocaleDateString()}</p>
             </div>
           </div>
-
-          {(product.brand || product.vendor) && (
-            <div className="grid grid-cols-2 gap-4">
-              {product.brand && (
-                <div>
-                  <strong>Brand:</strong> {product.brand}
-                </div>
-              )}
-              {product.vendor && (
-                <div>
-                  <strong>Vendor:</strong> {product.vendor}
-                </div>
-              )}
-            </div>
-          )}
-
-          {product.location && (
-            <div>
-              <strong>Location:</strong> 📍 {product.location}
-            </div>
-          )}
-
+          
           {product.description && (
             <div>
-              <strong>Description:</strong>
-              <p className="mt-2 text-gray-700 bg-gray-50 p-3 rounded-lg">{product.description}</p>
+              <p className="text-sm font-medium text-gray-500 mb-2">Description</p>
+              <p className="text-sm text-gray-700">{product.description}</p>
             </div>
           )}
-
-          <div className="text-sm text-gray-500">
-            <strong>Created:</strong> {new Date(product.created_at).toLocaleDateString()}
-            {product.updated_at !== product.created_at && (
-              <span className="ml-4">
-                <strong>Updated:</strong> {new Date(product.updated_at).toLocaleDateString()}
-              </span>
-            )}
-          </div>
         </div>
+        
         <DialogFooter>
-          <Button onClick={() => onOpenChange(false)} className="bg-blue-600 hover:bg-blue-700">
-            Close
-          </Button>
+          <Button onClick={() => onOpenChange(false)}>Close</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

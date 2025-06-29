@@ -1,7 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Product } from '@/types/product';
 
 interface UseProductsParams {
@@ -40,8 +40,8 @@ export const useProducts = (params: UseProductsParams = {}) => {
       // Transform data to include required fields with defaults
       return (data || []).map(item => ({
         ...item,
-        rating: 4, // Default rating
-        reviews_count: 0 // Default reviews count
+        rating: item.rating || 4, // Use existing rating or default
+        reviews_count: item.reviews_count || 0 // Use existing count or default
       })) as Product[];
     }
   });
@@ -49,7 +49,6 @@ export const useProducts = (params: UseProductsParams = {}) => {
 
 export const useCreateProduct = () => {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
   
   return useMutation({
     mutationFn: async (product: Omit<Product, 'id' | 'created_at' | 'rating' | 'reviews_count'>) => {
@@ -70,17 +69,57 @@ export const useCreateProduct = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      toast({
-        title: 'Product created',
-        description: 'Your product has been added successfully.',
-      });
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      toast.success('Product created successfully');
     },
     onError: (error: any) => {
-      toast({
-        title: 'Error creating product',
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast.error(`Error creating product: ${error.message}`);
+    }
+  });
+};
+
+export const useUpdateProduct = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Product> }) => {
+      const { error } = await supabase
+        .from('products')
+        .update(updates)
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      toast.success('Product updated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(`Error updating product: ${error.message}`);
+    }
+  });
+};
+
+export const useDeleteProduct = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      toast.success('Product deleted successfully');
+    },
+    onError: (error: any) => {
+      toast.error(`Error deleting product: ${error.message}`);
     }
   });
 };

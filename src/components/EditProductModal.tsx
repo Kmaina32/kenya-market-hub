@@ -1,294 +1,188 @@
 
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { useProductImages, useUploadProductImages } from '@/hooks/useProductImages';
-import ImageUpload from './ImageUpload';
-import { Trash2 } from 'lucide-react';
+import { useUpdateProduct } from '@/hooks/useProducts';
 
 interface EditProductModalProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
   product: any;
+  onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
 }
 
-const EditProductModal = ({ open, onOpenChange, product, onSuccess }: EditProductModalProps) => {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const { data: productImages } = useProductImages(product?.id);
-  const uploadImages = useUploadProductImages();
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  
-  // Form state
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState('');
-  const [price, setPrice] = useState('');
-  const [originalPrice, setOriginalPrice] = useState('');
-  const [stockQuantity, setStockQuantity] = useState('');
-  const [inStock, setInStock] = useState(true);
-  const [description, setDescription] = useState('');
-  const [condition, setCondition] = useState('new');
-  const [location, setLocation] = useState('');
-  const [brand, setBrand] = useState('');
-  const [vendor, setVendor] = useState('');
-  
+const EditProductModal: React.FC<EditProductModalProps> = ({ 
+  open, 
+  product, 
+  onOpenChange, 
+  onSuccess 
+}) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    price: '',
+    category: '',
+    brand: '',
+    stock_quantity: '',
+    image_url: ''
+  });
+
+  const updateProduct = useUpdateProduct();
+
   useEffect(() => {
     if (product) {
-      setName(product.name || '');
-      setCategory(product.category || '');
-      setPrice(product.price ? product.price.toString() : '');
-      setOriginalPrice(product.original_price ? product.original_price.toString() : '');
-      setStockQuantity(product.stock_quantity ? product.stock_quantity.toString() : '');
-      setInStock(product.in_stock ?? true);
-      setDescription(product.description || '');
-      setCondition(product.condition || 'new');
-      setLocation(product.location || '');
-      setBrand(product.brand || '');
-      setVendor(product.vendor || '');
+      setFormData({
+        name: product.name || '',
+        description: product.description || '',
+        price: product.price?.toString() || '',
+        category: product.category || '',
+        brand: product.brand || '',
+        stock_quantity: product.stock_quantity?.toString() || '',
+        image_url: product.image_url || ''
+      });
     }
   }, [product]);
 
-  const updateProduct = useMutation({
-    mutationFn: async () => {
-      const updateData = {
-        name,
-        category,
-        price: Number(price),
-        original_price: originalPrice ? Number(originalPrice) : null,
-        stock_quantity: Number(stockQuantity),
-        in_stock: inStock,
-        description,
-        condition,
-        location,
-        brand,
-        vendor
-      };
-
-      const { error } = await supabase
-        .from('products')
-        .update(updateData)
-        .eq('id', product.id);
-      
-      if (error) throw error;
-
-      // Upload new images if any were selected
-      if (selectedFiles.length > 0) {
-        await uploadImages.mutateAsync({
-          productId: product.id,
-          files: selectedFiles,
-          isPrimary: !productImages || productImages.length === 0
-        });
-      }
-    },
-    onSuccess: () => {
-      toast({ title: 'Product updated successfully' });
-      setSelectedFiles([]);
-      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      onSuccess();
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Error updating product',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-
-  const deleteImage = useMutation({
-    mutationFn: async (imageId: string) => {
-      const { error } = await supabase
-        .from('product_images')
-        .delete()
-        .eq('id', imageId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast({ title: 'Image deleted successfully' });
-      queryClient.invalidateQueries({ queryKey: ['product-images', product?.id] });
-    }
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateProduct.mutate();
-  };
-
-  const handleFilesSelected = (files: File[]) => {
-    setSelectedFiles(files);
-    toast({
-      title: `${files.length} image(s) selected`,
-      description: "Images will be uploaded when you save the product"
-    });
+    
+    if (!product) return;
+    
+    try {
+      await updateProduct.mutateAsync({
+        id: product.id,
+        updates: {
+          ...formData,
+          price: parseFloat(formData.price),
+          stock_quantity: parseInt(formData.stock_quantity) || 0,
+          in_stock: parseInt(formData.stock_quantity) > 0
+        }
+      });
+      
+      onSuccess();
+    } catch (error) {
+      console.error('Error updating product:', error);
+    }
   };
 
   const categories = [
-    'Electronics & Tech',
-    'Fashion & Apparel', 
-    'Cosmetics & Beauty',
-    'Auto Parts & Accessories',
+    'Electronics',
+    'Clothing',
+    'Books',
     'Home & Garden',
-    'Sports & Recreation',
-    'Books & Media',
-    'Health & Wellness'
+    'Sports',
+    'Automotive',
+    'Beauty',
+    'Toys',
+    'Food',
+    'Other'
   ];
-
-  const conditions = ['new', 'like new', 'good', 'fair', 'poor'];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Edit Product</DialogTitle>
+          <DialogDescription>
+            Update product information
+          </DialogDescription>
         </DialogHeader>
+        
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="name">Product Name</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              required
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              rows={3}
+            />
+          </div>
+          
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="name">Name *</Label>
-              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
+              <Label htmlFor="price">Price (KSH)</Label>
+              <Input
+                id="price"
+                type="number"
+                step="0.01"
+                value={formData.price}
+                onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                required
+              />
             </div>
+            
             <div>
-              <Label htmlFor="category">Category *</Label>
-              <Select value={category} onValueChange={setCategory}>
+              <Label htmlFor="stock">Stock Quantity</Label>
+              <Input
+                id="stock"
+                type="number"
+                value={formData.stock_quantity}
+                onChange={(e) => setFormData(prev => ({ ...prev, stock_quantity: e.target.value }))}
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="category">Category</Label>
+              <Select 
+                value={formData.category} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+                required
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((cat) => (
+                  {categories.map(cat => (
                     <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="price">Price (KSH) *</Label>
-              <Input id="price" type="number" value={price} onChange={(e) => setPrice(e.target.value)} required />
-            </div>
-            <div>
-              <Label htmlFor="originalPrice">Original Price (KSH)</Label>
-              <Input id="originalPrice" type="number" value={originalPrice} onChange={(e) => setOriginalPrice(e.target.value)} />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="stockQuantity">Stock Quantity *</Label>
-              <Input id="stockQuantity" type="number" value={stockQuantity} onChange={(e) => setStockQuantity(e.target.value)} required />
-            </div>
-            <div>
-              <Label htmlFor="condition">Condition</Label>
-              <Select value={condition} onValueChange={setCondition}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select condition" />
-                </SelectTrigger>
-                <SelectContent>
-                  {conditions.map((cond) => (
-                    <SelectItem key={cond} value={cond}>{cond}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+            
             <div>
               <Label htmlFor="brand">Brand</Label>
-              <Input id="brand" value={brand} onChange={(e) => setBrand(e.target.value)} />
+              <Input
+                id="brand"
+                value={formData.brand}
+                onChange={(e) => setFormData(prev => ({ ...prev, brand: e.target.value }))}
+              />
             </div>
-            <div>
-              <Label htmlFor="vendor">Vendor</Label>
-              <Input id="vendor" value={vendor} onChange={(e) => setVendor(e.target.value)} />
-            </div>
           </div>
-
+          
           <div>
-            <Label htmlFor="location">Location</Label>
-            <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g., Nairobi, Mombasa" />
-          </div>
-
-          <div>
-            <Label htmlFor="description">Description</Label>
-            <Textarea 
-              id="description" 
-              value={description} 
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe the product..."
-              rows={3}
+            <Label htmlFor="image_url">Image URL</Label>
+            <Input
+              id="image_url"
+              type="url"
+              value={formData.image_url}
+              onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
+              placeholder="https://example.com/image.jpg"
             />
           </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="inStock"
-              checked={inStock}
-              onChange={(e) => setInStock(e.target.checked)}
-              className="cursor-pointer"
-            />
-            <Label htmlFor="inStock" className="cursor-pointer">In Stock</Label>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Current Images</Label>
-            {productImages && productImages.length > 0 ? (
-              <div className="grid grid-cols-3 gap-2">
-                {productImages.map((image) => (
-                  <div key={image.id} className="relative group">
-                    <img 
-                      src={image.image_url} 
-                      alt="Product" 
-                      className="w-full h-20 object-cover rounded border"
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 p-1 h-6 w-6"
-                      onClick={() => deleteImage.mutate(image.id)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                    {image.is_primary && (
-                      <span className="absolute bottom-1 left-1 bg-blue-500 text-white text-xs px-1 rounded">
-                        Primary
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-gray-500">No images uploaded</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label>Add New Images</Label>
-            <ImageUpload 
-              onFilesSelected={handleFilesSelected}
-              maxFiles={5}
-            />
-            {selectedFiles.length > 0 && (
-              <p className="text-sm text-gray-600">
-                {selectedFiles.length} new image(s) selected
-              </p>
-            )}
-          </div>
-
+          
           <DialogFooter>
-            <Button type="submit" disabled={updateProduct.isPending} className="bg-blue-600 hover:bg-blue-700">
-              {updateProduct.isPending ? 'Saving...' : 'Save Changes'}
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={updateProduct.isPending}>
+              {updateProduct.isPending ? 'Updating...' : 'Update Product'}
             </Button>
           </DialogFooter>
         </form>

@@ -1,25 +1,25 @@
 
-import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 export interface Notification {
   id: string;
-  user_id: string;
   title: string;
   message: string;
-  type: 'info' | 'success' | 'warning' | 'error' | 'order' | 'ride' | 'property';
+  type: 'info' | 'success' | 'warning' | 'error';
   is_read: boolean;
-  action_url?: string;
-  metadata?: Record<string, any>;
   created_at: string;
+  action_url?: string;
+  metadata?: any;
 }
 
 export const useNotifications = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  // Fetch notifications for current user
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ['notifications', user?.id],
     queryFn: async () => {
@@ -31,13 +31,15 @@ export const useNotifications = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(50);
-
+      
       if (error) throw error;
-      return data || [];
+      return data as Notification[];
     },
-    enabled: !!user
+    enabled: !!user,
+    refetchInterval: 30000 // Refetch every 30 seconds
   });
 
+  // Mark notification as read
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
       const { error } = await supabase
@@ -48,10 +50,11 @@ export const useNotifications = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', user?.id] });
     }
   });
 
+  // Mark all notifications as read
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {
       if (!user) return;
@@ -65,10 +68,11 @@ export const useNotifications = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', user?.id] });
     }
   });
 
+  // Delete notification
   const deleteNotificationMutation = useMutation({
     mutationFn: async (notificationId: string) => {
       const { error } = await supabase
@@ -79,47 +83,43 @@ export const useNotifications = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', user?.id] });
     }
   });
-
-  // Real-time subscription for new notifications
-  useEffect(() => {
-    if (!user) return;
-
-    const channel = supabase
-      .channel('notifications')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
-          queryClient.invalidateQueries({ queryKey: ['notifications'] });
-          console.log('New notification received:', payload.new);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user, queryClient]);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
   return {
     notifications,
-    isLoading,
     unreadCount,
-    markAsRead: markAsReadMutation.mutate,
-    markAllAsRead: markAllAsReadMutation.mutate,
-    deleteNotification: deleteNotificationMutation.mutate,
-    isMarkingAsRead: markAsReadMutation.isPending,
-    isMarkingAllAsRead: markAllAsReadMutation.isPending,
-    isDeletingNotification: deleteNotificationMutation.isPending
+    isLoading,
+    markAsRead: (id: string) => markAsReadMutation.mutate(id),
+    markAllAsRead: () => markAllAsReadMutation.mutate(),
+    deleteNotification: (id: string) => deleteNotificationMutation.mutate(id)
   };
+};
+
+// Helper function to create notifications
+export const createNotification = async (
+  userId: string,
+  title: string,
+  message: string,
+  type: 'info' | 'success' | 'warning' | 'error' = 'info',
+  actionUrl?: string,
+  metadata?: any
+) => {
+  const { error } = await supabase
+    .from('notifications')
+    .insert({
+      user_id: userId,
+      title,
+      message,
+      type,
+      action_url: actionUrl,
+      metadata
+    });
+  
+  if (error) {
+    console.error('Failed to create notification:', error);
+  }
 };

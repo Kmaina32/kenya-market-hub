@@ -1,16 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+
+import React, { useState } from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { useUploadProductImages } from '@/hooks/useProductImages';
-import ImageUpload from './ImageUpload';
+import { useCreateProduct } from '@/hooks/useProducts';
 
 interface AddProductModalProps {
   open: boolean;
@@ -18,345 +14,162 @@ interface AddProductModalProps {
   onSuccess: () => void;
 }
 
-const AddProductModal = ({ open, onOpenChange, onSuccess }: AddProductModalProps) => {
-  const { toast } = useToast();
-  const uploadImages = useUploadProductImages();
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const initialFormData = {
+const AddProductModal: React.FC<AddProductModalProps> = ({ open, onOpenChange, onSuccess }) => {
+  const [formData, setFormData] = useState({
     name: '',
     description: '',
     price: '',
-    original_price: '',
     category: '',
     brand: '',
-    vendor_id: '',
-    image_url: '',
     stock_quantity: '',
-    in_stock: true,
-    make: '',
-    model: '',
-    year: ''
-  };
-  const [formData, setFormData] = useState(initialFormData);
-
-  // Reset form when modal is closed
-  useEffect(() => {
-    if (!open) {
-      setFormData(initialFormData);
-      setSelectedFiles([]);
-      console.log('[AddProductModal] Modal closed, form reset');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
-
-  const { data: vendors, isLoading: vendorsLoading } = useQuery({
-    queryKey: ['vendors'],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('vendors').select('id, business_name');
-      if (error) {
-        toast({
-          title: "Error fetching vendors",
-          description: error.message,
-          variant: "destructive"
-        });
-        return [];
-      }
-      return data;
-    },
+    image_url: ''
   });
+
+  const createProduct = useCreateProduct();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      await createProduct.mutateAsync({
+        ...formData,
+        price: parseFloat(formData.price),
+        stock_quantity: parseInt(formData.stock_quantity) || 0,
+        in_stock: parseInt(formData.stock_quantity) > 0
+      });
+      
+      setFormData({
+        name: '',
+        description: '',
+        price: '',
+        category: '',
+        brand: '',
+        stock_quantity: '',
+        image_url: ''
+      });
+      
+      onSuccess();
+    } catch (error) {
+      console.error('Error creating product:', error);
+    }
+  };
 
   const categories = [
     'Electronics',
-    'Fashion',
+    'Clothing',
+    'Books',
+    'Home & Garden',
+    'Sports',
+    'Automotive',
     'Beauty',
-    'Auto Parts',
-    'Food & Beverages',
-    'Motobike Spareparts',
-    'Motobike Accessories',
+    'Toys',
+    'Food',
     'Other'
   ];
 
-  const addProduct = useMutation({
-    mutationFn: async (productData: any) => {
-      const { data, error } = await supabase
-        .from('products')
-        .insert([productData])
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: async (newProduct) => {
-      let hadImageError = false;
-      if (selectedFiles.length > 0) {
-        try {
-          await uploadImages.mutateAsync({
-            productId: newProduct.id,
-            files: selectedFiles,
-            isPrimary: true
-          });
-        } catch (error) {
-          hadImageError = true;
-          console.error('Error uploading images:', error);
-          toast({
-            title: "Product added but image upload failed",
-            description: "You can add images later by editing the product",
-            variant: "destructive"
-          });
-        }
-      }
-      toast({ title: "Product added successfully!" });
-      onOpenChange(false);
-      onSuccess();
-      console.log('[AddProductModal] Product added: closing modal');
-    },
-    onError: (error: any) => {
-      toast({ 
-        title: "Error adding product", 
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  });
-
-  // Make sure any overlay click and escape key will close the modal properly
-  const handleDialogOpenChange = (openValue: boolean) => {
-    onOpenChange(openValue);
-    if (!openValue) {
-      console.log('[AddProductModal] Modal openChange (Dialog overlay/esc):', openValue);
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const productData = {
-      ...formData,
-      vendor_id: formData.vendor_id || null,
-      price: parseFloat(formData.price),
-      original_price: formData.original_price ? parseFloat(formData.original_price) : null,
-      stock_quantity: parseInt(formData.stock_quantity) || 0,
-      year: formData.year ? parseInt(formData.year) : null,
-    };
-    addProduct.mutate(productData);
-    console.log('[AddProductModal] Submit form: started mutation');
-  };
-
-  const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleFilesSelected = (files: File[]) => {
-    setSelectedFiles(files);
-    toast({
-      title: `${files.length} image(s) selected`,
-      description: "Images will be uploaded when you save the product"
-    });
-  };
-
-  const handleCancel = () => {
-    onOpenChange(false);
-    // No need to reset here, handled by useEffect
-    console.log('[AddProductModal] Cancel clicked: closing modal');
-  };
-
   return (
-    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Add New Product</DialogTitle>
           <DialogDescription>
-            Fill in the product details to add it to your inventory.
+            Create a new product in your inventory
           </DialogDescription>
         </DialogHeader>
-        <button
-          type="button"
-          className="absolute z-50 top-3 right-3 px-2 py-1 bg-red-200 text-red-700 rounded hover:bg-red-300"
-          onClick={() => {
-            handleCancel();
-          }}
-        >
-          Close X
-        </button>
+        
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Product Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="category">Category *</Label>
-              <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div>
+            <Label htmlFor="name">Product Name</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              required
+            />
           </div>
-
-          <div className="space-y-2">
+          
+          <div>
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
               value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               rows={3}
             />
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="price">Price (KSh) *</Label>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="price">Price (KSH)</Label>
               <Input
                 id="price"
                 type="number"
                 step="0.01"
                 value={formData.price}
-                onChange={(e) => handleInputChange('price', e.target.value)}
+                onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
                 required
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="original_price">Original Price (KSh)</Label>
+            <div>
+              <Label htmlFor="stock">Stock Quantity</Label>
               <Input
-                id="original_price"
+                id="stock"
                 type="number"
-                step="0.01"
-                value={formData.original_price}
-                onChange={(e) => handleInputChange('original_price', e.target.value)}
+                value={formData.stock_quantity}
+                onChange={(e) => setFormData(prev => ({ ...prev, stock_quantity: e.target.value }))}
               />
             </div>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="category">Category</Label>
+              <Select 
+                value={formData.category} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map(cat => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
               <Label htmlFor="brand">Brand</Label>
               <Input
                 id="brand"
                 value={formData.brand}
-                onChange={(e) => handleInputChange('brand', e.target.value)}
+                onChange={(e) => setFormData(prev => ({ ...prev, brand: e.target.value }))}
               />
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="vendor_id">Vendor</Label>
-              <Select
-                value={formData.vendor_id}
-                onValueChange={(value) => handleInputChange('vendor_id', value)}
-              >
-                <SelectTrigger id="vendor_id">
-                  <SelectValue placeholder="Select vendor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {vendorsLoading ? (
-                     <SelectItem value="loading" disabled>Loading vendors...</SelectItem>
-                  ) : (
-                    vendors?.map((vendor) => (
-                      <SelectItem key={vendor.id} value={vendor.id}>
-                        {vendor.business_name}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
-
-          <div className="space-y-2">
+          
+          <div>
             <Label htmlFor="image_url">Image URL</Label>
             <Input
               id="image_url"
               type="url"
               value={formData.image_url}
-              onChange={(e) => handleInputChange('image_url', e.target.value)}
+              onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
               placeholder="https://example.com/image.jpg"
             />
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="stock_quantity">Stock Quantity</Label>
-              <Input
-                id="stock_quantity"
-                type="number"
-                value={formData.stock_quantity}
-                onChange={(e) => handleInputChange('stock_quantity', e.target.value)}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="make">Make</Label>
-              <Input
-                id="make"
-                value={formData.make}
-                onChange={(e) => handleInputChange('make', e.target.value)}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="model">Model</Label>
-              <Input
-                id="model"
-                value={formData.model}
-                onChange={(e) => handleInputChange('model', e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="year">Year</Label>
-            <Input
-              id="year"
-              type="number"
-              value={formData.year}
-              onChange={(e) => handleInputChange('year', e.target.value)}
-              placeholder="2024"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Product Images</Label>
-            <ImageUpload 
-              onFilesSelected={handleFilesSelected}
-              maxFiles={5}
-            />
-            {selectedFiles.length > 0 && (
-              <p className="text-sm text-gray-600">
-                {selectedFiles.length} image(s) selected
-              </p>
-            )}
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="in_stock"
-              checked={formData.in_stock}
-              onCheckedChange={(checked) => handleInputChange('in_stock', checked)}
-            />
-            <Label htmlFor="in_stock">In Stock</Label>
-          </div>
-
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button type="button" variant="outline" onClick={handleCancel}>
+          
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={addProduct.isPending}>
-              {addProduct.isPending ? 'Adding...' : 'Add Product'}
+            <Button type="submit" disabled={createProduct.isPending}>
+              {createProduct.isPending ? 'Creating...' : 'Create Product'}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

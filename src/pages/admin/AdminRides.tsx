@@ -236,7 +236,7 @@ const AdminRides = () => {
                           <EditButton onClick={() => handleEdit(ride)} />
                           <Select
                             value={ride.status}
-                            onValueChange={(status) => updateRideStatus.mutate({ id: ride.id, status })}
+                            onValueChange={(status) => updateRideStatus.mutate({ id: ride.id, status: status as RideStatus })}
                           >
                             <SelectTrigger className="w-24 h-8">
                               <SelectValue />

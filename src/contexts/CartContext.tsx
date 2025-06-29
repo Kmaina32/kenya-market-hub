@@ -1,121 +1,59 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-
-interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  image: string;
-  vendor: string;
-}
+import React, { createContext, useContext } from 'react';
+import { useCart } from '@/hooks/useCart';
 
 interface CartContextType {
-  items: CartItem[];
-  addToCart: (item: Omit<CartItem, 'quantity'>) => void;
-  removeFromCart: (id: string) => void;
-  updateQuantity: (id: string, quantity: number) => void;
+  items: Array<{
+    id: string;
+    name: string;
+    price: number;
+    quantity: number;
+    image?: string;
+    vendor?: string;
+  }>;
+  addToCart: (productId: string, quantity?: number) => void;
+  removeFromCart: (productId: string) => void;
+  updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
-  getTotalItems: () => number;
   getTotalPrice: () => number;
+  getTotalItems: () => number;
+  isLoading: boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export const useCart = () => {
-  const context = useContext(CartContext);
-  if (!context) {
-    throw new Error('useCart must be used within a CartProvider');
-  }
-  return context;
-};
+export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const cartHook = useCart();
 
-interface CartProviderProps {
-  children: ReactNode;
-}
-
-export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
-  const [items, setItems] = React.useState<CartItem[]>([]);
-
-  // Load cart from localStorage on mount
-  React.useEffect(() => {
-    try {
-      const savedCart = localStorage.getItem('cart');
-      if (savedCart) {
-        const parsedCart = JSON.parse(savedCart);
-        if (Array.isArray(parsedCart)) {
-          setItems(parsedCart);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading cart from localStorage:', error);
-    }
-  }, []);
-
-  // Save cart to localStorage whenever items change
-  React.useEffect(() => {
-    try {
-      localStorage.setItem('cart', JSON.stringify(items));
-    } catch (error) {
-      console.error('Error saving cart to localStorage:', error);
-    }
-  }, [items]);
-
-  const addToCart = React.useCallback((newItem: Omit<CartItem, 'quantity'>) => {
-    setItems(prevItems => {
-      const existingItem = prevItems.find(item => item.id === newItem.id);
-      if (existingItem) {
-        return prevItems.map(item =>
-          item.id === newItem.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      }
-      return [...prevItems, { ...newItem, quantity: 1 }];
-    });
-  }, []);
-
-  const removeFromCart = React.useCallback((id: string) => {
-    setItems(prevItems => prevItems.filter(item => item.id !== id));
-  }, []);
-
-  const updateQuantity = React.useCallback((id: string, quantity: number) => {
-    if (quantity <= 0) {
-      removeFromCart(id);
-      return;
-    }
-    setItems(prevItems =>
-      prevItems.map(item =>
-        item.id === id ? { ...item, quantity } : item
-      )
-    );
-  }, [removeFromCart]);
-
-  const clearCart = React.useCallback(() => {
-    setItems([]);
-  }, []);
-
-  const getTotalItems = React.useCallback(() => {
-    return items.reduce((total, item) => total + item.quantity, 0);
-  }, [items]);
-
-  const getTotalPrice = React.useCallback(() => {
-    return items.reduce((total, item) => total + (item.price * item.quantity), 0);
-  }, [items]);
-
-  const contextValue: CartContextType = React.useMemo(() => ({
-    items,
-    addToCart,
-    removeFromCart,
-    updateQuantity,
-    clearCart,
-    getTotalItems,
-    getTotalPrice
-  }), [items, addToCart, removeFromCart, updateQuantity, clearCart, getTotalItems, getTotalPrice]);
+  const contextValue = {
+    items: cartHook.cartItems.map(item => ({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      image: item.image_url,
+      vendor: item.vendor
+    })),
+    addToCart: cartHook.addToCart,
+    removeFromCart: cartHook.removeFromCart,
+    updateQuantity: cartHook.updateQuantity,
+    clearCart: cartHook.clearCart,
+    getTotalPrice: cartHook.getCartTotal,
+    getTotalItems: cartHook.getCartCount,
+    isLoading: cartHook.isLoading
+  };
 
   return (
     <CartContext.Provider value={contextValue}>
       {children}
     </CartContext.Provider>
   );
+};
+
+export const useCartContext = () => {
+  const context = useContext(CartContext);
+  if (context === undefined) {
+    throw new Error('useCartContext must be used within a CartProvider');
+  }
+  return context;
 };
