@@ -1,251 +1,258 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
-import { getJobs, deleteJob, createJob, updateJob } from '@/integrations/supabase/jobBoardApi';
-import { Job } from '@/types/job';
-import MainLayout from '@/components/MainLayout';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Search, Filter, Eye, Edit, Trash2 } from 'lucide-react';
+import CreateJobModal from '@/components/admin/CreateJobModal';
+import { toast } from 'sonner';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 const JobBoard: React.FC = () => {
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [search, setSearch] = useState<string>('');
-  const { toast } = useToast();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    fetchJobs();
-  }, []);
+  const { data: jobs = [], isLoading } = useQuery({
+    queryKey: ['admin-jobs', searchTerm, statusFilter],
+    queryFn: async () => {
+      let query = supabase
+        .from('jobs')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-  const fetchJobs = async () => {
-    setLoading(true);
-    try {
-      const response = await getJobs();
-      // Handle both array and paginated response formats
-      const jobData = Array.isArray(response) ? response : response?.data || [];
-      // Ensure all jobs have required fields
-      const formattedJobs = jobData.map((job: any) => ({
-        ...job,
-        location: job.location || 'Not specified'
-      }));
-      setJobs(formattedJobs);
-    } catch (error) {
-      toast({ title: 'Error', description: (error as Error).message, variant: 'destructive' });
-    } finally {
-      setLoading(false);
+      if (searchTerm) {
+        query = query.or(`title.ilike.%${searchTerm}%,company.ilike.%${searchTerm}%`);
+      }
+
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
     }
-  };
-
-  const filteredJobs = jobs.filter(job =>
-    job.title.toLowerCase().includes(search.toLowerCase()) ||
-    (job.location && job.location.toLowerCase().includes(search.toLowerCase())) ||
-    job.category.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const [editingJob, setEditingJob] = React.useState<Job | null>(null);
-  const [showForm, setShowForm] = React.useState(false);
-  const [formData, setFormData] = React.useState({
-    title: '',
-    description: '',
-    location: '',
-    category: '',
-    salary: '',
-    status: 'open',
   });
 
-  const resetForm = () => {
-    setFormData({
-      title: '',
-      description: '',
-      location: '',
-      category: '',
-      salary: '',
-      status: 'open',
-    });
-    setEditingJob(null);
+  const { data: applications = [] } = useQuery({
+    queryKey: ['job-applications'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('job_applications')
+        .select('job_id')
+        .eq('status', 'pending');
+      
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
+  const deleteJobMutation = useMutation({
+    mutationFn: async (jobId: number) => {
+      const { error } = await supabase
+        .from('jobs')
+        .delete()
+        .eq('id', jobId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Job deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['admin-jobs'] });
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to delete job: ${error.message}`);
+    }
+  });
+
+  const toggleJobStatusMutation = useMutation({
+    mutationFn: async ({ jobId, newStatus }: { jobId: number; newStatus: string }) => {
+      const { error } = await supabase
+        .from('jobs')
+        .update({ status: newStatus })
+        .eq('id', jobId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Job status updated');
+      queryClient.invalidateQueries({ queryKey: ['admin-jobs'] });
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to update job: ${error.message}`);
+    }
+  });
+
+  const getApplicationCount = (jobId: number) => {
+    return applications.filter(app => app.job_id === jobId).length;
   };
 
-  const handleAddJob = () => {
-    resetForm();
-    setShowForm(true);
-  };
-
-  const handleEditJob = (job: Job) => {
-    setFormData({
-      title: job.title,
-      description: job.description,
-      location: job.location || '',
-      category: job.category,
-      salary: job.salary,
-      status: job.status,
-    });
-    setEditingJob(job);
-    setShowForm(true);
-  };
-
-  const handleDeleteJob = async (id: number) => {
-    try {
-      await deleteJob(id);
-      toast({ title: 'Success', description: 'Job deleted successfully' });
-      fetchJobs();
-    } catch (error) {
-      toast({ title: 'Error', description: (error as Error).message, variant: 'destructive' });
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'open': return 'bg-green-500';
+      case 'closed': return 'bg-red-500';
+      case 'paused': return 'bg-yellow-500';
+      default: return 'bg-gray-500';
     }
   };
 
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (editingJob) {
-        await updateJob(editingJob.id, formData);
-        toast({ title: 'Success', description: 'Job updated successfully' });
-      } else {
-        await createJob(formData);
-        toast({ title: 'Success', description: 'Job created successfully' });
-      }
-      setShowForm(false);
-      fetchJobs();
-      resetForm();
-    } catch (error) {
-      toast({ title: 'Error', description: (error as Error).message, variant: 'destructive' });
-    }
-  };
+  const filteredJobs = jobs;
 
   return (
-    <MainLayout>
-      <div className="p-6">
-        <h1 className="text-2xl font-bold mb-4">Admin Job Board Management</h1>
-        <div className="mb-4 flex justify-between items-center">
-          <Input
-            placeholder="Search jobs..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="max-w-sm"
-          />
-          <Button onClick={handleAddJob}>
-            Add Job
-          </Button>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Job Management</h1>
+          <p className="text-gray-600 mt-1">Manage job postings and applications</p>
         </div>
-
-        {showForm && (
-          <form onSubmit={handleFormSubmit} className="mb-6 p-4 border rounded-md bg-white shadow-sm">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block mb-1 font-medium">Title</label>
-                <Input
-                  name="title"
-                  value={formData.title}
-                  onChange={handleFormChange}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block mb-1 font-medium">Location</label>
-                <Input
-                  name="location"
-                  value={formData.location}
-                  onChange={handleFormChange}
-                />
-              </div>
-              <div>
-                <label className="block mb-1 font-medium">Category</label>
-                <Input
-                  name="category"
-                  value={formData.category}
-                  onChange={handleFormChange}
-                />
-              </div>
-              <div>
-                <label className="block mb-1 font-medium">Salary</label>
-                <Input
-                  name="salary"
-                  value={formData.salary}
-                  onChange={handleFormChange}
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block mb-1 font-medium">Description</label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleFormChange}
-                  rows={4}
-                  className="w-full border rounded-md p-2"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block mb-1 font-medium">Status</label>
-                <select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleFormChange}
-                  className="w-full border rounded-md p-2"
-                >
-                  <option value="open">Open</option>
-                  <option value="closed">Closed</option>
-                </select>
-              </div>
-            </div>
-            <div className="mt-4 flex space-x-2">
-              <Button type="submit">
-                {editingJob ? 'Update Job' : 'Create Job'}
-              </Button>
-              <Button type="button" variant="ghost" onClick={() => { setShowForm(false); resetForm(); }}>
-                Cancel
-              </Button>
-            </div>
-          </form>
-        )}
-
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Salary</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center">Loading...</TableCell>
-              </TableRow>
-            ) : filteredJobs.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center">No jobs found.</TableCell>
-              </TableRow>
-            ) : (
-              filteredJobs.map(job => (
-                <TableRow key={job.id}>
-                  <TableCell>{job.title}</TableCell>
-                  <TableCell>{job.location || 'Not specified'}</TableCell>
-                  <TableCell>{job.category}</TableCell>
-                  <TableCell>{job.salary}</TableCell>
-                  <TableCell>{job.status}</TableCell>
-                  <TableCell>
-                    <Button size="sm" variant="outline" className="mr-2" onClick={() => handleEditJob(job)}>
-                      Edit
-                    </Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDeleteJob(job.id)}>
-                      Delete
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+        <Button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Post New Job
+        </Button>
       </div>
-    </MainLayout>
+
+      {/* Filters */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex gap-4 items-center">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search jobs..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="open">Open</SelectItem>
+                <SelectItem value="closed">Closed</SelectItem>
+                <SelectItem value="paused">Paused</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Jobs List */}
+      {isLoading ? (
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="text-gray-600 mt-2">Loading jobs...</p>
+        </div>
+      ) : filteredJobs.length > 0 ? (
+        <div className="grid gap-4">
+          {filteredJobs.map((job) => (
+            <Card key={job.id} className="hover:shadow-lg transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {job.title}
+                      </h3>
+                      <Badge className={`${getStatusColor(job.status)} text-white`}>
+                        {job.status}
+                      </Badge>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                      {job.company && (
+                        <div>
+                          <span className="font-medium">Company:</span> {job.company}
+                        </div>
+                      )}
+                      <div>
+                        <span className="font-medium">Location:</span> {job.location || 'Remote'}
+                      </div>
+                      <div>
+                        <span className="font-medium">Type:</span> {job.job_type}
+                      </div>
+                      <div>
+                        <span className="font-medium">Applications:</span> {getApplicationCount(job.id)}
+                      </div>
+                    </div>
+
+                    {job.salary && (
+                      <div className="mt-2 text-sm text-gray-600">
+                        <span className="font-medium">Salary:</span> {job.salary}
+                      </div>
+                    )}
+
+                    <p className="mt-3 text-gray-700 line-clamp-2">
+                      {job.description}
+                    </p>
+
+                    <div className="mt-3 text-xs text-gray-500">
+                      Posted on {new Date(job.created_at).toLocaleDateString()}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 ml-4">
+                    <Button variant="outline" size="sm">
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const newStatus = job.status === 'open' ? 'closed' : 'open';
+                        toggleJobStatusMutation.mutate({ jobId: job.id, newStatus });
+                      }}
+                      className={job.status === 'open' ? 'text-red-600' : 'text-green-600'}
+                    >
+                      {job.status === 'open' ? 'Close' : 'Open'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => deleteJobMutation.mutate(job.id)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <div className="text-gray-400 mb-4">
+              <Filter className="h-12 w-12 mx-auto" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No jobs found</h3>
+            <p className="text-gray-600">
+              {searchTerm || statusFilter !== 'all' ? 'Try adjusting your filters' : 'Start by posting your first job'}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      <CreateJobModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
+    </div>
   );
 };
 

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,9 +8,11 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus, Building, Search, Edit, Trash2, Eye } from 'lucide-react';
 import { EditButton, DeleteButton, ViewButton } from '@/components/ui/action-buttons';
+import CreatePropertyModal from '@/components/admin/CreatePropertyModal';
 
-const AdminProperties = () => {
+const AdminProperties: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const { data: properties, isLoading } = useQuery({
     queryKey: ['admin-properties', searchTerm],
@@ -51,9 +52,12 @@ const AdminProperties = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Property Management</h1>
-          <p className="text-gray-600">Manage all property listings and approvals</p>
+          <p className="text-gray-600 mt-1">Manage property listings and inquiries</p>
         </div>
-        <Button className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
+        <Button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700"
+        >
           <Plus className="h-4 w-4 mr-2" />
           Add Property
         </Button>
@@ -144,6 +148,11 @@ const AdminProperties = () => {
           )}
         </CardContent>
       </Card>
+
+      <CreatePropertyModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
     </div>
   );
 };

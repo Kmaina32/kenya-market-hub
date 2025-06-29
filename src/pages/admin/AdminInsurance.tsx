@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -6,10 +5,12 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Shield, Search, DollarSign } from 'lucide-react';
+import { Shield, Search, DollarSign, Plus } from 'lucide-react';
+import CreateInsurancePlanModal from '@/components/admin/CreateInsurancePlanModal';
 
-const AdminInsurance = () => {
+const AdminInsurance: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Fetch insurance plans from database
   const { data: plans, isLoading: plansLoading } = useQuery({
@@ -52,8 +53,15 @@ const AdminInsurance = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Insurance Management</h1>
-          <p className="text-gray-600">Manage all insurance plans and policies</p>
+          <p className="text-gray-600 mt-1">Manage insurance plans and policies</p>
         </div>
+        <Button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Create Plan
+        </Button>
       </div>
 
       <div className="flex items-center space-x-4">
@@ -213,6 +221,11 @@ const AdminInsurance = () => {
           )}
         </CardContent>
       </Card>
+
+      <CreateInsurancePlanModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
     </div>
   );
 };

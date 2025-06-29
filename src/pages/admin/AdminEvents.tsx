@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,9 +8,11 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus, Calendar, Search, MapPin, Users } from 'lucide-react';
 import { format } from 'date-fns';
+import CreateEventModal from '@/components/admin/CreateEventModal';
 
-const AdminEvents = () => {
+const AdminEvents: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Fetch events from database
   const { data: events, isLoading } = useQuery({
@@ -36,12 +37,15 @@ const AdminEvents = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Event Management</h1>
-          <p className="text-gray-600">Manage all events and bookings</p>
+          <h1 className="text-3xl font-bold text-gray-900">Events Management</h1>
+          <p className="text-gray-600 mt-1">Manage events and bookings</p>
         </div>
-        <Button className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
+        <Button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
+        >
           <Plus className="h-4 w-4 mr-2" />
-          Add Event
+          Create Event
         </Button>
       </div>
 
@@ -145,6 +149,11 @@ const AdminEvents = () => {
           )}
         </CardContent>
       </Card>
+
+      <CreateEventModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
     </div>
   );
 };

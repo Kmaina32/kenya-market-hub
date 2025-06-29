@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,9 +8,11 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus, UtensilsCrossed, Search, Edit, Trash2, Eye } from 'lucide-react';
 import { EditButton, DeleteButton, ViewButton } from '@/components/ui/action-buttons';
+import CreateRestaurantModal from '@/components/admin/CreateRestaurantModal';
 
-const AdminFoodDelivery = () => {
+const AdminFoodDelivery: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const { data: restaurants, isLoading } = useQuery({
     queryKey: ['admin-restaurants', searchTerm],
@@ -51,9 +52,12 @@ const AdminFoodDelivery = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Food Delivery Management</h1>
-          <p className="text-gray-600">Manage restaurants and food delivery services</p>
+          <p className="text-gray-600 mt-1">Manage restaurants and food delivery operations</p>
         </div>
-        <Button className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
+        <Button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
+        >
           <Plus className="h-4 w-4 mr-2" />
           Add Restaurant
         </Button>
@@ -147,6 +151,11 @@ const AdminFoodDelivery = () => {
           )}
         </CardContent>
       </Card>
+
+      <CreateRestaurantModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
     </div>
   );
 };
