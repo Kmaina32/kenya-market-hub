@@ -11,6 +11,7 @@ interface WishlistItem {
   price: number;
   image_url?: string;
   category: string;
+  vendor?: string;
 }
 
 // Local storage hook for non-authenticated users
@@ -42,6 +43,7 @@ export const useWishlist = () => {
         price: product.price,
         image_url: product.image_url,
         category: product.category,
+        vendor: product.vendor,
       }];
     });
   };
