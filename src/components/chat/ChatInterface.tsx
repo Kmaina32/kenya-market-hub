@@ -7,8 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Send, Search, MessageCircle, Plus, User, Users } from 'lucide-react';
-import { useChatConversations, useUserSearch, useCreateConversation } from '@/hooks/useChatForums';
+import { useConversations, useCreateConversation } from '@/hooks/useChat';
 import { useChatMessages, useSendMessage } from '@/hooks/useChatMessages';
+import { useUserSearch } from '@/hooks/useChatForums';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -20,14 +21,15 @@ const ChatInterface = () => {
   const [isNewChatOpen, setIsNewChatOpen] = useState(false);
   
   const { user } = useAuth();
-  const { data: conversations, isLoading: conversationsLoading } = useChatConversations();
+  const { data: conversations, isLoading: conversationsLoading } = useConversations();
   const { data: messages, isLoading: messagesLoading } = useChatMessages(selectedConversation || '');
   const { data: searchedUsers } = useUserSearch(userSearchTerm);
   const sendMessage = useSendMessage();
   const createConversation = useCreateConversation();
 
   const filteredConversations = conversations?.filter(conv =>
-    conv.other_participant?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    conv.participant1?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    conv.participant2?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
   const handleSendMessage = () => {
@@ -52,10 +54,8 @@ const ChatInterface = () => {
 
   const handleStartNewChat = async (targetUserId: string) => {
     try {
-      const result = await createConversation.mutateAsync({ 
-        participantId: targetUserId 
-      });
-      setSelectedConversation(result.conversationId);
+      const result = await createConversation.mutateAsync(targetUserId);
+      setSelectedConversation(result.id);
       setIsNewChatOpen(false);
       setUserSearchTerm('');
     } catch (error) {
@@ -64,6 +64,10 @@ const ChatInterface = () => {
   };
 
   const selectedConversationData = conversations?.find(c => c.id === selectedConversation);
+  const otherParticipant = selectedConversationData ? 
+    (selectedConversationData.participant1_id === user?.id ? 
+     selectedConversationData.participant2 : 
+     selectedConversationData.participant1) : null;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[700px] max-w-7xl mx-auto">
@@ -157,45 +161,45 @@ const ChatInterface = () => {
                   <p className="text-xs text-gray-400 mt-1">Start chatting with community members!</p>
                 </div>
               ) : (
-                filteredConversations.map((conversation) => (
-                  <div
-                    key={conversation.id}
-                    onClick={() => setSelectedConversation(conversation.id)}
-                    className={`flex items-center gap-3 p-4 border-b cursor-pointer hover:bg-orange-50 transition-colors ${
-                      selectedConversation === conversation.id ? 'bg-orange-50 border-orange-200' : ''
-                    }`}
-                  >
-                    <Avatar className="h-10 w-10 flex-shrink-0">
-                      <AvatarImage src={conversation.other_participant?.avatar_url} />
-                      <AvatarFallback>
-                        <User className="h-5 w-5" />
-                      </AvatarFallback>
-                    </Avatar>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start mb-1">
-                        <h4 className="font-medium text-sm truncate">
-                          {conversation.other_participant?.full_name || 'Unknown User'}
-                        </h4>
-                        {conversation.unread_count > 0 && (
-                          <Badge variant="destructive" className="text-xs px-2 py-0.5 ml-2">
-                            {conversation.unread_count}
-                          </Badge>
+                filteredConversations.map((conversation) => {
+                  const otherParticipant = conversation.participant1_id === user?.id ? 
+                    conversation.participant2 : conversation.participant1;
+                  
+                  return (
+                    <div
+                      key={conversation.id}
+                      onClick={() => setSelectedConversation(conversation.id)}
+                      className={`flex items-center gap-3 p-4 border-b cursor-pointer hover:bg-orange-50 transition-colors ${
+                        selectedConversation === conversation.id ? 'bg-orange-50 border-orange-200' : ''
+                      }`}
+                    >
+                      <Avatar className="h-10 w-10 flex-shrink-0">
+                        <AvatarImage src={otherParticipant?.avatar_url} />
+                        <AvatarFallback>
+                          <User className="h-5 w-5" />
+                        </AvatarFallback>
+                      </Avatar>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start mb-1">
+                          <h4 className="font-medium text-sm truncate">
+                            {otherParticipant?.full_name || 'Unknown User'}
+                          </h4>
+                        </div>
+                        
+                        <p className="text-xs text-gray-500 line-clamp-1 mb-1">
+                          {conversation.last_message || 'No messages yet'}
+                        </p>
+                        
+                        {conversation.last_message_at && (
+                          <p className="text-xs text-gray-400">
+                            {formatDistanceToNow(new Date(conversation.last_message_at), { addSuffix: true })}
+                          </p>
                         )}
                       </div>
-                      
-                      <p className="text-xs text-gray-500 line-clamp-1 mb-1">
-                        {conversation.last_message || 'No messages yet'}
-                      </p>
-                      
-                      {conversation.last_message_at && (
-                        <p className="text-xs text-gray-400">
-                          {formatDistanceToNow(new Date(conversation.last_message_at), { addSuffix: true })}
-                        </p>
-                      )}
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </CardContent>
@@ -210,14 +214,14 @@ const ChatInterface = () => {
               <CardHeader className="border-b pb-4 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-t-lg">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={selectedConversationData.other_participant?.avatar_url} />
+                    <AvatarImage src={otherParticipant?.avatar_url} />
                     <AvatarFallback className="bg-white text-orange-600">
                       <User className="h-5 w-5" />
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <CardTitle className="text-lg text-white">
-                      {selectedConversationData.other_participant?.full_name || 'Chat'}
+                      {otherParticipant?.full_name || 'Chat'}
                     </CardTitle>
                     <p className="text-sm text-orange-100">Online</p>
                   </div>

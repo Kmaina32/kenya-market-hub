@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCreateForumPost, useForumCategories } from '@/hooks/useChatForums';
+import { useAuth } from '@/contexts/AuthContext';
 import { Plus } from 'lucide-react';
 
 interface CreatePostModalProps {
@@ -18,15 +19,17 @@ const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
   const [content, setContent] = useState('');
   const [categoryId, setCategoryId] = useState('');
   
+  const { user } = useAuth();
   const { data: categories } = useForumCategories();
   const createPost = useCreateForumPost();
 
   const handleSubmit = () => {
-    if (title.trim() && content.trim() && categoryId) {
+    if (title.trim() && content.trim() && categoryId && user) {
       createPost.mutate({
         title,
         content,
-        category_id: categoryId
+        category_id: categoryId,
+        author_id: user.id
       }, {
         onSuccess: () => {
           setTitle('');
@@ -92,7 +95,7 @@ const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
             </Button>
             <Button 
               onClick={handleSubmit}
-              disabled={!title.trim() || !content.trim() || !categoryId || createPost.isPending}
+              disabled={!title.trim() || !content.trim() || !categoryId || !user || createPost.isPending}
               className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white"
             >
               {createPost.isPending ? 'Creating...' : 'Create Post'}

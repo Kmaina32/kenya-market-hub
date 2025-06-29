@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Search, Send, Plus, Users, MessageSquare } from 'lucide-react';
-import { useChatConversations, useUserSearch, useCreateConversation, ChatConversation, UserSearchResult } from '@/hooks/useChatForums';
+import { useConversations, useCreateConversation, ChatConversation } from '@/hooks/useChat';
+import { useUserSearch, UserSearchResult } from '@/hooks/useChatForums';
 import { useChatMessages, useSendMessage, ChatMessage } from '@/hooks/useChatMessages';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserOnlineStatus } from '@/hooks/useOnlineStatus';
@@ -23,17 +24,18 @@ const ImprovedChatInterface = () => {
   const [isMobileView, setIsMobileView] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { data: conversations = [], isLoading: conversationsLoading } = useChatConversations();
+  const { data: conversations = [], isLoading: conversationsLoading } = useConversations();
   const { data: searchResults = [] } = useUserSearch(userSearchTerm);
   const { data: messages = [] } = useChatMessages(selectedConversationId);
   const sendMessage = useSendMessage();
   const createConversation = useCreateConversation();
 
   // Filter conversations based on search
-  const filteredConversations = conversations.filter(conv =>
-    conv.other_participant?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    conv.last_message?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredConversations = conversations.filter(conv => {
+    const otherParticipant = conv.participant1_id === user?.id ? conv.participant2 : conv.participant1;
+    return otherParticipant?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           conv.last_message?.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -55,10 +57,10 @@ const ImprovedChatInterface = () => {
 
   const handleStartConversation = (participant: UserSearchResult) => {
     createConversation.mutate(
-      { participantId: participant.id },
+      participant.id,
       {
         onSuccess: (data) => {
-          setSelectedConversationId(data.conversationId);
+          setSelectedConversationId(data.id);
           setIsNewChatOpen(false);
           setUserSearchTerm('');
         }
@@ -151,6 +153,7 @@ const ImprovedChatInterface = () => {
                 conversation={conversation}
                 isSelected={selectedConversationId === conversation.id}
                 onClick={() => setSelectedConversationId(conversation.id)}
+                currentUserId={user?.id}
               />
             ))
           )}
@@ -167,6 +170,7 @@ const ImprovedChatInterface = () => {
                 conversation={selectedConversation}
                 onBack={() => setSelectedConversationId('')}
                 isMobileView={isMobileView}
+                currentUserId={user?.id}
               />
             )}
 
@@ -218,13 +222,17 @@ const ImprovedChatInterface = () => {
 const ConversationCard = ({ 
   conversation, 
   isSelected, 
-  onClick 
+  onClick,
+  currentUserId
 }: { 
   conversation: ChatConversation; 
   isSelected: boolean; 
   onClick: () => void; 
+  currentUserId?: string;
 }) => {
-  const { isOnline } = useUserOnlineStatus(conversation.other_participant?.id || '');
+  const otherParticipant = conversation.participant1_id === currentUserId ? 
+    conversation.participant2 : conversation.participant1;
+  const { isOnline } = useUserOnlineStatus(otherParticipant?.id || '');
 
   return (
     <div
@@ -236,9 +244,9 @@ const ConversationCard = ({
       <div className="flex items-center gap-3">
         <div className="relative">
           <Avatar className="h-10 w-10">
-            <AvatarImage src={conversation.other_participant?.avatar_url} />
+            <AvatarImage src={otherParticipant?.avatar_url} />
             <AvatarFallback>
-              {conversation.other_participant?.full_name?.charAt(0) || 'U'}
+              {otherParticipant?.full_name?.charAt(0) || 'U'}
             </AvatarFallback>
           </Avatar>
           {isOnline && (
@@ -247,7 +255,7 @@ const ConversationCard = ({
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
-            <p className="font-medium truncate">{conversation.other_participant?.full_name}</p>
+            <p className="font-medium truncate">{otherParticipant?.full_name}</p>
             {conversation.last_message_at && (
               <span className="text-xs text-gray-500">
                 {formatDistanceToNow(new Date(conversation.last_message_at), { addSuffix: true })}
@@ -258,9 +266,6 @@ const ConversationCard = ({
             <p className="text-sm text-gray-600 truncate">{conversation.last_message}</p>
           )}
         </div>
-        {conversation.unread_count > 0 && (
-          <Badge className="bg-orange-500 text-white">{conversation.unread_count}</Badge>
-        )}
       </div>
     </div>
   );
@@ -270,22 +275,26 @@ const ConversationCard = ({
 const ChatHeader = ({ 
   conversation, 
   onBack, 
-  isMobileView 
+  isMobileView,
+  currentUserId
 }: { 
   conversation: ChatConversation; 
   onBack: () => void; 
   isMobileView: boolean; 
+  currentUserId?: string;
 }) => {
-  const { isOnline } = useUserOnlineStatus(conversation.other_participant?.id || '');
+  const otherParticipant = conversation.participant1_id === currentUserId ? 
+    conversation.participant2 : conversation.participant1;
+  const { isOnline } = useUserOnlineStatus(otherParticipant?.id || '');
 
   return (
     <div className="border-b p-4 bg-gradient-to-r from-orange-50 to-red-50">
       <div className="flex items-center gap-3">
         <div className="relative">
           <Avatar className="h-10 w-10">
-            <AvatarImage src={conversation.other_participant?.avatar_url} />
+            <AvatarImage src={otherParticipant?.avatar_url} />
             <AvatarFallback>
-              {conversation.other_participant?.full_name?.charAt(0) || 'U'}
+              {otherParticipant?.full_name?.charAt(0) || 'U'}
             </AvatarFallback>
           </Avatar>
           {isOnline && (
@@ -293,7 +302,7 @@ const ChatHeader = ({
           )}
         </div>
         <div>
-          <h3 className="font-semibold">{conversation.other_participant?.full_name}</h3>
+          <h3 className="font-semibold">{otherParticipant?.full_name}</h3>
           <p className="text-sm text-gray-600">
             {isOnline ? 'Online' : 'Offline'}
           </p>
