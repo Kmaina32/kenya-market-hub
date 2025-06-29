@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCart } from '@/contexts/CartContext';
+import { useCartContext } from '@/contexts/CartContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,7 +16,7 @@ import CouponInput from '@/components/CouponInput';
 const Checkout = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { items, getTotalPrice, clearCart } = useCart();
+  const { cartItems, getCartTotal, clearCart } = useCartContext();
   const { toast } = useToast();
   
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
@@ -30,7 +29,7 @@ const Checkout = () => {
     specialInstructions: ''
   });
 
-  const subtotal = getTotalPrice();
+  const subtotal = getCartTotal();
   const shippingCost = 500; // Fixed shipping cost
   const discount = appliedCoupon?.discount_amount || 0;
   const total = subtotal + shippingCost - discount;
@@ -57,7 +56,7 @@ const Checkout = () => {
       return;
     }
 
-    if (items.length === 0) {
+    if (cartItems.length === 0) {
       toast({
         title: 'Your cart is empty',
         variant: 'destructive'
@@ -117,7 +116,7 @@ const Checkout = () => {
     );
   }
 
-  if (items.length === 0) {
+  if (cartItems.length === 0) {
     return (
       <FrontendLayout>
         <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
@@ -238,7 +237,7 @@ const Checkout = () => {
                   <CardTitle>Order Summary</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {items.map((item) => (
+                  {cartItems.map((item) => (
                     <div key={item.id} className="flex justify-between">
                       <div>
                         <p className="font-medium">{item.name}</p>

@@ -1,18 +1,17 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Trash2, Plus, Minus, ShoppingCart } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
-import { useCart } from '@/contexts/CartContext';
+import { useCartContext } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, useNavigate } from 'react-router-dom';
 import HeroSection from '@/components/shared/HeroSection';
 
 const Cart = () => {
   const { user } = useAuth();
-  const { items, removeFromCart, updateQuantity, getTotalPrice, getTotalItems } = useCart();
+  const { cartItems, removeFromCart, updateQuantity, getCartTotal, getCartCount } = useCartContext();
   const navigate = useNavigate();
 
   if (!user) {
@@ -36,7 +35,7 @@ const Cart = () => {
         />
 
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          {items.length === 0 ? (
+          {cartItems.length === 0 ? (
             <div className="text-center py-12">
               <ShoppingCart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
               <h2 className="text-xl font-bold text-gray-900 mb-3">Your cart is empty</h2>
@@ -55,17 +54,17 @@ const Cart = () => {
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold text-gray-900">Cart Items</h2>
                   <Badge variant="secondary" className="bg-orange-100 text-orange-800 px-2 py-1 text-xs">
-                    {getTotalItems()} {getTotalItems() === 1 ? 'item' : 'items'}
+                    {getCartCount()} {getCartCount() === 1 ? 'item' : 'items'}
                   </Badge>
                 </div>
 
-                {items.map((item) => (
+                {cartItems.map((item) => (
                   <Card key={item.id} className="hover:shadow-md transition-shadow border-orange-100 rounded-2xl">
                     <CardContent className="p-4">
                       <div className="flex items-center space-x-3">
                         <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                           <img 
-                            src={item.image || '/placeholder.svg'} 
+                            src={item.image_url || '/placeholder.svg'} 
                             alt={item.name}
                             className="w-full h-full object-cover"
                           />
@@ -127,8 +126,8 @@ const Cart = () => {
                   </CardHeader>
                   <CardContent className="p-4 space-y-3">
                     <div className="flex justify-between text-xs">
-                      <span className="text-gray-600">Subtotal ({getTotalItems()} items)</span>
-                      <span className="font-medium">KSH {getTotalPrice().toLocaleString()}</span>
+                      <span className="text-gray-600">Subtotal ({getCartCount()} items)</span>
+                      <span className="font-medium">KSH {getCartTotal().toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-xs">
                       <span className="text-gray-600">Shipping</span>
@@ -137,7 +136,7 @@ const Cart = () => {
                     <div className="border-t pt-3">
                       <div className="flex justify-between text-sm font-bold">
                         <span>Total</span>
-                        <span className="text-orange-600">KSH {getTotalPrice().toLocaleString()}</span>
+                        <span className="text-orange-600">KSH {getCartTotal().toLocaleString()}</span>
                       </div>
                     </div>
                     <Button 

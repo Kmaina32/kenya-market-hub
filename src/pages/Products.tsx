@@ -105,13 +105,7 @@ const Products = () => {
   });
 
   const handleAddToCart = (product: any) => {
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: Number(product.price),
-      image: product.image_url || '/placeholder.svg',
-      vendor: product.vendor || 'Unknown Vendor'
-    });
+    addToCart(product.id);
     toast({ title: "Added to cart", description: `${product.name} has been added to your cart.` });
   };
 

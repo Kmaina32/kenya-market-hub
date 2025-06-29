@@ -1,11 +1,10 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, Trash2, Heart } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
 import { useWishlist } from '@/hooks/useWishlist';
-import { useCart } from '@/contexts/CartContext';
+import { useCartContext } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
@@ -14,7 +13,7 @@ import HeroSection from '@/components/shared/HeroSection';
 const Wishlist = () => {
   const { user } = useAuth();
   const { wishlistItems, removeFromWishlist, data, isLoading } = useWishlist();
-  const { addToCart } = useCart();
+  const { addToCart } = useCartContext();
   const { toast } = useToast();
 
   if (!user) {
@@ -26,13 +25,7 @@ const Wishlist = () => {
   const loading = isLoading || false;
 
   const handleAddToCart = (item: any) => {
-    addToCart({
-      id: item.id,
-      name: item.name || 'Unknown Product',
-      price: Number(item.price || 0),
-      image: item.image_url || '/placeholder.svg',
-      vendor: item.vendor || 'Unknown Vendor'
-    });
+    addToCart(item.id);
     toast({ title: "Added to cart", description: `${item.name || 'Product'} has been added to your cart.` });
   };
 
