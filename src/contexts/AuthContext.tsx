@@ -31,9 +31,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Only gmaina424@gmail.com is admin
-        if (session?.user?.email === 'gmaina424@gmail.com') {
-          setIsAdmin(true);
+        // Check if user is admin using database role
+        if (session?.user) {
+          try {
+            const { data: adminCheck, error } = await supabase.rpc('is_current_user_admin');
+            if (!error) {
+              setIsAdmin(adminCheck || false);
+            } else {
+              console.error('Error checking admin status:', error);
+              setIsAdmin(false);
+            }
+          } catch (error) {
+            console.error('Error in admin check:', error);
+            setIsAdmin(false);
+          }
         } else {
           setIsAdmin(false);
         }
@@ -43,14 +54,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       console.log('🔄 Initial session check:', session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
       
-      // Only gmaina424@gmail.com is admin
-      if (session?.user?.email === 'gmaina424@gmail.com') {
-        setIsAdmin(true);
+      // Check if user is admin using database role
+      if (session?.user) {
+        try {
+          const { data: adminCheck, error } = await supabase.rpc('is_current_user_admin');
+          if (!error) {
+            setIsAdmin(adminCheck || false);
+          } else {
+            console.error('Error checking admin status:', error);
+            setIsAdmin(false);
+          }
+        } catch (error) {
+          console.error('Error in admin check:', error);
+          setIsAdmin(false);
+        }
       } else {
         setIsAdmin(false);
       }

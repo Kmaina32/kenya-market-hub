@@ -8,7 +8,7 @@ interface ProtectedAdminRouteProps {
 }
 
 const ProtectedAdminRoute = ({ children }: ProtectedAdminRouteProps) => {
-  const { user, loading } = useAuth();
+  const { user, loading, isAdmin } = useAuth();
   
   if (loading) {
     return (
@@ -25,8 +25,8 @@ const ProtectedAdminRoute = ({ children }: ProtectedAdminRouteProps) => {
     return <Navigate to="/auth" replace />;
   }
   
-  // Only gmaina424@gmail.com can access admin routes
-  if (user.email !== 'gmaina424@gmail.com') {
+  // Use role-based admin check instead of hardcoded email
+  if (!isAdmin) {
     return <Navigate to="/" replace />;
   }
   

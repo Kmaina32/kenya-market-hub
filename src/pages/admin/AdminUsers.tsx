@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAdminUsers, useUpdateUserRole, useDeleteUser } from '@/hooks/useAdminUsers';
 import { Users, Search, Edit, Trash2, Eye } from 'lucide-react';
+import { validateInput } from '@/utils/authUtils';
 
 const AdminUsers = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,9 +26,12 @@ const AdminUsers = () => {
     }
   };
 
+  // Sanitize search input
+  const sanitizedSearchTerm = validateInput(searchTerm, 100);
+
   const filteredUsers = users?.filter(user =>
-    user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    user.full_name?.toLowerCase().includes(sanitizedSearchTerm.toLowerCase()) ||
+    user.email?.toLowerCase().includes(sanitizedSearchTerm.toLowerCase())
   ) || [];
 
   const getRoleColor = (role: string) => {
@@ -55,7 +59,8 @@ const AdminUsers = () => {
             placeholder="Search users..." 
             className="pl-10"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => setSearchTerm(validateInput(e.target.value, 100))}
+            maxLength={100}
           />
         </div>
       </div>
@@ -98,41 +103,34 @@ const AdminUsers = () => {
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{user.phone || 'Not provided'}</TableCell>
                       <TableCell>
-                        <Select
-                          value={user.user_roles?.[0]?.role || 'customer'}
-                          onValueChange={(role: 'admin' | 'customer' | 'vendor' | 'driver' | 'property_owner' | 'rider' | 'service_provider') => 
-                            handleRoleChange(user.id, role)
-                          }
-                        >
-                          <SelectTrigger className="w-32">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="customer">Customer</SelectItem>
-                            <SelectItem value="vendor">Vendor</SelectItem>
-                            <SelectItem value="driver">Driver</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                            <SelectItem value="property_owner">Property Owner</SelectItem>
-                            <SelectItem value="service_provider">Service Provider</SelectItem>
-                            <SelectItem value="rider">Rider</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell className="text-sm text-gray-500">
-                        {new Date(user.created_at).toLocaleDateString()}
+                        <Badge variant={getRoleColor(user.role)}>
+                          {user.role || 'customer'}
+                        </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="destructive" 
+                        {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <Select
+                            value={user.role || 'customer'}
+                            onValueChange={(role) => handleRoleChange(user.id, role as any)}
+                          >
+                            <SelectTrigger className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="customer">Customer</SelectItem>
+                              <SelectItem value="vendor">Vendor</SelectItem>
+                              <SelectItem value="driver">Driver</SelectItem>
+                              <SelectItem value="admin">Admin</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button
                             size="sm"
+                            variant="outline"
                             onClick={() => handleDeleteUser(user.id)}
+                            className="text-red-600 hover:text-red-700"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -145,11 +143,8 @@ const AdminUsers = () => {
             </div>
           ) : (
             <div className="text-center py-8">
-              <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Users Found</h3>
-              <p className="text-gray-600 mb-4">
-                {searchTerm ? 'No users match your search criteria.' : 'Users will appear here once they register.'}
-              </p>
+              <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">No users found</p>
             </div>
           )}
         </CardContent>
