@@ -40,7 +40,7 @@ const Index = () => {
       title: "Kenya's Complete Digital Marketplace",
       subtitle: "Everything you need in one place",
       description: "From shopping to services, we connect you to the best Kenya has to offer",
-      image: "photo-1556742049-0cfed4f6a45d",
+      image: "photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80",
       cta: "Start Shopping",
       ctaAction: () => navigate('/shop')
     },
@@ -49,7 +49,7 @@ const Index = () => {
       title: "Find Your Dream Property",
       subtitle: "Real Estate Made Simple",
       description: "Discover homes and commercial properties across Kenya's prime locations",
-      image: "photo-1483058712412-4245e9b90334",
+      image: "photo-1483058712412-4245e9b90334?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80",
       cta: "Browse Properties",
       ctaAction: () => navigate('/real-estate')
     },
@@ -58,7 +58,7 @@ const Index = () => {
       title: "Professional Services at Your Fingertips",
       subtitle: "Trusted Service Providers",
       description: "Connect with verified professionals for all your service needs",
-      image: "photo-1473091534298-04dcbce3278c",
+      image: "photo-1473091534298-04dcbce3278c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80",
       cta: "Book Services",
       ctaAction: () => navigate('/services')
     },
@@ -67,7 +67,7 @@ const Index = () => {
       title: "Ride & Delivery Solutions",
       subtitle: "Get Moving with Ease",
       description: "Safe, reliable transportation and delivery services across Kenya",
-      image: "photo-1487887235947-a955ef187fcc",
+      image: "photo-1487887235947-a955ef187fcc?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80",
       cta: "Book a Ride",
       ctaAction: () => navigate('/rides')
     },
@@ -76,7 +76,7 @@ const Index = () => {
       title: "Join Our Growing Community",
       subtitle: "Become a Partner",
       description: "Grow your business with thousands of customers across Kenya",
-      image: "photo-1460925895917-afdab827c52f",
+      image: "photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80",
       cta: "Become a Partner",
       ctaAction: () => navigate('/service-hub')
     }
@@ -115,7 +115,7 @@ const Index = () => {
       icon: ShoppingBag,
       color: 'from-orange-500 to-red-500',
       route: '/shop',
-      image: 'photo-1563013544-824ae1b704d3',
+      image: 'photo-1649972904349-6e44c42644a7',
       stats: `${stats?.products || 0}+ Products`
     },
     {
@@ -125,7 +125,7 @@ const Index = () => {
       icon: Building,
       color: 'from-orange-500 to-red-500',
       route: '/real-estate',
-      image: 'photo-1560518883-ce09059eeffa',
+      image: 'photo-1483058712412-4245e9b90334',
       stats: `${stats?.properties || 0}+ Properties`
     },
     {
@@ -135,7 +135,7 @@ const Index = () => {
       icon: Car,
       color: 'from-orange-500 to-red-500',
       route: '/rides',
-      image: 'photo-1544620347-c4fd4a3d5957',
+      image: 'photo-1487887235947-a955ef187fcc',
       stats: `${stats?.rides || 0}+ Rides`
     },
     {
@@ -145,7 +145,7 @@ const Index = () => {
       icon: Wrench,
       color: 'from-orange-500 to-red-500',
       route: '/services',
-      image: 'photo-1581578731548-c64695cc6952',
+      image: 'photo-1473091534298-04dcbce3278c',
       stats: `${stats?.vendors || 0}+ Providers`
     },
     {
@@ -155,7 +155,7 @@ const Index = () => {
       icon: Stethoscope,
       color: 'from-orange-500 to-red-500',
       route: '/medical',
-      image: 'photo-1559757148-5c350d0d3c56',
+      image: 'photo-1581090464777-f3220bbe1b8b',
       stats: '0+ Doctors'
     },
     {
@@ -165,7 +165,7 @@ const Index = () => {
       icon: Shield,
       color: 'from-orange-500 to-red-500',
       route: '/insurance',
-      image: 'photo-1450101499163-c8848c66ca85',
+      image: 'photo-1524230572899-a752b3835840',
       stats: '0+ Plans'
     },
     {
@@ -175,7 +175,7 @@ const Index = () => {
       icon: UtensilsCrossed,
       color: 'from-orange-500 to-red-500',
       route: '/food',
-      image: 'photo-1565299624946-b28f40a0ca4b',
+      image: 'photo-1721322800607-8c38375eef04',
       stats: `${stats?.vendors || 0}+ Restaurants`
     },
     {
@@ -185,7 +185,7 @@ const Index = () => {
       icon: Calendar,
       color: 'from-orange-500 to-red-500',
       route: '/events',
-      image: 'photo-1492684223066-81342ee5ff30',
+      image: 'photo-1605810230434-7631ac76ec81',
       stats: '0+ Events'
     },
     {
@@ -195,7 +195,7 @@ const Index = () => {
       icon: Briefcase,
       color: 'from-orange-500 to-red-500',
       route: '/jobs',
-      image: 'photo-1507003211169-0a1dd7228f2d',
+      image: 'photo-1486312338219-ce68d2c6f44d',
       stats: '0+ Jobs'
     },
     {
@@ -205,7 +205,7 @@ const Index = () => {
       icon: MessageCircle,
       color: 'from-orange-500 to-red-500',
       route: '/chat-forums',
-      image: 'photo-1577563908411-5077b6dc7624',
+      image: 'photo-1460925895917-afdab827c52f',
       stats: `${stats?.users || 0}+ Members`
     }
   ];
@@ -229,7 +229,7 @@ const Index = () => {
           <div 
             className="absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out rounded-b-3xl"
             style={{ 
-              backgroundImage: `url(https://images.unsplash.com/${currentSlideData.image}?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80)`,
+              backgroundImage: `url(https://images.unsplash.com/${currentSlideData.image})`,
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent rounded-b-3xl" />
@@ -337,7 +337,7 @@ const Index = () => {
                   <div 
                     className="h-full bg-cover bg-center"
                     style={{ 
-                      backgroundImage: `url(https://images.unsplash.com/${app.image}?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80)`,
+                      backgroundImage: `url(https://images.unsplash.com/${app.image})`,
                     }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />

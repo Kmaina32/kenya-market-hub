@@ -34,38 +34,18 @@ const ImageUpload = ({
       return;
     }
 
-    // Validate file types and sizes
-    const validFiles = files.filter(file => {
-      if (!file.type.startsWith('image/')) {
-        return false;
-      }
-      // Check file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: `${file.name} is too large. Maximum size is 5MB.`,
-          variant: "destructive"
-        });
-        return false;
-      }
-      return true;
-    });
-
+    // Validate file types
+    const validFiles = files.filter(file => file.type.startsWith('image/'));
     if (validFiles.length !== files.length) {
       toast({
         title: "Invalid file type",
-        description: "Only image files under 5MB are allowed",
+        description: "Only image files are allowed",
         variant: "destructive"
       });
     }
 
     if (validFiles.length > 0) {
       onFilesSelected(validFiles);
-    }
-
-    // Reset input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
     }
   };
 
