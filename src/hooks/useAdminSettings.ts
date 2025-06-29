@@ -1,73 +1,63 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-
-export interface AdminSettings {
-  [key: string]: any;
-}
-
-const transformSettingsForApp = (data: any[] | null): AdminSettings => {
-    if (!data) return {};
-    return data.reduce((acc, setting) => {
-        acc[setting.setting_key] = setting.setting_value.value;
-        return acc;
-    }, {} as AdminSettings);
-};
+import { toast } from 'sonner';
 
 export const useAdminSettings = () => {
-  return useQuery<AdminSettings>({
+  return useQuery({
     queryKey: ['admin-settings'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('admin_settings')
-        .select('setting_key, setting_value');
-      
-      if (error) {
-        console.error('Error fetching admin settings:', error);
-        throw error;
-      }
-      return transformSettingsForApp(data);
-    },
+        .select('*');
+
+      if (error) throw error;
+
+      // Convert array of settings to object for easier use
+      const settings = data?.reduce((acc, setting) => {
+        acc[setting.setting_key] = setting.setting_value;
+        return acc;
+      }, {} as Record<string, any>) || {};
+
+      return settings;
+    }
   });
 };
 
 export const useUpdateAdminSettings = () => {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
-  return useMutation<void, Error, AdminSettings>({
-    mutationFn: async (settings: AdminSettings) => {
+  return useMutation({
+    mutationFn: async (settings: Record<string, any>) => {
       const { data: { user } } = await supabase.auth.getUser();
-      
-      const settingsArray = Object.entries(settings).map(([key, value]) => ({
-        setting_key: key,
-        setting_value: { value },
-        updated_by: user?.id,
-        updated_at: new Date().toISOString(),
-      }));
-      
-      const upsertPromises = settingsArray.map(setting =>
-        supabase.from('admin_settings').upsert(setting, { onConflict: 'setting_key' })
+      if (!user) throw new Error('User not authenticated');
+
+      // Update each setting individually
+      const updates = Object.entries(settings).map(([key, value]) =>
+        supabase
+          .from('admin_settings')
+          .upsert({
+            setting_key: key,
+            setting_value: value,
+            updated_by: user.id
+          }, { onConflict: 'setting_key' })
       );
 
-      const results = await Promise.all(upsertPromises);
-      const firstError = results.find(res => res.error);
-
-      if (firstError && firstError.error) {
-          throw firstError.error;
+      const results = await Promise.all(updates);
+      const errors = results.filter(result => result.error);
+      
+      if (errors.length > 0) {
+        throw new Error('Failed to update some settings');
       }
+
+      return results;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-settings'] });
-      toast({ title: "Settings saved successfully" });
+      toast.success('Settings updated successfully');
     },
     onError: (error: any) => {
-      toast({ 
-        title: "Error saving settings", 
-        description: error.message,
-        variant: "destructive"
-      });
+      toast.error(`Failed to update settings: ${error.message}`);
     }
   });
 };

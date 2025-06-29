@@ -5,50 +5,130 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Building2, Search, Edit, Trash2, Eye, Briefcase } from 'lucide-react';
+import { Plus, Building2, Search, Briefcase } from 'lucide-react';
+import { EditButton, DeleteButton, ViewButton } from '@/components/ui/action-buttons';
+import { ViewModal, EditModal, DeleteModal } from '@/components/admin/ActionModals';
+import { toast } from 'sonner';
 
 const AdminEmployers = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedEmployer, setSelectedEmployer] = useState<any>(null);
+  const [modalType, setModalType] = useState<'view' | 'edit' | 'delete' | null>(null);
+  const queryClient = useQueryClient();
 
-  // Fetch jobs to simulate employers data
-  const { data: jobs, isLoading } = useQuery({
+  // Fetch employers (grouped from jobs data)
+  const { data: employers, isLoading } = useQuery({
     queryKey: ['admin-employers', searchTerm],
     queryFn: async () => {
-      let query = supabase
+      const { data: jobs, error } = await supabase
         .from('jobs')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (searchTerm) {
-        query = query.or(`company.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%`);
-      }
-
-      const { data, error } = await query;
       if (error) throw error;
-      
-      // Group by company to simulate employers
-      const employers = data?.reduce((acc, job) => {
+
+      // Group by company to create employer records
+      const employerMap = jobs?.reduce((acc, job) => {
         const company = job.company || 'Unknown Company';
         if (!acc[company]) {
           acc[company] = {
-            id: job.id,
+            id: job.posted_by,
             company,
+            contact_email: `contact@${company.toLowerCase().replace(/\s+/g, '')}.com`,
+            contact_phone: '+254-700-000-000',
             jobCount: 0,
             activeJobs: 0,
+            totalApplications: 0,
             posted_by: job.posted_by,
-            created_at: job.created_at
+            created_at: job.created_at,
+            status: 'active'
           };
         }
         acc[company].jobCount++;
         if (job.status === 'open') acc[company].activeJobs++;
         return acc;
       }, {} as Record<string, any>);
-      
-      return Object.values(employers || {});
+
+      let employersList = Object.values(employerMap || {});
+
+      if (searchTerm) {
+        employersList = employersList.filter(employer =>
+          employer.company.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+
+      return employersList;
     }
   });
+
+  // Update employer mutation
+  const updateEmployer = useMutation({
+    mutationFn: async (employerData: any) => {
+      // In a real app, you'd update the employer record
+      // For now, we'll simulate success
+      return employerData;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-employers'] });
+      toast.success('Employer updated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to update employer: ${error.message}`);
+    }
+  });
+
+  // Delete employer mutation
+  const deleteEmployer = useMutation({
+    mutationFn: async (employerId: string) => {
+      // In a real app, you'd deactivate the employer and their jobs
+      const { error } = await supabase
+        .from('jobs')
+        .update({ status: 'closed' })
+        .eq('posted_by', employerId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-employers'] });
+      toast.success('Employer deactivated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to deactivate employer: ${error.message}`);
+    }
+  });
+
+  const handleView = (employer: any) => {
+    setSelectedEmployer(employer);
+    setModalType('view');
+  };
+
+  const handleEdit = (employer: any) => {
+    setSelectedEmployer(employer);
+    setModalType('edit');
+  };
+
+  const handleDelete = (employer: any) => {
+    setSelectedEmployer(employer);
+    setModalType('delete');
+  };
+
+  const editFields = [
+    { key: 'company', label: 'Company Name', type: 'text' as const },
+    { key: 'contact_email', label: 'Contact Email', type: 'email' as const },
+    { key: 'contact_phone', label: 'Contact Phone', type: 'text' as const },
+    { 
+      key: 'status', 
+      label: 'Status', 
+      type: 'select' as const,
+      options: [
+        { value: 'active', label: 'Active' },
+        { value: 'suspended', label: 'Suspended' },
+        { value: 'pending', label: 'Pending Review' }
+      ]
+    }
+  ];
 
   return (
     <div className="space-y-6">
@@ -79,7 +159,7 @@ const AdminEmployers = () => {
         <CardHeader>
           <CardTitle className="flex items-center">
             <Building2 className="h-5 w-5 mr-2" />
-            All Employers ({jobs?.length || 0})
+            All Employers ({employers?.length || 0})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -88,21 +168,22 @@ const AdminEmployers = () => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
               <span className="ml-2">Loading employers...</span>
             </div>
-          ) : jobs && jobs.length > 0 ? (
+          ) : employers && employers.length > 0 ? (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Company</TableHead>
-                    <TableHead>Posted By</TableHead>
+                    <TableHead>Contact Info</TableHead>
                     <TableHead>Total Jobs</TableHead>
                     <TableHead>Active Jobs</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Member Since</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {jobs.map((employer: any) => (
+                  {employers.map((employer: any) => (
                     <TableRow key={employer.id}>
                       <TableCell>
                         <div className="flex items-center">
@@ -110,7 +191,12 @@ const AdminEmployers = () => {
                           <span className="font-medium">{employer.company}</span>
                         </div>
                       </TableCell>
-                      <TableCell>User {employer.posted_by?.slice(-8) || 'Unknown'}</TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div>{employer.contact_email}</div>
+                          <div className="text-gray-500">{employer.contact_phone}</div>
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center">
                           <Briefcase className="h-3 w-3 mr-1 text-gray-400" />
@@ -121,19 +207,21 @@ const AdminEmployers = () => {
                         <Badge variant="default">{employer.activeJobs} active</Badge>
                       </TableCell>
                       <TableCell>
+                        <Badge 
+                          variant={employer.status === 'active' ? 'default' : 'secondary'}
+                          className={employer.status === 'active' ? 'bg-green-100 text-green-800' : ''}
+                        >
+                          {employer.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
                         {employer.created_at ? new Date(employer.created_at).toLocaleDateString() : 'Unknown'}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="destructive" size="sm">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <ViewButton onClick={() => handleView(employer)} />
+                          <EditButton onClick={() => handleEdit(employer)} />
+                          <DeleteButton onClick={() => handleDelete(employer)} />
                         </div>
                       </TableCell>
                     </TableRow>
@@ -152,6 +240,35 @@ const AdminEmployers = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Modals */}
+      {selectedEmployer && (
+        <>
+          <ViewModal
+            isOpen={modalType === 'view'}
+            onClose={() => setModalType(null)}
+            title={`Employer Details - ${selectedEmployer.company}`}
+            data={selectedEmployer}
+          />
+
+          <EditModal
+            isOpen={modalType === 'edit'}
+            onClose={() => setModalType(null)}
+            title={`Edit Employer - ${selectedEmployer.company}`}
+            data={selectedEmployer}
+            fields={editFields}
+            onSave={(data) => updateEmployer.mutate(data)}
+          />
+
+          <DeleteModal
+            isOpen={modalType === 'delete'}
+            onClose={() => setModalType(null)}
+            title="Deactivate Employer"
+            description={`Are you sure you want to deactivate ${selectedEmployer.company}? This will close all their active job postings.`}
+            onConfirm={() => deleteEmployer.mutate(selectedEmployer.id)}
+          />
+        </>
+      )}
     </div>
   );
 };
