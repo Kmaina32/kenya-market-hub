@@ -1,24 +1,100 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, ShoppingBag, DollarSign, TrendingUp, Calendar, Briefcase, Shield, UtensilsCrossed } from 'lucide-react';
 import { useAdminStats } from '@/hooks/useAdminStats';
+import { useNavigate } from 'react-router-dom';
+import { 
+  Users, 
+  ShoppingBag, 
+  ClipboardList, 
+  Store, 
+  Car, 
+  Building, 
+  Briefcase,
+  DollarSign 
+} from 'lucide-react';
 
 const AdminDashboardOverview = () => {
-  const { data: stats, isLoading, error } = useAdminStats();
+  const { data: stats, isLoading } = useAdminStats();
+  const navigate = useNavigate();
+
+  const statCards = [
+    {
+      title: 'Total Users',
+      value: stats?.totalUsers || 0,
+      icon: Users,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-100',
+      path: '/admin/users'
+    },
+    {
+      title: 'Total Orders',
+      value: stats?.totalOrders || 0,
+      icon: ClipboardList,
+      color: 'text-green-600',
+      bgColor: 'bg-green-100',
+      path: '/admin/orders'
+    },
+    {
+      title: 'Products',
+      value: stats?.totalProducts || 0,
+      icon: ShoppingBag,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-100',
+      path: '/admin/products'
+    },
+    {
+      title: 'Active Vendors',
+      value: stats?.totalVendors || 0,
+      icon: Store,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-100',
+      path: '/admin/vendors'
+    },
+    {
+      title: 'Drivers',
+      value: stats?.totalDrivers || 0,
+      icon: Car,
+      color: 'text-red-600',
+      bgColor: 'bg-red-100',
+      path: '/admin/drivers'
+    },
+    {
+      title: 'Properties',
+      value: stats?.totalProperties || 0,
+      icon: Building,
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-100',
+      path: '/admin/properties'
+    },
+    {
+      title: 'Job Postings',
+      value: stats?.totalJobs || 0,
+      icon: Briefcase,
+      color: 'text-teal-600',
+      bgColor: 'bg-teal-100',
+      path: '/admin/jobs'
+    },
+    {
+      title: 'Total Revenue',
+      value: `KSh ${(stats?.totalRevenue || 0).toLocaleString()}`,
+      icon: DollarSign,
+      color: 'text-green-600',
+      bgColor: 'bg-green-100',
+      path: '/admin/analytics'
+    }
+  ];
 
   if (isLoading) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[...Array(8)].map((_, i) => (
           <Card key={i} className="animate-pulse">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <div className="h-4 bg-gray-200 rounded w-20"></div>
-              <div className="h-4 w-4 bg-gray-200 rounded"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
-              <div className="h-3 bg-gray-200 rounded w-24"></div>
+            <CardContent className="p-6">
+              <div className="space-y-3">
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+              </div>
             </CardContent>
           </Card>
         ))}
@@ -26,88 +102,34 @@ const AdminDashboardOverview = () => {
     );
   }
 
-  if (error) {
-    return (
-      <Card>
-        <CardContent className="pt-6">
-          <div className="text-center text-red-600">
-            <p>Error loading dashboard statistics</p>
-            <p className="text-sm text-gray-500 mt-1">{error.message}</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const statCards = [
-    {
-      title: 'Total Users',
-      value: stats?.totalUsers?.toLocaleString() || '0',
-      icon: Users,
-      color: 'text-blue-600'
-    },
-    {
-      title: 'Products',
-      value: stats?.totalProducts?.toLocaleString() || '0',
-      icon: ShoppingBag,
-      color: 'text-green-600'
-    },
-    {
-      title: 'Revenue',
-      value: `KSh ${stats?.totalRevenue?.toLocaleString() || '0'}`,
-      icon: DollarSign,
-      color: 'text-orange-600'
-    },
-    {
-      title: 'Orders',
-      value: stats?.totalOrders?.toLocaleString() || '0',
-      icon: TrendingUp,
-      color: 'text-purple-600'
-    },
-    {
-      title: 'Vendors',
-      value: stats?.totalVendors?.toLocaleString() || '0',
-      icon: Users,
-      color: 'text-red-600'
-    },
-    {
-      title: 'Drivers',
-      value: stats?.totalDrivers?.toLocaleString() || '0',
-      icon: Calendar,
-      color: 'text-indigo-600'
-    },
-    {
-      title: 'Properties',
-      value: stats?.totalProperties?.toLocaleString() || '0',
-      icon: Briefcase,
-      color: 'text-yellow-600'
-    },
-    {
-      title: 'Pending Orders',
-      value: stats?.pendingOrders?.toLocaleString() || '0',
-      icon: Shield,
-      color: 'text-cyan-600'
-    }
-  ];
-
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {statCards.map((stat) => (
-        <Card key={stat.title} className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              {stat.title}
-            </CardTitle>
-            <stat.icon className={`h-4 w-4 ${stat.color}`} />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stat.value}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Live from database
-            </p>
-          </CardContent>
-        </Card>
-      ))}
+      {statCards.map((stat, index) => {
+        const IconComponent = stat.icon;
+        return (
+          <Card 
+            key={index} 
+            className="hover:shadow-lg transition-all duration-200 cursor-pointer hover:scale-105"
+            onClick={() => navigate(stat.path)}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">
+                    {stat.title}
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {typeof stat.value === 'string' ? stat.value : stat.value.toLocaleString()}
+                  </p>
+                </div>
+                <div className={`p-3 rounded-full ${stat.bgColor}`}>
+                  <IconComponent className={`h-6 w-6 ${stat.color}`} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 };

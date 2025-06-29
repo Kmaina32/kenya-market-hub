@@ -1,17 +1,18 @@
+
 import React, { useState } from 'react';
-import AdminLayout from '@/layouts/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { UtensilsCrossed, Search, Star, Clock, MapPin } from 'lucide-react';
+import { Plus, UtensilsCrossed, Search, Edit, Trash2, Eye } from 'lucide-react';
+import { EditButton, DeleteButton, ViewButton } from '@/components/ui/action-buttons';
 
 const AdminFoodDelivery = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Fetch restaurants from database
   const { data: restaurants, isLoading } = useQuery({
     queryKey: ['admin-restaurants', searchTerm],
     queryFn: async () => {
@@ -26,121 +27,127 @@ const AdminFoodDelivery = () => {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+      return data || [];
     }
   });
 
+  const handleEdit = (restaurantId: string) => {
+    console.log('Edit restaurant:', restaurantId);
+    // TODO: Open edit modal
+  };
+
+  const handleDelete = (restaurantId: string) => {
+    console.log('Delete restaurant:', restaurantId);
+    // TODO: Implement delete functionality
+  };
+
+  const handleView = (restaurantId: string) => {
+    console.log('View restaurant:', restaurantId);
+    // TODO: Open view modal
+  };
+
   return (
-    <AdminLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Food Delivery Management</h1>
-            <p className="text-gray-600">Manage all restaurants and food orders</p>
-          </div>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Food Delivery Management</h1>
+          <p className="text-gray-600">Manage restaurants and food delivery services</p>
         </div>
-
-        <div className="flex items-center space-x-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input 
-              placeholder="Search restaurants..." 
-              className="pl-10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <UtensilsCrossed className="h-5 w-5 mr-2" />
-              Restaurants ({restaurants?.length || 0})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-                <span className="ml-2">Loading restaurants...</span>
-              </div>
-            ) : restaurants && restaurants.length > 0 ? (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Restaurant</TableHead>
-                      <TableHead>Cuisine Type</TableHead>
-                      <TableHead>Rating</TableHead>
-                      <TableHead>Delivery Info</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {restaurants.map((restaurant) => (
-                      <TableRow key={restaurant.id}>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{restaurant.name}</div>
-                            <div className="text-sm text-gray-500 line-clamp-1">
-                              {restaurant.description}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{restaurant.cuisine_type}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center">
-                            <Star className="h-4 w-4 text-yellow-500 mr-1" />
-                            <span>{Number(restaurant.rating || 0).toFixed(1)}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1 text-sm">
-                            <div className="flex items-center">
-                              <Clock className="h-3 w-3 mr-1 text-gray-400" />
-                              <span>{restaurant.delivery_time_minutes} min</span>
-                            </div>
-                            <div className="text-green-600 font-medium">
-                              KSh {Number(restaurant.delivery_fee || 0).toLocaleString()} delivery
-                            </div>
-                            <div className="text-gray-500">
-                              Min order: KSh {Number(restaurant.minimum_order || 0).toLocaleString()}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center text-sm">
-                            <MapPin className="h-3 w-3 mr-1 text-gray-400" />
-                            <span className="truncate max-w-32">{restaurant.address || 'Not specified'}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={restaurant.is_active ? 'default' : 'secondary'}>
-                            {restaurant.is_active ? 'Active' : 'Inactive'}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <UtensilsCrossed className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Restaurants Found</h3>
-                <p className="text-gray-600 mb-4">
-                  {searchTerm ? 'No restaurants match your search criteria.' : 'Restaurants will appear here once they register.'}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <Button className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
+          <Plus className="h-4 w-4 mr-2" />
+          Add Restaurant
+        </Button>
       </div>
-    </AdminLayout>
+
+      <div className="flex items-center space-x-4">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input 
+            placeholder="Search restaurants..." 
+            className="pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <UtensilsCrossed className="h-5 w-5 mr-2" />
+            All Restaurants ({restaurants?.length || 0})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+              <span className="ml-2">Loading restaurants...</span>
+            </div>
+          ) : restaurants && restaurants.length > 0 ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Cuisine Type</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead>Rating</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {restaurants.map((restaurant) => (
+                    <TableRow key={restaurant.id}>
+                      <TableCell className="font-medium">{restaurant.name}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{restaurant.cuisine_type}</Badge>
+                      </TableCell>
+                      <TableCell>{restaurant.address || 'Not specified'}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <span className="text-yellow-500">★</span>
+                          <span className="ml-1">{restaurant.rating || 0}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={restaurant.is_active ? 'default' : 'secondary'}
+                          className={restaurant.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
+                        >
+                          {restaurant.is_active ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <ViewButton onClick={() => handleView(restaurant.id)} />
+                          <EditButton onClick={() => handleEdit(restaurant.id)} />
+                          <DeleteButton onClick={() => handleDelete(restaurant.id)} />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <UtensilsCrossed className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">No restaurants found</h3>
+              <p className="text-gray-600 mb-4">Start by adding your first restaurant partner.</p>
+              <Button 
+                onClick={() => {}}
+                className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
+              >
+                <Plus className="h-5 w-5 mr-2" />
+                Add Restaurant
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
