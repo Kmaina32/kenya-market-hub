@@ -18,45 +18,20 @@ interface AdminLayoutProps {
 }
 
 const AdminLayout = ({ children }: AdminLayoutProps) => {
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const { user, signOut } = useAuth();
 
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gray-50">
-        {/* Mobile Sidebar Overlay */}
-        {isMobileSidebarOpen && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-            onClick={() => setIsMobileSidebarOpen(false)}
-          />
-        )}
-
-        {/* Desktop Sidebar */}
-        <div className="hidden lg:block">
-          <ModernAdminSidebar />
-        </div>
-
-        {/* Mobile Sidebar */}
-        <ModernAdminSidebar 
-          isMobileOpen={isMobileSidebarOpen}
-          onMobileClose={() => setIsMobileSidebarOpen(false)}
-        />
+        {/* Sidebar - now handles its own mobile behavior */}
+        <ModernAdminSidebar />
 
         {/* Main Content */}
         <main className="flex-1 flex flex-col min-w-0">
           {/* Header */}
           <header className="bg-white shadow-sm border-b border-gray-200 h-16 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30">
             <div className="flex items-center">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsMobileSidebarOpen(true)}
-                className="lg:hidden hover:bg-gray-100"
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
-              <h1 className="text-xl font-semibold text-gray-900 ml-2 lg:ml-0">
+              <h1 className="text-xl font-semibold text-gray-900">
                 Sokko Sasa Admin
               </h1>
             </div>
