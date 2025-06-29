@@ -204,11 +204,12 @@ const AdminModernDashboard = () => {
 
       {/* Main Dashboard Content */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="bulk-ops">Bulk Operations</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          <TabsTrigger value="bulk-ops" className="hidden sm:flex">Bulk Ops</TabsTrigger>
+          <TabsTrigger value="notifications" className="hidden sm:flex">Notifications</TabsTrigger>
+          <TabsTrigger value="live" className="hidden lg:flex">Live Data</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -234,7 +235,7 @@ const AdminModernDashboard = () => {
               <CardContent>
                 <div className="space-y-4">
                   {stats?.recentActivity?.slice(0, 5).map((activity, index) => (
-                    <div key={activity.id || index} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-white/60 transition-colors">
+                    <div key={activity.id} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-white/60 transition-colors">
                       <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
                         activity.type === 'order' ? 'bg-green-500' :
                         activity.type === 'user' ? 'bg-blue-500' :
@@ -324,6 +325,21 @@ const AdminModernDashboard = () => {
 
         <TabsContent value="notifications">
           <NotificationCenter />
+        </TabsContent>
+
+        <TabsContent value="live">
+          <Card>
+            <CardHeader>
+              <CardTitle>Live Data Stream</CardTitle>
+              <CardDescription>Real-time updates and system monitoring</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-12">
+                <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">Live data streaming will be implemented here</p>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

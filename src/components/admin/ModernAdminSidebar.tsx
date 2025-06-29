@@ -14,7 +14,6 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   LayoutDashboard,
   Users,
@@ -35,16 +34,10 @@ import {
   Shield,
   UtensilsCrossed,
   Calendar,
-  FileText,
-  X
+  FileText
 } from 'lucide-react';
 
-interface ModernAdminSidebarProps {
-  isMobileOpen?: boolean;
-  onMobileClose?: () => void;
-}
-
-const ModernAdminSidebar = ({ isMobileOpen, onMobileClose }: ModernAdminSidebarProps) => {
+const ModernAdminSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -54,7 +47,6 @@ const ModernAdminSidebar = ({ isMobileOpen, onMobileClose }: ModernAdminSidebarP
 
   const handleNavigation = (path: string) => {
     navigate(`/admin${path}`);
-    onMobileClose?.();
   };
 
   const mainItems = [
@@ -127,53 +119,36 @@ const ModernAdminSidebar = ({ isMobileOpen, onMobileClose }: ModernAdminSidebarP
   );
 
   return (
-    <div className={`fixed inset-y-0 left-0 z-50 w-80 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
-      isMobileOpen ? 'translate-x-0' : '-translate-x-full'
-    } lg:block`}>
-      <Sidebar 
-        variant="inset" 
-        className="border-r border-orange-200/50 bg-white shadow-xl h-full"
-      >
-        <SidebarHeader className="border-b border-orange-200/50 p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 flex items-center justify-center shadow-lg">
-                <LayoutDashboard className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-gray-900">Admin Panel</h1>
-                <p className="text-sm text-gray-600">Sokko Sasa</p>
-              </div>
-            </div>
-            
-            {/* Mobile Close Button */}
-            {isMobileOpen && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="lg:hidden p-2"
-                onClick={onMobileClose}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
+    <Sidebar 
+      variant="inset" 
+      className="border-r border-orange-200/50 bg-white shadow-xl"
+      collapsible="offcanvas"
+    >
+      <SidebarHeader className="border-b border-orange-200/50 p-4">
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 flex items-center justify-center shadow-lg">
+            <LayoutDashboard className="h-6 w-6 text-white" />
           </div>
-        </SidebarHeader>
-
-        <SidebarContent className="py-4 space-y-4 overflow-y-auto">
-          <SidebarSection title="Main" items={mainItems} />
-          <SidebarSection title="Business Partners" items={businessItems} />
-          <SidebarSection title="Services & Modules" items={servicesItems} />
-          <SidebarSection title="System" items={systemItems} />
-        </SidebarContent>
-
-        <SidebarFooter className="border-t border-orange-200/50 p-4">
-          <div className="text-xs text-gray-500 text-center">
-            © 2025 Sokko Sasa Admin
+          <div>
+            <h1 className="text-lg font-bold text-gray-900">Admin Panel</h1>
+            <p className="text-sm text-gray-600">Sokko Sasa</p>
           </div>
-        </SidebarFooter>
-      </Sidebar>
-    </div>
+        </div>
+      </SidebarHeader>
+
+      <SidebarContent className="py-4 space-y-4 overflow-y-auto">
+        <SidebarSection title="Main" items={mainItems} />
+        <SidebarSection title="Business Partners" items={businessItems} />
+        <SidebarSection title="Services & Modules" items={servicesItems} />
+        <SidebarSection title="System" items={systemItems} />
+      </SidebarContent>
+
+      <SidebarFooter className="border-t border-orange-200/50 p-4">
+        <div className="text-xs text-gray-500 text-center">
+          © 2025 Sokko Sasa Admin
+        </div>
+      </SidebarFooter>
+    </Sidebar>
   );
 };
 
