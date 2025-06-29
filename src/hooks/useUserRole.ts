@@ -11,14 +11,18 @@ export const useUserRole = () => {
     queryFn: async () => {
       if (!user) return null;
 
-      const { data, error } = await supabase.rpc('get_current_user_role');
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
       
-      if (error) {
+      if (error && error.code !== 'PGRST116') { // PGRST116 is "not found" error
         console.error('Error fetching user role:', error);
         return null;
       }
       
-      return data;
+      return data?.role || 'customer';
     },
     enabled: !!user,
   });

@@ -43,6 +43,14 @@ const AdminUsers = () => {
     }
   };
 
+  // Helper function to get user's primary role
+  const getUserRole = (user: any) => {
+    if (user.user_roles && user.user_roles.length > 0) {
+      return user.user_roles[0].role;
+    }
+    return 'customer';
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -92,52 +100,55 @@ const AdminUsers = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredUsers.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{user.full_name || 'Unknown'}</div>
-                          <div className="text-sm text-gray-500">{user.city}, {user.country}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>{user.phone || 'Not provided'}</TableCell>
-                      <TableCell>
-                        <Badge variant={getRoleColor(user.role)}>
-                          {user.role || 'customer'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <Select
-                            value={user.role || 'customer'}
-                            onValueChange={(role) => handleRoleChange(user.id, role as any)}
-                          >
-                            <SelectTrigger className="w-32">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="customer">Customer</SelectItem>
-                              <SelectItem value="vendor">Vendor</SelectItem>
-                              <SelectItem value="driver">Driver</SelectItem>
-                              <SelectItem value="admin">Admin</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleDeleteUser(user.id)}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {filteredUsers.map((user) => {
+                    const userRole = getUserRole(user);
+                    return (
+                      <TableRow key={user.id}>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{user.full_name || 'Unknown'}</div>
+                            <div className="text-sm text-gray-500">{user.city}, {user.country}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{user.email}</TableCell>
+                        <TableCell>{user.phone || 'Not provided'}</TableCell>
+                        <TableCell>
+                          <Badge variant={getRoleColor(userRole)}>
+                            {userRole}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <Select
+                              value={userRole}
+                              onValueChange={(role) => handleRoleChange(user.id, role as any)}
+                            >
+                              <SelectTrigger className="w-32">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="customer">Customer</SelectItem>
+                                <SelectItem value="vendor">Vendor</SelectItem>
+                                <SelectItem value="driver">Driver</SelectItem>
+                                <SelectItem value="admin">Admin</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDeleteUser(user.id)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>

@@ -19,14 +19,20 @@ export const checkUserRole = async (userId: string): Promise<string | null> => {
 
 export const isUserAdmin = async (userId: string): Promise<boolean> => {
   try {
-    const { data, error } = await supabase.rpc('is_current_user_admin');
+    // Check user role from user_roles table
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .eq('role', 'admin')
+      .single();
     
-    if (error) {
+    if (error && error.code !== 'PGRST116') { // PGRST116 is "not found" error
       console.error('Error checking admin status:', error);
       return false;
     }
     
-    return data || false;
+    return !!data;
   } catch (error) {
     console.error('Error in isUserAdmin:', error);
     return false;

@@ -34,9 +34,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Check if user is admin using database role
         if (session?.user) {
           try {
-            const { data: adminCheck, error } = await supabase.rpc('is_current_user_admin');
+            const { data: adminCheck, error } = await supabase
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', session.user.id)
+              .eq('role', 'admin')
+              .single();
+            
             if (!error) {
-              setIsAdmin(adminCheck || false);
+              setIsAdmin(!!adminCheck);
+            } else if (error.code === 'PGRST116') {
+              // No admin role found
+              setIsAdmin(false);
             } else {
               console.error('Error checking admin status:', error);
               setIsAdmin(false);
@@ -62,9 +71,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Check if user is admin using database role
       if (session?.user) {
         try {
-          const { data: adminCheck, error } = await supabase.rpc('is_current_user_admin');
+          const { data: adminCheck, error } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', session.user.id)
+            .eq('role', 'admin')
+            .single();
+          
           if (!error) {
-            setIsAdmin(adminCheck || false);
+            setIsAdmin(!!adminCheck);
+          } else if (error.code === 'PGRST116') {
+            // No admin role found
+            setIsAdmin(false);
           } else {
             console.error('Error checking admin status:', error);
             setIsAdmin(false);
