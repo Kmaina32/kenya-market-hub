@@ -35,7 +35,7 @@ interface Job {
 const Jobs = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
-  const [jobTypeFilter, setJobTypeFilter] = useState('');
+  const [jobTypeFilter, setJobTypeFilter] = useState('all');
   const [savedJobs, setSavedJobs] = useState<number[]>([]);
 
   // Mock data for jobs
@@ -173,7 +173,7 @@ const Jobs = () => {
                 <SelectValue placeholder="Job Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Types</SelectItem>
+                <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="Full-time">Full-time</SelectItem>
                 <SelectItem value="Part-time">Part-time</SelectItem>
                 <SelectItem value="Contract">Contract</SelectItem>
