@@ -35,7 +35,8 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ open, onOpenChange, o
         ...formData,
         price: parseFloat(formData.price),
         stock_quantity: parseInt(formData.stock_quantity) || 0,
-        in_stock: parseInt(formData.stock_quantity) > 0
+        in_stock: parseInt(formData.stock_quantity) > 0,
+        updated_at: new Date().toISOString()
       });
       
       setFormData({

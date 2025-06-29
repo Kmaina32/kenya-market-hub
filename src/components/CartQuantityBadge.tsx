@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { useCart } from '@/contexts/CartContext';
+import { useCartContext } from '@/contexts/CartContext';
 
 const CartQuantityBadge = () => {
-  const { items } = useCart();
+  const { items } = useCartContext();
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 
   if (totalItems === 0) return null;

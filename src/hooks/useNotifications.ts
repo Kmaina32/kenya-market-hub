@@ -95,7 +95,10 @@ export const useNotifications = () => {
     isLoading,
     markAsRead: (id: string) => markAsReadMutation.mutate(id),
     markAllAsRead: () => markAllAsReadMutation.mutate(),
-    deleteNotification: (id: string) => deleteNotificationMutation.mutate(id)
+    deleteNotification: (id: string) => deleteNotificationMutation.mutate(id),
+    isMarkingAsRead: markAsReadMutation.isPending,
+    isMarkingAllAsRead: markAllAsReadMutation.isPending,
+    isDeletingNotification: deleteNotificationMutation.isPending
   };
 };
 

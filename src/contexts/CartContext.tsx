@@ -57,3 +57,6 @@ export const useCartContext = () => {
   }
   return context;
 };
+
+// Export the hook for backward compatibility
+export { useCart };
