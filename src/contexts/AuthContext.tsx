@@ -23,6 +23,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
 
+  const checkAdminStatus = async (userId: string) => {
+    try {
+      const { data: adminCheck, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .eq('role', 'admin')
+        .single();
+      
+      if (!error && adminCheck) {
+        setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
+      }
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+      setIsAdmin(false);
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -31,29 +51,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Check if user is admin using database role
+        // Check admin status if user exists
         if (session?.user) {
-          try {
-            const { data: adminCheck, error } = await supabase
-              .from('user_roles')
-              .select('role')
-              .eq('user_id', session.user.id)
-              .eq('role', 'admin')
-              .single();
-            
-            if (!error) {
-              setIsAdmin(!!adminCheck);
-            } else if (error.code === 'PGRST116') {
-              // No admin role found
-              setIsAdmin(false);
-            } else {
-              console.error('Error checking admin status:', error);
-              setIsAdmin(false);
-            }
-          } catch (error) {
-            console.error('Error in admin check:', error);
-            setIsAdmin(false);
-          }
+          // Use setTimeout to avoid blocking the auth state change
+          setTimeout(() => {
+            checkAdminStatus(session.user.id);
+          }, 0);
         } else {
           setIsAdmin(false);
         }
@@ -68,29 +71,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(session);
       setUser(session?.user ?? null);
       
-      // Check if user is admin using database role
+      // Check admin status if user exists
       if (session?.user) {
-        try {
-          const { data: adminCheck, error } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', session.user.id)
-            .eq('role', 'admin')
-            .single();
-          
-          if (!error) {
-            setIsAdmin(!!adminCheck);
-          } else if (error.code === 'PGRST116') {
-            // No admin role found
-            setIsAdmin(false);
-          } else {
-            console.error('Error checking admin status:', error);
-            setIsAdmin(false);
-          }
-        } catch (error) {
-          console.error('Error in admin check:', error);
-          setIsAdmin(false);
-        }
+        setTimeout(() => {
+          checkAdminStatus(session.user.id);
+        }, 0);
       } else {
         setIsAdmin(false);
       }

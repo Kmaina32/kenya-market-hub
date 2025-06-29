@@ -9,7 +9,7 @@ export const useUserRole = () => {
   return useQuery({
     queryKey: ['user-role', user?.id],
     queryFn: async () => {
-      if (!user) return null;
+      if (!user) return 'customer';
 
       const { data, error } = await supabase
         .from('user_roles')
@@ -19,12 +19,14 @@ export const useUserRole = () => {
       
       if (error && error.code !== 'PGRST116') { // PGRST116 is "not found" error
         console.error('Error fetching user role:', error);
-        return null;
+        return 'customer';
       }
       
       return data?.role || 'customer';
     },
     enabled: !!user,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: false, // Don't retry on error to prevent infinite loading
   });
 };
 
