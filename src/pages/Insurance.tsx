@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import FrontendLayout from '@/components/layouts/FrontendLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import GetQuoteModal from '@/components/modals/GetQuoteModal';
 import ComparePlansModal from '@/components/modals/ComparePlansModal';
+import HeroSection from '@/components/shared/HeroSection';
 import { 
   Shield, 
   Car, 
@@ -113,7 +115,6 @@ const Insurance: React.FC = () => {
       title: "Plan Selected",
       description: "Redirecting to enrollment process...",
     });
-    // In real app, redirect to enrollment page
   };
 
   const handleComparePlans = (planId: string) => {
@@ -146,80 +147,53 @@ const Insurance: React.FC = () => {
       title: "Plan Details",
       description: "Opening detailed plan information...",
     });
-    // In real app, navigate to plan details page
   };
 
   return (
     <FrontendLayout>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-        {/* Enhanced Hero Section */}
-        <div className="relative overflow-hidden">
-          {/* Background Image */}
-          <div 
-            className="absolute inset-0 bg-cover bg-center opacity-20"
-            style={{ 
-              backgroundImage: `url(https://images.unsplash.com/photo-1551601651-2a8555f1a136?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80)` 
-            }}
-          />
-          
-          {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-indigo-700 to-purple-800 opacity-90" />
-          
-          {/* Content */}
-          <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-20 sm:py-24 lg:py-32">
-            <div className="text-center text-white">
-              <div className="flex justify-center mb-8">
-                <Shield className="h-20 w-20 text-blue-200 animate-pulse" />
-              </div>
-              
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
-                Protect What 
-                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
-                  Matters Most
-                </span>
-              </h1>
-              
-              <p className="text-xl sm:text-2xl mb-10 opacity-90 max-w-4xl mx-auto leading-relaxed">
-                Find and compare comprehensive insurance plans from Kenya's most trusted providers. 
-                Get the coverage you need with competitive rates and excellent service.
-              </p>
-              
-              {/* Search Bar */}
-              <div className="max-w-3xl mx-auto mb-8">
-                <div className="relative">
-                  <Search className="absolute left-6 top-1/2 transform -translate-y-1/2 h-6 w-6 text-gray-400" />
-                  <Input
-                    placeholder="Search insurance plans..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-16 pr-6 py-6 text-lg bg-white/95 border-0 text-gray-900 placeholder-gray-500 rounded-2xl shadow-2xl backdrop-blur-sm"
-                  />
-                </div>
-              </div>
-
-              {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <Button 
-                  size="lg"
-                  onClick={() => handleGetQuote()}
-                  className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-2xl transform hover:scale-105 transition-all duration-300"
-                >
-                  Get Quote Now
-                </Button>
-                <Button 
-                  variant="outline"
-                  size="lg"
-                  onClick={() => setShowComparisonModal(true)}
-                  className="bg-white/20 border-white/30 text-white hover:bg-white/30 px-8 py-4 text-lg font-semibold rounded-xl backdrop-blur-sm"
-                >
-                  Compare Plans
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
+        {/* Hero Section - Updated to match other pages */}
+        <HeroSection
+          title="Insurance Coverage"
+          subtitle="Protect What Matters Most"
+          description="Find and compare comprehensive insurance plans from Kenya's most trusted providers. Get the coverage you need with competitive rates and excellent service."
+          imageUrl="photo-1551601651-2a8555f1a136"
+          className="mb-8"
+        />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
+          {/* Search Bar */}
+          <div className="max-w-3xl mx-auto">
+            <div className="relative">
+              <Search className="absolute left-6 top-1/2 transform -translate-y-1/2 h-6 w-6 text-gray-400" />
+              <Input
+                placeholder="Search insurance plans..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-16 pr-6 py-6 text-lg bg-white/95 border-0 text-gray-900 placeholder-gray-500 rounded-2xl shadow-2xl backdrop-blur-sm"
+              />
+            </div>
+          </div>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Button 
+              size="lg"
+              onClick={() => handleGetQuote()}
+              className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-2xl transform hover:scale-105 transition-all duration-300"
+            >
+              Get Quote Now
+            </Button>
+            <Button 
+              variant="outline"
+              size="lg"
+              onClick={() => setShowComparisonModal(true)}
+              className="bg-white/20 border-orange-300 text-orange-600 hover:bg-orange-50 px-8 py-4 text-lg font-semibold rounded-xl backdrop-blur-sm"
+            >
+              Compare Plans
+            </Button>
+          </div>
+
           {/* Insurance Types */}
           <section>
             <div className="text-center mb-12">
@@ -231,7 +205,7 @@ const Insurance: React.FC = () => {
               {insuranceTypes.map((type) => {
                 const TypeIcon = type.icon;
                 return (
-                  <Card key={type.id} className="group hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 hover:border-blue-300 overflow-hidden">
+                  <Card key={type.id} className="group hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 hover:border-orange-300 overflow-hidden">
                     <div className={`h-2 bg-gradient-to-r ${type.gradient}`}></div>
                     <CardHeader className="text-center pb-4">
                       <div className={`mx-auto p-4 rounded-full bg-gradient-to-r ${type.gradient} w-20 h-20 flex items-center justify-center mb-4 shadow-lg`}>
@@ -273,16 +247,16 @@ const Insurance: React.FC = () => {
 
             {isLoading ? (
               <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
                 <p className="text-gray-600">Loading insurance plans...</p>
               </div>
             ) : filteredPlans.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filteredPlans.map((plan) => (
-                  <Card key={plan.id} className="hover:shadow-xl transition-all duration-300 border-2 hover:border-blue-300 flex flex-col">
+                  <Card key={plan.id} className="hover:shadow-xl transition-all duration-300 border-2 hover:border-orange-300 flex flex-col">
                     <CardHeader className="pb-4">
                       <div className="flex items-center justify-between mb-2">
-                        <Badge variant="outline" className="text-blue-600 border-blue-200">
+                        <Badge variant="outline" className="text-orange-600 border-orange-200">
                           {plan.plan_type}
                         </Badge>
                         <div className="flex items-center gap-1">
@@ -296,7 +270,7 @@ const Insurance: React.FC = () => {
                     
                     <CardContent className="flex-grow flex flex-col">
                       <div className="mb-6">
-                        <div className="text-3xl font-bold text-blue-600 mb-2">
+                        <div className="text-3xl font-bold text-orange-600 mb-2">
                           KSh {Number(plan.monthly_premium).toLocaleString()}
                           <span className="text-lg text-gray-500 font-normal">/month</span>
                         </div>
@@ -320,7 +294,7 @@ const Insurance: React.FC = () => {
 
                       <div className="space-y-3 mt-auto">
                         <Button 
-                          className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white py-3 rounded-xl font-semibold"
+                          className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white py-3 rounded-xl font-semibold"
                           onClick={() => handleSelectPlan(plan.id)}
                         >
                           Select Plan
@@ -329,7 +303,7 @@ const Insurance: React.FC = () => {
                         <div className="grid grid-cols-2 gap-3">
                           <Button 
                             variant="outline" 
-                            className="border-blue-200 text-blue-600 hover:bg-blue-50 py-2 rounded-xl"
+                            className="border-orange-200 text-orange-600 hover:bg-orange-50 py-2 rounded-xl"
                             onClick={() => handleComparePlans(plan.id)}
                           >
                             <ArrowLeftRight className="h-4 w-4 mr-1" />
@@ -337,7 +311,7 @@ const Insurance: React.FC = () => {
                           </Button>
                           <Button 
                             variant="outline" 
-                            className="border-gray-200 text-gray-600 hover:bg-gray-50 py-2 rounded-xl"
+                            className="border-orange-200 text-orange-600 hover:bg-orange-50 py-2 rounded-xl"
                             onClick={() => handleViewDetails(plan.id)}
                           >
                             <Eye className="h-4 w-4 mr-1" />
@@ -364,7 +338,7 @@ const Insurance: React.FC = () => {
                     setSearchTerm('');
                     setSelectedCategory('all');
                   }}
-                  className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white px-6 py-3 rounded-xl font-semibold"
+                  className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-6 py-3 rounded-xl font-semibold"
                 >
                   Clear Filters
                 </Button>
@@ -376,7 +350,7 @@ const Insurance: React.FC = () => {
           <section>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               <Card className="text-center p-6 hover:shadow-lg transition-shadow">
-                <Shield className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+                <Shield className="h-12 w-12 text-orange-600 mx-auto mb-4" />
                 <h3 className="font-semibold text-lg mb-2">Trusted Coverage</h3>
                 <p className="text-gray-600 text-sm">
                   Comprehensive protection from Kenya's leading insurers

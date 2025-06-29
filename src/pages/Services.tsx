@@ -1,151 +1,236 @@
 
 import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  Wrench, 
+  Home, 
+  Car, 
+  Scissors, 
+  Truck, 
+  PaintBucket, 
+  Search, 
+  Star,
+  MapPin,
+  Phone,
+  Calendar
+} from 'lucide-react';
+import MainLayout from '@/components/MainLayout';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import FrontendLayout from '@/components/layouts/FrontendLayout';
 import HeroSection from '@/components/shared/HeroSection';
-import ServiceCard from '@/components/services/ServiceCard';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Search, Filter } from 'lucide-react';
-import BookServiceModal from '@/components/services/BookServiceModal';
-import ContactServiceModal from '@/components/services/ContactServiceModal';
+import ServiceBookingModal from '@/components/modals/ServiceBookingModal';
+import { useToast } from '@/hooks/use-toast';
 
-const Services: React.FC = () => {
+const Services = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedType, setSelectedType] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedService, setSelectedService] = useState<any>(null);
-  const [isBookModalOpen, setIsBookModalOpen] = useState(false);
-  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const { toast } = useToast();
 
-  const { data: services = [], isLoading } = useQuery({
+  const { data: services, isLoading } = useQuery({
     queryKey: ['service-providers'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('service_provider_profiles')
         .select('*')
         .eq('is_active', true)
-        .eq('verification_status', 'approved')
-        .order('created_at', { ascending: false });
+        .eq('verification_status', 'verified');
       
       if (error) throw error;
       return data || [];
     }
   });
 
-  const serviceTypes = ['all', 'service_provider', 'vendor', 'driver', 'property_owner'];
+  const serviceCategories = [
+    { id: 'all', name: 'All Services', icon: Wrench },
+    { id: 'home', name: 'Home Services', icon: Home },
+    { id: 'automotive', name: 'Automotive', icon: Car },
+    { id: 'beauty', name: 'Beauty & Wellness', icon: Scissors },
+    { id: 'moving', name: 'Moving & Delivery', icon: Truck },
+    { id: 'maintenance', name: 'Maintenance', icon: PaintBucket },
+  ];
 
-  const filteredServices = services.filter(service => {
+  const filteredServices = services?.filter(service => {
     const matchesSearch = service.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         service.business_description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = selectedType === 'all' || service.provider_type === selectedType;
-    return matchesSearch && matchesType;
-  });
+                         service.business_description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         service.provider_type?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || 
+                           service.provider_type?.toLowerCase().includes(selectedCategory.toLowerCase());
+    return matchesSearch && matchesCategory;
+  }) || [];
 
   const handleBookService = (service: any) => {
-    setSelectedService(service);
-    setIsBookModalOpen(true);
+    setSelectedService({
+      id: service.id,
+      title: service.business_name,
+      provider: service.business_name,
+      type: service.provider_type
+    });
+    setShowBookingModal(true);
   };
 
-  const handleContactService = (service: any) => {
-    setSelectedService(service);
-    setIsContactModalOpen(true);
+  const handleContactProvider = (service: any) => {
+    if (service.phone_number) {
+      window.location.href = `tel:${service.phone_number}`;
+      toast({
+        title: "Calling Provider",
+        description: "Opening phone dialer...",
+      });
+    } else {
+      toast({
+        title: "Contact Information",
+        description: "Phone number not available for this provider.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleViewProfile = (serviceId: string) => {
+    toast({
+      title: "Provider Profile",
+      description: "Opening provider profile...",
+    });
   };
 
   return (
-    <FrontendLayout>
+    <MainLayout>
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
         <HeroSection
           title="Professional Services"
-          subtitle="Quality services at your fingertips"
-          description="Connect with verified service providers across Kenya"
-          imageUrl="photo-1560472354-b33ff0c44a43"
+          subtitle="Find Trusted Service Providers"
+          description="Connect with verified professionals for home services, repairs, beauty treatments, and more across Kenya."
+          imageUrl="photo-1521791136064-7986c2920216"
           className="mb-8"
         />
 
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-          {/* Search and Filter Section */}
-          <div className="mb-8 space-y-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Search and Categories */}
+          <div className="mb-8">
+            <div className="max-w-2xl mx-auto mb-6">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <Input
-                  placeholder="Search services..."
+                  placeholder="Search for services..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 border-orange-200 focus:border-orange-500"
+                  className="pl-12 pr-4 py-3 text-base border-orange-200 focus:border-orange-400 rounded-xl"
                 />
               </div>
-              <Button variant="outline" className="border-orange-200 hover:bg-orange-50">
-                <Filter className="h-4 w-4 mr-2" />
-                Filter
-              </Button>
             </div>
 
-            {/* Service Type Filter */}
-            <div className="flex flex-wrap gap-2">
-              {serviceTypes.map(type => (
-                <Badge
-                  key={type}
-                  variant={selectedType === type ? 'default' : 'outline'}
-                  className={`cursor-pointer capitalize ${
-                    selectedType === type 
-                      ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600' 
-                      : 'border-orange-200 hover:bg-orange-50'
-                  }`}
-                  onClick={() => setSelectedType(type)}
-                >
-                  {type.replace('_', ' ')}
-                </Badge>
-              ))}
-            </div>
+            <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
+              <TabsList className="grid grid-cols-3 lg:grid-cols-6 gap-2 h-auto p-2">
+                {serviceCategories.map((category) => {
+                  const Icon = category.icon;
+                  return (
+                    <TabsTrigger
+                      key={category.id}
+                      value={category.id}
+                      className="flex flex-col items-center gap-2 p-3 data-[state=active]:bg-orange-50 data-[state=active]:text-orange-600"
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span className="text-xs">{category.name}</span>
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
+            </Tabs>
           </div>
 
-          {/* Services Grid */}
           {isLoading ? (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
               <p className="mt-4 text-gray-600">Loading services...</p>
             </div>
-          ) : filteredServices.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredServices.map((service) => (
-                <ServiceCard
-                  key={service.id}
-                  service={service}
-                  onContact={handleContactService}
-                  onBook={handleBookService}
-                />
-              ))}
+          ) : filteredServices.length === 0 ? (
+            <div className="text-center py-12">
+              <Wrench className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">No Services Available</h3>
+              <p className="text-gray-600 mb-6">
+                {searchTerm || selectedCategory !== 'all' 
+                  ? 'No services match your current criteria.' 
+                  : 'Service providers will be available soon.'
+                }
+              </p>
+              <Button onClick={() => { setSearchTerm(''); setSelectedCategory('all'); }} variant="outline">
+                Clear Filters
+              </Button>
             </div>
           ) : (
-            <div className="text-center py-12">
-              <p className="text-gray-600">No services found matching your criteria.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredServices.map((service) => (
+                <Card key={service.id} className="hover:shadow-xl transition-all duration-300 border-2 hover:border-orange-300">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <Badge variant="outline" className="text-orange-600 border-orange-200">
+                        {service.provider_type}
+                      </Badge>
+                      <div className="flex items-center gap-1">
+                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        <span className="text-sm text-gray-600">4.8</span>
+                      </div>
+                    </div>
+                    <CardTitle className="text-lg text-gray-900 line-clamp-1">
+                      {service.business_name}
+                    </CardTitle>
+                    <p className="text-sm text-gray-600 line-clamp-2">
+                      {service.business_description}
+                    </p>
+                  </CardHeader>
+
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <MapPin className="h-4 w-4 text-orange-500" />
+                      <span className="truncate">{service.location_address || 'Location available'}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Badge 
+                        variant={service.verification_status === 'verified' ? 'default' : 'secondary'}
+                        className={service.verification_status === 'verified' ? 'bg-green-100 text-green-800' : ''}
+                      >
+                        {service.verification_status === 'verified' ? 'Verified' : 'Pending'}
+                      </Badge>
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleBookService(service)}
+                        className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                      >
+                        <Calendar className="h-4 w-4 mr-1" />
+                        Book Now
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleContactProvider(service)}
+                        className="border-orange-200 text-orange-600 hover:bg-orange-50"
+                      >
+                        <Phone className="h-4 w-4 mr-1" />
+                        Call
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           )}
         </div>
 
-        {/* Modals */}
-        <BookServiceModal
-          isOpen={isBookModalOpen}
-          onClose={() => {
-            setIsBookModalOpen(false);
-            setSelectedService(null);
-          }}
-          service={selectedService}
-        />
-
-        <ContactServiceModal
-          isOpen={isContactModalOpen}
-          onClose={() => {
-            setIsContactModalOpen(false);
-            setSelectedService(null);
-          }}
+        <ServiceBookingModal
+          isOpen={showBookingModal}
+          onClose={() => setShowBookingModal(false)}
           service={selectedService}
         />
       </div>
-    </FrontendLayout>
+    </MainLayout>
   );
 };
 

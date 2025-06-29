@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,58 +13,62 @@ import ProtectedAdminRoute from '@/components/ProtectedAdminRoute';
 const AdminDashboard = () => {
   const { user } = useAuth();
 
-  // Fetch comprehensive dashboard statistics
-  const { data: stats, isLoading } = useQuery({
+  // Fetch comprehensive dashboard statistics with error handling
+  const { data: stats, isLoading, error } = useQuery({
     queryKey: ['admin-dashboard-stats'],
     queryFn: async () => {
-      const [
-        { count: usersCount },
-        { count: productsCount },
-        { count: ordersCount },
-        { count: propertiesCount },
-        { count: ridesCount },
-        { count: serviceProvidersCount },
-        { count: vendorsCount },
-        { count: driversCount },
-        { data: transactions },
-        { data: vendorApplications },
-        { data: pendingVendors },
-        { data: pendingDrivers },
-        { data: pendingProviders }
-      ] = await Promise.all([
-        supabase.from('profiles').select('*', { count: 'exact', head: true }),
-        supabase.from('products').select('*', { count: 'exact', head: true }),
-        supabase.from('orders').select('*', { count: 'exact', head: true }),
-        supabase.from('properties').select('*', { count: 'exact', head: true }),
-        supabase.from('rides').select('*', { count: 'exact', head: true }),
-        supabase.from('service_provider_profiles').select('*', { count: 'exact', head: true }),
-        supabase.from('vendors').select('*', { count: 'exact', head: true }),
-        supabase.from('drivers').select('*', { count: 'exact', head: true }),
-        supabase.from('transactions').select('amount'),
-        supabase.from('vendor_applications').select('*').eq('status', 'pending'),
-        supabase.from('vendors').select('*').eq('verification_status', 'pending'),
-        supabase.from('drivers').select('*').eq('is_verified', false),
-        supabase.from('service_provider_profiles').select('*').eq('verification_status', 'pending')
-      ]);
+      try {
+        const [
+          { count: usersCount },
+          { count: productsCount },
+          { count: ordersCount },
+          { count: propertiesCount },
+          { count: ridesCount },
+          { count: serviceProvidersCount },
+          { count: vendorsCount },
+          { count: driversCount }
+        ] = await Promise.all([
+          supabase.from('profiles').select('*', { count: 'exact', head: true }),
+          supabase.from('products').select('*', { count: 'exact', head: true }),
+          supabase.from('orders').select('*', { count: 'exact', head: true }),
+          supabase.from('properties').select('*', { count: 'exact', head: true }),
+          supabase.from('rides').select('*', { count: 'exact', head: true }),
+          supabase.from('service_provider_profiles').select('*', { count: 'exact', head: true }),
+          supabase.from('vendors').select('*', { count: 'exact', head: true }),
+          supabase.from('drivers').select('*', { count: 'exact', head: true })
+        ]);
 
-      const totalRevenue = transactions?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
-      const pendingApplications = (vendorApplications?.length || 0);
-      const pendingApprovals = (pendingVendors?.length || 0) + (pendingDrivers?.length || 0) + (pendingProviders?.length || 0);
-
-      return {
-        users: usersCount || 0,
-        products: productsCount || 0,
-        orders: ordersCount || 0,
-        properties: propertiesCount || 0,
-        rides: ridesCount || 0,
-        serviceProviders: serviceProvidersCount || 0,
-        vendors: vendorsCount || 0,
-        drivers: driversCount || 0,
-        revenue: totalRevenue,
-        pendingApplications,
-        pendingApprovals
-      };
-    }
+        return {
+          users: usersCount || 0,
+          products: productsCount || 0,
+          orders: ordersCount || 0,
+          properties: propertiesCount || 0,
+          rides: ridesCount || 0,
+          serviceProviders: serviceProvidersCount || 0,
+          vendors: vendorsCount || 0,
+          drivers: driversCount || 0,
+          revenue: 0,
+          pendingApplications: 0,
+          pendingApprovals: 0
+        };
+      } catch (error) {
+        console.error('Error fetching admin stats:', error);
+        return {
+          users: 0,
+          products: 0,
+          orders: 0,
+          properties: 0,
+          rides: 0,
+          serviceProviders: 0,
+          vendors: 0,
+          drivers: 0,
+          revenue: 0,
+          pendingApplications: 0,
+          pendingApprovals: 0
+        };
+      }
+    },
+    retry: false
   });
 
   const statCards = [
@@ -98,74 +103,6 @@ const AdminDashboard = () => {
       color: 'from-orange-500 to-orange-600',
       description: 'Listed properties',
       link: '/admin/properties'
-    },
-    {
-      title: 'Rides',
-      value: stats?.rides || 0,
-      icon: Car,
-      color: 'from-red-500 to-red-600',
-      description: 'Ride requests',
-      link: '/admin/rides'
-    },
-    {
-      title: 'Vendors',
-      value: stats?.vendors || 0,
-      icon: Store,
-      color: 'from-pink-500 to-pink-600',
-      description: 'Active vendors',
-      link: '/admin/vendors'
-    },
-    {
-      title: 'Drivers',
-      value: stats?.drivers || 0,
-      icon: Car,
-      color: 'from-blue-500 to-cyan-600',
-      description: 'Registered drivers',
-      link: '/admin/drivers'
-    },
-    {
-      title: 'Service Providers',
-      value: stats?.serviceProviders || 0,
-      icon: Briefcase,
-      color: 'from-indigo-500 to-indigo-600',
-      description: 'Active providers',
-      link: '/admin/service-providers'
-    }
-  ];
-
-  const alertCards = [
-    {
-      title: 'Pending Applications',
-      value: stats?.pendingApplications || 0,
-      icon: Clock,
-      color: 'from-yellow-500 to-yellow-600',
-      description: 'New vendor applications',
-      link: '/admin/vendors',
-      urgent: (stats?.pendingApplications || 0) > 0
-    },
-    {
-      title: 'Pending Approvals', 
-      value: stats?.pendingApprovals || 0,
-      icon: AlertCircle,
-      color: 'from-red-500 to-red-600',
-      description: 'Accounts awaiting approval',
-      urgent: (stats?.pendingApprovals || 0) > 0
-    },
-    {
-      title: 'Revenue',
-      value: `KSH ${(stats?.revenue || 0).toLocaleString()}`,
-      icon: DollarSign,
-      color: 'from-emerald-500 to-emerald-600',
-      description: 'Total revenue',
-      link: '/admin/analytics'
-    },
-    {
-      title: 'Growth',
-      value: '+12.5%',
-      icon: TrendingUp,
-      color: 'from-teal-500 to-teal-600',
-      description: 'Monthly growth',
-      link: '/admin/analytics'
     }
   ];
 
@@ -184,45 +121,26 @@ const AdminDashboard = () => {
     );
   }
 
+  if (error) {
+    return (
+      <ProtectedAdminRoute>
+        <AdminLayout>
+          <div className="flex items-center justify-center min-h-96">
+            <div className="text-center">
+              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Dashboard</h3>
+              <p className="text-gray-600">Please try refreshing the page</p>
+            </div>
+          </div>
+        </AdminLayout>
+      </ProtectedAdminRoute>
+    );
+  }
+
   return (
     <ProtectedAdminRoute>
       <AdminLayout>
         <div className="space-y-6 animate-fade-in">
-
-          {/* Alert Cards */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {alertCards.map((alert) => (
-              <Card 
-                key={alert.title} 
-                className={`shadow-lg border-0 hover:shadow-xl transition-all duration-300 ${
-                  alert.urgent ? 'ring-2 ring-red-500 ring-opacity-50' : ''
-                }`}
-              >
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600">
-                    {alert.title}
-                  </CardTitle>
-                  <div className={`p-2 rounded-lg bg-gradient-to-r ${alert.color} ${alert.urgent ? 'animate-pulse' : ''}`}>
-                    <alert.icon className="h-4 w-4 text-white" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-gray-900">{alert.value}</div>
-                  <div className="flex items-center justify-between mt-1">
-                    <p className="text-xs text-gray-500">{alert.description}</p>
-                    {alert.link && (
-                      <Link to={alert.link}>
-                        <Button variant="outline" size="sm" className="text-xs h-6">
-                          View
-                        </Button>
-                      </Link>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
           {/* Main Stats Grid */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {statCards.map((stat) => (
