@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Upload, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface JobApplicationModalProps {
   jobId: number;
@@ -60,15 +61,23 @@ const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
     setIsSubmitting(true);
 
     try {
-      // TODO: Implement actual job application submission to Supabase
-      console.log('Job Application Data:', {
-        jobId,
-        ...formData,
-        resumeFile
-      });
+      // For now, we'll store the file name since we don't have storage bucket set up
+      const resumeUrl = resumeFile ? resumeFile.name : null;
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const { error } = await supabase
+        .from('job_applications')
+        .insert({
+          job_id: jobId,
+          applicant_name: formData.fullName,
+          applicant_email: formData.email,
+          applicant_phone: formData.phone || null,
+          cover_letter: formData.coverLetter,
+          experience: formData.experience || null,
+          resume_url: resumeUrl,
+          status: 'pending'
+        });
+
+      if (error) throw error;
       
       toast.success('Application submitted successfully!');
       onClose();
@@ -82,7 +91,8 @@ const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
         experience: '',
       });
       setResumeFile(null);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error submitting application:', error);
       toast.error('Failed to submit application. Please try again.');
     } finally {
       setIsSubmitting(false);

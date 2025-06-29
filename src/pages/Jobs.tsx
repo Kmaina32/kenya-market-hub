@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import FrontendLayout from '@/components/layouts/FrontendLayout';
 import HeroSection from '@/components/shared/HeroSection';
+import JobApplicationModal from '@/components/jobs/JobApplicationModal';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +20,6 @@ import {
   BriefcaseIcon
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useJobs } from '@/hooks/useJobs';
 
 const Jobs = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -27,19 +27,46 @@ const Jobs = () => {
   const [jobTypeFilter, setJobTypeFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [savedJobs, setSavedJobs] = useState<number[]>([]);
+  const [applicationModal, setApplicationModal] = useState<{
+    isOpen: boolean;
+    jobId: number | null;
+    jobTitle: string;
+  }>({
+    isOpen: false,
+    jobId: null,
+    jobTitle: '',
+  });
 
-  // Use the existing useJobs hook to fetch from Supabase
-  const { jobs, loading, error } = useJobs();
+  // Fetch jobs from Supabase
+  const { data: jobs = [], isLoading: loading, error } = useQuery({
+    queryKey: ['jobs', searchTerm, locationFilter, jobTypeFilter, categoryFilter],
+    queryFn: async () => {
+      let query = supabase
+        .from('jobs')
+        .select('*')
+        .eq('status', 'open')
+        .order('created_at', { ascending: false });
 
-  // Filter jobs based on search criteria
-  const filteredJobs = jobs.filter(job => {
-    const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (job.company && job.company.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesLocation = !locationFilter || (job.location && job.location.toLowerCase().includes(locationFilter.toLowerCase()));
-    const matchesType = jobTypeFilter === 'all' || job.job_type === jobTypeFilter;
-    const matchesCategory = categoryFilter === 'all' || job.category === categoryFilter;
-    
-    return matchesSearch && matchesLocation && matchesType && matchesCategory;
+      if (searchTerm) {
+        query = query.or(`title.ilike.%${searchTerm}%,company.ilike.%${searchTerm}%`);
+      }
+
+      if (locationFilter) {
+        query = query.ilike('location', `%${locationFilter}%`);
+      }
+
+      if (jobTypeFilter !== 'all') {
+        query = query.eq('job_type', jobTypeFilter);
+      }
+
+      if (categoryFilter !== 'all') {
+        query = query.eq('category', categoryFilter);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    }
   });
 
   const handleSaveJob = (jobId: number) => {
@@ -50,9 +77,20 @@ const Jobs = () => {
     );
   };
 
-  const handleApplyNow = (jobId: number) => {
-    console.log('Applying to job:', jobId);
-    // TODO: Implement job application logic
+  const handleApplyNow = (jobId: number, jobTitle: string) => {
+    setApplicationModal({
+      isOpen: true,
+      jobId,
+      jobTitle,
+    });
+  };
+
+  const closeApplicationModal = () => {
+    setApplicationModal({
+      isOpen: false,
+      jobId: null,
+      jobTitle: '',
+    });
   };
 
   if (error) {
@@ -60,7 +98,7 @@ const Jobs = () => {
       <FrontendLayout>
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <p className="text-red-600 mb-4">Error loading jobs: {error}</p>
+            <p className="text-red-600 mb-4">Error loading jobs: {error.message}</p>
             <Button onClick={() => window.location.reload()}>Try Again</Button>
           </div>
         </div>
@@ -151,7 +189,7 @@ const Jobs = () => {
                 </Card>
               ))}
             </div>
-          ) : filteredJobs.length === 0 ? (
+          ) : jobs.length === 0 ? (
             <div className="text-center py-12">
               <BriefcaseIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 mb-2">No jobs found</h3>
@@ -171,7 +209,7 @@ const Jobs = () => {
             </div>
           ) : (
             <div className="grid gap-6">
-              {filteredJobs.map((job) => (
+              {jobs.map((job) => (
                 <Card key={job.id} className="hover:shadow-lg transition-all duration-300 border-orange-100 hover:border-orange-200">
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start">
@@ -226,7 +264,7 @@ const Jobs = () => {
                       {/* Action Buttons */}
                       <div className="flex flex-col gap-3 ml-6">
                         <Button
-                          onClick={() => handleApplyNow(job.id)}
+                          onClick={() => handleApplyNow(job.id, job.title)}
                           className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg"
                         >
                           Apply Now
@@ -253,6 +291,16 @@ const Jobs = () => {
           )}
         </div>
       </div>
+
+      {/* Job Application Modal */}
+      {applicationModal.jobId && (
+        <JobApplicationModal
+          jobId={applicationModal.jobId}
+          jobTitle={applicationModal.jobTitle}
+          isOpen={applicationModal.isOpen}
+          onClose={closeApplicationModal}
+        />
+      )}
     </FrontendLayout>
   );
 };
