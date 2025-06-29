@@ -26,7 +26,7 @@ const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
       createPost.mutate({
         title,
         content,
-        category_id: categoryId  // Use category_id instead of categoryId
+        category_id: categoryId
       }, {
         onSuccess: () => {
           setTitle('');
@@ -56,7 +56,7 @@ const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
               </SelectTrigger>
               <SelectContent>
                 {categories?.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
+                  <SelectItem key={category.id} value={category.id || 'default'}>
                     {category.name}
                   </SelectItem>
                 ))}

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import FrontendLayout from '@/components/layouts/FrontendLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -120,30 +119,66 @@ const Insurance: React.FC = () => {
   return (
     <FrontendLayout>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-        {/* Hero Section */}
-        <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-            <div className="text-center">
-              <Shield className="h-16 w-16 mx-auto mb-6 text-blue-200" />
-              <h1 className="text-4xl md:text-6xl font-bold mb-6">
-                Protect What Matters Most
+        {/* Hero Section with Background Image */}
+        <div className="relative overflow-hidden">
+          {/* Background Image */}
+          <div 
+            className="absolute inset-0 bg-cover bg-center opacity-20"
+            style={{ 
+              backgroundImage: `url(https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80)` 
+            }}
+          />
+          
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-indigo-700 to-purple-800 opacity-90" />
+          
+          {/* Content */}
+          <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-20 sm:py-24 lg:py-32">
+            <div className="text-center text-white">
+              <div className="flex justify-center mb-8">
+                <Shield className="h-20 w-20 text-blue-200 animate-pulse" />
+              </div>
+              
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
+                Protect What 
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
+                  Matters Most
+                </span>
               </h1>
-              <p className="text-xl mb-8 opacity-90 max-w-3xl mx-auto">
+              
+              <p className="text-xl sm:text-2xl mb-10 opacity-90 max-w-4xl mx-auto leading-relaxed">
                 Find and compare comprehensive insurance plans from Kenya's most trusted providers. 
                 Get the coverage you need with competitive rates and excellent service.
               </p>
               
               {/* Search Bar */}
-              <div className="max-w-2xl mx-auto">
+              <div className="max-w-3xl mx-auto mb-8">
                 <div className="relative">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Search className="absolute left-6 top-1/2 transform -translate-y-1/2 h-6 w-6 text-gray-400" />
                   <Input
                     placeholder="Search insurance plans..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-12 py-4 text-lg bg-white/95 border-0 text-gray-900 placeholder-gray-500 rounded-xl shadow-lg"
+                    className="pl-16 pr-6 py-6 text-lg bg-white/95 border-0 text-gray-900 placeholder-gray-500 rounded-2xl shadow-2xl backdrop-blur-sm"
                   />
                 </div>
+              </div>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <Button 
+                  size="lg"
+                  className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-2xl transform hover:scale-105 transition-all duration-300"
+                >
+                  Get Quote Now
+                </Button>
+                <Button 
+                  variant="outline"
+                  size="lg"
+                  className="bg-white/20 border-white/30 text-white hover:bg-white/30 px-8 py-4 text-lg font-semibold rounded-xl backdrop-blur-sm"
+                >
+                  Compare Plans
+                </Button>
               </div>
             </div>
           </div>
