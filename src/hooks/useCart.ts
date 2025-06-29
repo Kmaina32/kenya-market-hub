@@ -66,7 +66,7 @@ export const useCart = () => {
   // Add to cart mutation
   const addToCartMutation = useMutation({
     mutationFn: async ({ productId, quantity = 1 }: { productId: string; quantity?: number }) => {
-      console.log('Adding to cart:', { productId, quantity }); // Debug log
+      console.log('Adding to cart:', { productId, quantity });
       
       if (!user) {
         // Handle local cart for non-authenticated users
@@ -100,6 +100,17 @@ export const useCart = () => {
         return;
       }
 
+      // First, verify the product exists
+      const { data: product, error: productError } = await supabase
+        .from('products')
+        .select('id')
+        .eq('id', productId)
+        .single();
+
+      if (productError || !product) {
+        throw new Error('Product not found. Please refresh the page and try again.');
+      }
+
       // Handle database cart for authenticated users
       const { data: existingItem } = await supabase
         .from('cart_items')
@@ -124,7 +135,12 @@ export const useCart = () => {
             quantity
           });
         
-        if (error) throw error;
+        if (error) {
+          if (error.code === '23503') {
+            throw new Error('Product not found. Please refresh the page and try again.');
+          }
+          throw error;
+        }
       }
     },
     onSuccess: () => {
