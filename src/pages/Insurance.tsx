@@ -7,6 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import GetQuoteModal from '@/components/modals/GetQuoteModal';
+import ComparePlansModal from '@/components/modals/ComparePlansModal';
 import { 
   Shield, 
   Car, 
@@ -28,6 +31,11 @@ const Insurance: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedPlans, setSelectedPlans] = useState<string[]>([]);
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [showComparisonModal, setShowComparisonModal] = useState(false);
+  const [quotePlanType, setQuotePlanType] = useState('');
+  
+  const { toast } = useToast();
 
   // Fetch insurance plans from database
   const { data: plans, isLoading } = useQuery({
@@ -101,7 +109,11 @@ const Insurance: React.FC = () => {
 
   const handleSelectPlan = (planId: string) => {
     console.log('Selecting plan:', planId);
-    // Handle plan selection logic
+    toast({
+      title: "Plan Selected",
+      description: "Redirecting to enrollment process...",
+    });
+    // In real app, redirect to enrollment page
   };
 
   const handleComparePlans = (planId: string) => {
@@ -110,22 +122,43 @@ const Insurance: React.FC = () => {
         ? prev.filter(id => id !== planId)
         : [...prev, planId]
     );
+    
+    if (!selectedPlans.includes(planId) && selectedPlans.length >= 1) {
+      setShowComparisonModal(true);
+    }
   };
 
   const handleBrowsePlans = (category: string) => {
     setSelectedCategory(category);
+    toast({
+      title: "Browsing Plans",
+      description: `Showing ${category} insurance plans`,
+    });
+  };
+
+  const handleGetQuote = (planType?: string) => {
+    setQuotePlanType(planType || '');
+    setShowQuoteModal(true);
+  };
+
+  const handleViewDetails = (planId: string) => {
+    toast({
+      title: "Plan Details",
+      description: "Opening detailed plan information...",
+    });
+    // In real app, navigate to plan details page
   };
 
   return (
     <FrontendLayout>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-        {/* Hero Section with Background Image */}
+        {/* Enhanced Hero Section */}
         <div className="relative overflow-hidden">
           {/* Background Image */}
           <div 
             className="absolute inset-0 bg-cover bg-center opacity-20"
             style={{ 
-              backgroundImage: `url(https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80)` 
+              backgroundImage: `url(https://images.unsplash.com/photo-1551601651-2a8555f1a136?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80)` 
             }}
           />
           
@@ -168,6 +201,7 @@ const Insurance: React.FC = () => {
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <Button 
                   size="lg"
+                  onClick={() => handleGetQuote()}
                   className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-2xl transform hover:scale-105 transition-all duration-300"
                 >
                   Get Quote Now
@@ -175,6 +209,7 @@ const Insurance: React.FC = () => {
                 <Button 
                   variant="outline"
                   size="lg"
+                  onClick={() => setShowComparisonModal(true)}
                   className="bg-white/20 border-white/30 text-white hover:bg-white/30 px-8 py-4 text-lg font-semibold rounded-xl backdrop-blur-sm"
                 >
                   Compare Plans
@@ -303,6 +338,7 @@ const Insurance: React.FC = () => {
                           <Button 
                             variant="outline" 
                             className="border-gray-200 text-gray-600 hover:bg-gray-50 py-2 rounded-xl"
+                            onClick={() => handleViewDetails(plan.id)}
                           >
                             <Eye className="h-4 w-4 mr-1" />
                             Details
@@ -371,6 +407,19 @@ const Insurance: React.FC = () => {
           </section>
         </div>
       </div>
+
+      {/* Modals */}
+      <GetQuoteModal
+        isOpen={showQuoteModal}
+        onClose={() => setShowQuoteModal(false)}
+        planType={quotePlanType}
+      />
+      
+      <ComparePlansModal
+        isOpen={showComparisonModal}
+        onClose={() => setShowComparisonModal(false)}
+        selectedPlans={selectedPlans}
+      />
     </FrontendLayout>
   );
 };
