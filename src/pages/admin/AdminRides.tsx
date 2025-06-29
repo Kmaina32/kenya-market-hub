@@ -8,16 +8,18 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Car, Search, MapPin, Clock } from 'lucide-react';
+import { Plus, Car, Search, MapPin, Clock, DollarSign } from 'lucide-react';
 import { EditButton, DeleteButton, ViewButton } from '@/components/ui/action-buttons';
-import { ViewModal, EditModal } from '@/components/admin/ActionModals';
+import { ViewModal, EditModal, DeleteModal } from '@/components/admin/ActionModals';
 import { toast } from 'sonner';
+
+type RideStatus = 'requested' | 'accepted' | 'in_progress' | 'completed' | 'cancelled';
 
 const AdminRides = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedRide, setSelectedRide] = useState<any>(null);
-  const [modalType, setModalType] = useState<'view' | 'edit' | null>(null);
+  const [modalType, setModalType] = useState<'view' | 'edit' | 'delete' | null>(null);
   const queryClient = useQueryClient();
 
   // Fetch rides
@@ -29,12 +31,12 @@ const AdminRides = () => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (statusFilter !== 'all') {
-        query = query.eq('status', statusFilter);
-      }
-
       if (searchTerm) {
         query = query.or(`pickup_address.ilike.%${searchTerm}%,destination_address.ilike.%${searchTerm}%`);
+      }
+
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter as RideStatus);
       }
 
       const { data, error } = await query;
@@ -45,7 +47,7 @@ const AdminRides = () => {
 
   // Update ride status mutation
   const updateRideStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+    mutationFn: async ({ id, status }: { id: string; status: RideStatus }) => {
       const { error } = await supabase
         .from('rides')
         .update({ status })
@@ -95,6 +97,7 @@ const AdminRides = () => {
     switch (status) {
       case 'completed': return 'bg-green-100 text-green-800';
       case 'in_progress': return 'bg-blue-100 text-blue-800';
+      case 'accepted': return 'bg-yellow-100 text-yellow-800';
       case 'cancelled': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
