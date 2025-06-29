@@ -7,7 +7,8 @@ import { ShoppingCart, Heart, Star } from 'lucide-react';
 import LazyImage from './LazyImage';
 import ProductPreviewModal from './ProductPreviewModal';
 import { useCart } from '@/contexts/CartContext';
-import { useToggleWishlist, useIsInWishlist } from '@/hooks/useWishlist';
+import { useWishlist } from '@/hooks/useWishlist';
+import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
 interface Product {
@@ -33,9 +34,9 @@ const OptimizedProductCard = memo<OptimizedProductCardProps>(({
   className,
   showQuickActions = true 
 }) => {
+  const { user } = useAuth();
   const { addToCart } = useCart();
-  const toggleWishlist = useToggleWishlist();
-  const { data: isInWishlist } = useIsInWishlist(product.id);
+  const { addToWishlist, isInWishlist } = useWishlist();
   const [showPreview, setShowPreview] = React.useState(false);
 
   const discountedPrice = product.discount_percentage 
@@ -55,7 +56,7 @@ const OptimizedProductCard = memo<OptimizedProductCardProps>(({
 
   const handleToggleWishlist = (e: React.MouseEvent) => {
     e.stopPropagation();
-    toggleWishlist.mutate({ productId: product.id, isInWishlist });
+    addToWishlist(product);
   };
 
   const handleCardClick = () => {
@@ -75,6 +76,8 @@ const OptimizedProductCard = memo<OptimizedProductCardProps>(({
       />
     ));
   };
+
+  const productIsInWishlist = isInWishlist(product.id);
 
   return (
     <>
@@ -109,7 +112,7 @@ const OptimizedProductCard = memo<OptimizedProductCardProps>(({
                   <Heart 
                     className={cn(
                       'h-4 w-4',
-                      isInWishlist ? 'fill-red-500 text-red-500' : ''
+                      productIsInWishlist ? 'fill-red-500 text-red-500' : ''
                     )} 
                   />
                 </Button>
