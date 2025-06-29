@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Star, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useCart } from '@/contexts/CartContext';
+import { useCartContext } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { useAddToRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,7 +19,7 @@ interface ProductDetailModalProps {
 }
 
 const ProductDetailModal = ({ open, onOpenChange, product }: ProductDetailModalProps) => {
-  const { addToCart } = useCart();
+  const { addToCart } = useCartContext();
   const { toast } = useToast();
   const { user } = useAuth();
   const addToRecentlyViewed = useAddToRecentlyViewed();
@@ -46,13 +46,7 @@ const ProductDetailModal = ({ open, onOpenChange, product }: ProductDetailModalP
       : ['/placeholder.svg'];
 
   const handleAddToCart = () => {
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: Number(product.price),
-      image: images[0],
-      vendor: product.vendor || 'Unknown Vendor'
-    });
+    addToCart(product.id);
     toast({ title: "Added to cart", description: `${product.name} has been added to your cart.` });
   };
 

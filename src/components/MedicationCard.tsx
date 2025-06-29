@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Pill, ShoppingCart, ShieldAlert } from 'lucide-react';
 import type { Medication } from '@/hooks/useMedications';
-import { useCart } from '@/contexts/CartContext';
+import { useCartContext } from '@/contexts/CartContext';
 import { toast } from '@/hooks/use-toast';
 
 interface MedicationCardProps {
@@ -12,16 +12,10 @@ interface MedicationCardProps {
 }
 
 const MedicationCard: React.FC<MedicationCardProps> = ({ medication }) => {
-  const { addToCart } = useCart();
+  const { addToCart } = useCartContext();
 
   const handleAddToCart = () => {
-    addToCart({
-      id: medication.id,
-      name: medication.name,
-      price: medication.price,
-      image: medication.image_url || '',
-      vendor: 'Soko Medical'
-    });
+    addToCart(medication.id);
     toast({
       title: "Added to cart",
       description: `${medication.name} has been added to your cart.`,

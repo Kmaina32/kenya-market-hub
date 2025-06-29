@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Star, ShoppingCart, X } from 'lucide-react';
-import { useCart } from '@/contexts/CartContext';
+import { useCartContext } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import WishlistButton from './WishlistButton';
 import { useProductImages } from '@/hooks/useProductImages';
@@ -18,7 +17,7 @@ interface ProductPreviewModalProps {
 }
 
 const ProductPreviewModal = ({ open, onOpenChange, product }: ProductPreviewModalProps) => {
-  const { addToCart } = useCart();
+  const { addToCart } = useCartContext();
   const { toast } = useToast();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { data: productImages } = useProductImages(product?.id);
@@ -36,13 +35,7 @@ const ProductPreviewModal = ({ open, onOpenChange, product }: ProductPreviewModa
       : ['/placeholder.svg'];
 
   const handleAddToCart = () => {
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: Number(product.price),
-      image: images[0],
-      vendor: product.vendor || 'Unknown Vendor'
-    });
+    addToCart(product.id);
     toast({ 
       title: "Added to cart", 
       description: `${product.name} has been added to your cart.` 
