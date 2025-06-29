@@ -36,6 +36,7 @@ import EmailConfirmation from "./pages/EmailConfirmation";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import NewAdminDashboard from "./pages/NewAdminDashboard";
+import AdminApp from "./pages/AdminApp";
 
 // Service provider pages
 import ServiceHub from "./pages/ServiceHub";
@@ -101,9 +102,9 @@ function App() {
                     <Route path="/wishlist" element={<Wishlist />} />
                     <Route path="/email-confirmation" element={<EmailConfirmation />} />
 
-                    {/* Admin routes */}
+                    {/* Admin routes - Fixed routing */}
                     <Route path="/admin-login" element={<AdminLogin />} />
-                    <Route path="/admin/*" element={<AdminDashboard />} />
+                    <Route path="/admin/*" element={<AdminApp />} />
                     <Route path="/new-admin/*" element={<NewAdminDashboard />} />
 
                     {/* Service provider routes */}

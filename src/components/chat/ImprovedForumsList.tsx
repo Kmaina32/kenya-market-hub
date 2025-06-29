@@ -1,10 +1,11 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Heart, MessageCircle, Eye, Search } from 'lucide-react';
@@ -109,7 +110,7 @@ const ImprovedForumsList: React.FC = () => {
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
                   {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
+                    <SelectItem key={category.id} value={category.id || `cat-${category.name}`}>
                       {category.name}
                     </SelectItem>
                   ))}
@@ -128,6 +129,9 @@ const ImprovedForumsList: React.FC = () => {
                 <DialogContent className="mobile-modal max-w-md mx-auto">
                   <DialogHeader>
                     <DialogTitle>Create New Post</DialogTitle>
+                    <DialogDescription>
+                      Share your thoughts and start a discussion with the community.
+                    </DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleCreatePost} className="space-y-4 mobile-form">
                     <div>
@@ -138,7 +142,7 @@ const ImprovedForumsList: React.FC = () => {
                         </SelectTrigger>
                         <SelectContent>
                           {categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id}>
+                            <SelectItem key={category.id} value={category.id || `cat-${category.name}`}>
                               {category.name}
                             </SelectItem>
                           ))}

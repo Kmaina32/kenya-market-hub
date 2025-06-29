@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -46,6 +46,9 @@ const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
             <Plus className="h-5 w-5" />
             Create New Post
           </DialogTitle>
+          <DialogDescription>
+            Share your thoughts and start a discussion with the community.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>
@@ -56,7 +59,7 @@ const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
               </SelectTrigger>
               <SelectContent>
                 {categories?.map((category) => (
-                  <SelectItem key={category.id} value={category.id || 'default'}>
+                  <SelectItem key={category.id} value={category.id || `category-${category.name}`}>
                     {category.name}
                   </SelectItem>
                 ))}
