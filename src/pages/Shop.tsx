@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -83,7 +82,8 @@ const Shop: React.FC = () => {
   };
 
   const handleAddToCart = (product: any) => {
-    addToCart(product);
+    // Pass only the product ID to addToCart
+    addToCart(product.id);
     toast.success(`${product.name} added to cart!`);
   };
 

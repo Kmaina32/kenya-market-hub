@@ -66,6 +66,8 @@ export const useCart = () => {
   // Add to cart mutation
   const addToCartMutation = useMutation({
     mutationFn: async ({ productId, quantity = 1 }: { productId: string; quantity?: number }) => {
+      console.log('Adding to cart:', { productId, quantity }); // Debug log
+      
       if (!user) {
         // Handle local cart for non-authenticated users
         const { data: product } = await supabase
@@ -132,6 +134,7 @@ export const useCart = () => {
       toast.success('Item added to cart');
     },
     onError: (error: any) => {
+      console.error('Cart error:', error);
       toast.error(`Failed to add item to cart: ${error.message}`);
     }
   });
@@ -233,7 +236,21 @@ export const useCart = () => {
 
   return {
     cartItems,
-    addToCart: (productId: string, quantity = 1) => addToCartMutation.mutate({ productId, quantity }),
+    addToCart: (productIdOrProduct: string | any, quantity = 1) => {
+      // Handle both string ID and product object
+      let productId: string;
+      if (typeof productIdOrProduct === 'string') {
+        productId = productIdOrProduct;
+      } else if (productIdOrProduct && productIdOrProduct.id) {
+        productId = productIdOrProduct.id;
+      } else {
+        console.error('Invalid product data passed to addToCart:', productIdOrProduct);
+        toast.error('Invalid product data');
+        return;
+      }
+      
+      addToCartMutation.mutate({ productId, quantity });
+    },
     removeFromCart: (productId: string) => removeFromCartMutation.mutate(productId),
     updateQuantity: (productId: string, quantity: number) => updateQuantityMutation.mutate({ productId, quantity }),
     clearCart: () => clearCartMutation.mutate(),

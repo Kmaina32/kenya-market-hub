@@ -41,6 +41,7 @@ const OptimizedProductCard: React.FC<OptimizedProductCardProps> = ({
     }
 
     try {
+      // Pass only the product ID to addToCart
       addToCart(product.id, 1);
     } catch (error) {
       console.error('Error adding to cart:', error);
