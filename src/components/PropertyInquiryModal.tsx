@@ -38,8 +38,18 @@ const PropertyInquiryModal: React.FC<PropertyInquiryModalProps> = ({
     e.preventDefault();
     if (!property) return;
 
-    // Ensure we have a valid UUID for property_id
+    // Validate that we have a proper UUID for property_id
     const propertyId = property.id;
+    
+    // Check if the property ID is a valid UUID format
+    const isValidUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(propertyId);
+    
+    if (!isValidUuid) {
+      console.error('Invalid property ID format:', propertyId);
+      alert('There seems to be an issue with this property. Please try again later.');
+      return;
+    }
+
     console.log('Creating property inquiry:', {
       property_id: propertyId,
       inquirer_name: formData.inquirer_name,
