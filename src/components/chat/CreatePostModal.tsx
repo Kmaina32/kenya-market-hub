@@ -26,7 +26,7 @@ const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
       createPost.mutate({
         title,
         content,
-        categoryId
+        category_id: categoryId  // Use category_id instead of categoryId
       }, {
         onSuccess: () => {
           setTitle('');

@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Heart, MessageCircle, Eye, Search } from 'lucide-react';
 import { useForumPosts, useCreateForumPost, useTogglePostLike, useIncrementPostViews } from '@/hooks/useForumPosts';
-import { useChatForums } from '@/hooks/useChatForums';
+import { useForumCategories } from '@/hooks/useChatForums';
 import { formatDistanceToNow } from 'date-fns';
 import { ResponsivePage, ResponsiveSection, ResponsiveButtonGroup, ResponsiveGrid } from '@/components/ui/responsive-layout';
 import { PrimaryButton, SecondaryButton } from '@/components/ui/unified-buttons';

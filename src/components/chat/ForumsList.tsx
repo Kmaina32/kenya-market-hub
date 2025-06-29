@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Heart, MessageCircle, Eye, Search } from 'lucide-react';
 import { useForumPosts, useCreateForumPost, useTogglePostLike, useIncrementPostViews } from '@/hooks/useForumPosts';
-import { useChatForums } from '@/hooks/useChatForums';
+import { useForumCategories } from '@/hooks/useChatForums';
 import { formatDistanceToNow } from 'date-fns';
 
 const ForumsList: React.FC = () => {
@@ -23,7 +23,7 @@ const ForumsList: React.FC = () => {
     categoryId: ''
   });
 
-  const { data: categories = [] } = useChatForums();
+  const { data: categories = [] } = useForumCategories();
   const { data: posts = [], isLoading } = useForumPosts(selectedCategory === 'all' ? undefined : selectedCategory);
   const createPostMutation = useCreateForumPost();
   const toggleLikeMutation = useTogglePostLike();

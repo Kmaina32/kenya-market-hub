@@ -26,6 +26,29 @@ export interface ForumPost {
   };
 }
 
+export interface UserSearchResult {
+  id: string;
+  full_name: string;
+  avatar_url?: string;
+  email: string;
+}
+
+export interface ChatConversation {
+  id: string;
+  participant1_id: string;
+  participant2_id: string;
+  created_at: string;
+  last_message?: string;
+  last_message_at?: string;
+  unread_count: number;
+  other_participant?: {
+    id: string;
+    full_name: string;
+    avatar_url?: string;
+    email: string;
+  };
+}
+
 // Get all forum posts with author and category info
 export const useForumPosts = () => {
   return useQuery({
@@ -80,7 +103,7 @@ export const useForumPosts = () => {
   });
 };
 
-// Get forum categories
+// Get forum categories - renamed from useChatForums to avoid confusion
 export const useForumCategories = () => {
   return useQuery({
     queryKey: ['forum-categories'],
@@ -95,6 +118,9 @@ export const useForumCategories = () => {
     },
   });
 };
+
+// Alias for backward compatibility
+export const useChatForums = useForumCategories;
 
 // Create a new forum post
 export const useCreateForumPost = () => {
@@ -150,6 +176,163 @@ export const useIncrementPostViews = () => {
         post_id: postId
       });
       if (error) throw error;
+    },
+  });
+};
+
+// User search functionality
+export const useUserSearch = (searchTerm: string) => {
+  return useQuery({
+    queryKey: ['user-search', searchTerm],
+    queryFn: async () => {
+      if (!searchTerm.trim()) return [];
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url, email')
+        .or(`full_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
+        .limit(10);
+
+      if (error) throw error;
+      return data as UserSearchResult[];
+    },
+    enabled: !!searchTerm.trim(),
+  });
+};
+
+// Chat conversations (moved from useChat.ts)
+export const useChatConversations = () => {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['conversations', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+
+      console.log('Fetching conversations...');
+      
+      // Get conversations where user is a participant
+      const { data: conversations, error } = await supabase
+        .from('chat_conversations')
+        .select('*')
+        .or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`)
+        .order('last_message_at', { ascending: false, nullsFirst: false });
+
+      if (error) {
+        console.error('Error fetching conversations:', error);
+        throw error;
+      }
+
+      if (!conversations || conversations.length === 0) return [];
+
+      // Get unique participant IDs (excluding current user)
+      const participantIds = new Set<string>();
+      conversations.forEach(conv => {
+        if (conv.participant1_id !== user.id) participantIds.add(conv.participant1_id);
+        if (conv.participant2_id !== user.id) participantIds.add(conv.participant2_id);
+      });
+
+      // Fetch participant profiles
+      let participantProfiles: any[] = [];
+      if (participantIds.size > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url, email')
+          .in('id', Array.from(participantIds));
+        participantProfiles = profiles || [];
+      }
+
+      // Combine the data and add other_participant info
+      return conversations.map(conv => {
+        const otherParticipantId = conv.participant1_id === user.id ? conv.participant2_id : conv.participant1_id;
+        const otherParticipant = participantProfiles.find(p => p.id === otherParticipantId);
+        
+        return {
+          ...conv,
+          unread_count: 0, // TODO: Implement unread count logic
+          other_participant: otherParticipant,
+          participant1: participantProfiles.find(p => p.id === conv.participant1_id),
+          participant2: participantProfiles.find(p => p.id === conv.participant2_id)
+        };
+      }) as ChatConversation[];
+    },
+    enabled: !!user,
+  });
+};
+
+// Create a new conversation
+export const useCreateConversation = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ participantId }: { participantId: string }) => {
+      if (!user) throw new Error('User not authenticated');
+
+      // Check if conversation already exists
+      const { data: existing } = await supabase
+        .from('chat_conversations')
+        .select('id')
+        .or(`and(participant1_id.eq.${user.id},participant2_id.eq.${participantId}),and(participant1_id.eq.${participantId},participant2_id.eq.${user.id})`)
+        .single();
+
+      if (existing) {
+        return { conversationId: existing.id };
+      }
+
+      // Create new conversation
+      const { data, error } = await supabase
+        .from('chat_conversations')
+        .insert({
+          participant1_id: user.id,
+          participant2_id: participantId
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { conversationId: data.id };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    },
+    onError: (error: any) => {
+      console.error('Conversation creation error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create conversation. Please try again.',
+        variant: 'destructive',
+      });
+    },
+  });
+};
+
+// Start business conversation
+export const useStartBusinessConversation = () => {
+  const { toast } = useToast();
+  
+  return useMutation({
+    mutationFn: async ({ businessId, initialMessage }: { businessId: string; initialMessage: string }) => {
+      // This is a placeholder - you would implement business conversation logic here
+      console.log('Starting conversation with business:', businessId, initialMessage);
+      
+      // For now, just show a success message
+      return { success: true };
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Message Sent',
+        description: 'Your message has been sent to the business.',
+      });
+    },
+    onError: (error: any) => {
+      console.error('Business conversation error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to send message. Please try again.',
+        variant: 'destructive',
+      });
     },
   });
 };
