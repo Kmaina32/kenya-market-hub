@@ -5,17 +5,21 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { useQuery } from '@tanstack/react-query';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Briefcase, Search, MapPin, Building } from 'lucide-react';
+import { Plus, Briefcase, Search, MapPin, Building, Edit, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 const AdminJobs = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const queryClient = useQueryClient();
 
   // Fetch jobs from database
   const { data: jobs, isLoading } = useQuery({
-    queryKey: ['admin-jobs', searchTerm],
+    queryKey: ['admin-jobs', searchTerm, statusFilter],
     queryFn: async () => {
       let query = supabase
         .from('jobs')
@@ -26,9 +30,49 @@ const AdminJobs = () => {
         query = query.or(`title.ilike.%${searchTerm}%,company.ilike.%${searchTerm}%,category.ilike.%${searchTerm}%`);
       }
 
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
+      }
+
       const { data, error } = await query;
       if (error) throw error;
       return data;
+    }
+  });
+
+  // Delete job mutation
+  const deleteJobMutation = useMutation({
+    mutationFn: async (jobId: number) => {
+      const { error } = await supabase
+        .from('jobs')
+        .delete()
+        .eq('id', jobId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-jobs'] });
+      toast.success('Job deleted successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to delete job: ' + error.message);
+    }
+  });
+
+  // Update job status mutation
+  const updateJobStatusMutation = useMutation({
+    mutationFn: async ({ jobId, status }: { jobId: number; status: string }) => {
+      const { error } = await supabase
+        .from('jobs')
+        .update({ status })
+        .eq('id', jobId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-jobs'] });
+      toast.success('Job status updated');
+    },
+    onError: (error) => {
+      toast.error('Failed to update job: ' + error.message);
     }
   });
 
@@ -74,6 +118,17 @@ const AdminJobs = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="open">Open</SelectItem>
+            <SelectItem value="closed">Closed</SelectItem>
+            <SelectItem value="draft">Draft</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <Card>
@@ -102,6 +157,7 @@ const AdminJobs = () => {
                     <TableHead>Salary</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Posted</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -134,12 +190,37 @@ const AdminJobs = () => {
                         {job.salary || 'Negotiable'}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={getStatusColor(job.status)}>
-                          {job.status}
-                        </Badge>
+                        <Select 
+                          value={job.status} 
+                          onValueChange={(status) => updateJobStatusMutation.mutate({ jobId: job.id, status })}
+                        >
+                          <SelectTrigger className="w-24">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="open">Open</SelectItem>
+                            <SelectItem value="closed">Closed</SelectItem>
+                            <SelectItem value="draft">Draft</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell className="text-sm text-gray-500">
                         {job.created_at ? format(new Date(job.created_at), 'MMM dd, yyyy') : 'Unknown'}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button variant="outline" size="sm">
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                          <Button 
+                            variant="destructive" 
+                            size="sm"
+                            onClick={() => deleteJobMutation.mutate(job.id)}
+                            disabled={deleteJobMutation.isPending}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

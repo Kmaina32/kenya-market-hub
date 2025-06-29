@@ -1,112 +1,63 @@
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 
-export interface WishlistItem {
+interface WishlistItem {
   id: string;
-  user_id: string;
-  product_id: string;
-  created_at: string;
-  product?: {
-    id: string;
-    name: string;
-    price: number;
-    image_url: string;
-    vendor?: string;
-  };
+  name: string;
+  price: number;
+  image_url?: string;
+  category: string;
 }
 
 export const useWishlist = () => {
-  const { user } = useAuth();
-  
-  return useQuery({
-    queryKey: ['wishlist', user?.id],
-    queryFn: async () => {
-      // Mock implementation since wishlist table doesn't exist
-      return [] as WishlistItem[];
-    },
-    enabled: !!user,
-  });
-};
+  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
 
-export const useAddToWishlist = () => {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-  
-  return useMutation({
-    mutationFn: async (productId: string) => {
-      // Mock implementation
-      return { id: Date.now().toString(), product_id: productId };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['wishlist'] });
-      toast({
-        title: 'Added to wishlist',
-        description: 'Product has been added to your wishlist.',
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Error adding to wishlist',
-        description: error.message,
-        variant: 'destructive',
-      });
+  useEffect(() => {
+    const savedWishlist = localStorage.getItem('wishlist');
+    if (savedWishlist) {
+      setWishlistItems(JSON.parse(savedWishlist));
     }
-  });
-};
+  }, []);
 
-export const useRemoveFromWishlist = () => {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-  
-  return useMutation({
-    mutationFn: async (productId: string) => {
-      // Mock implementation
-      return { success: true };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['wishlist'] });
-      toast({
-        title: 'Removed from wishlist',
-        description: 'Product has been removed from your wishlist.',
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Error removing from wishlist',
-        description: error.message,
-        variant: 'destructive',
-      });
-    }
-  });
-};
+  useEffect(() => {
+    localStorage.setItem('wishlist', JSON.stringify(wishlistItems));
+  }, [wishlistItems]);
 
-export const useToggleWishlist = () => {
-  const addToWishlist = useAddToWishlist();
-  const removeFromWishlist = useRemoveFromWishlist();
-  
-  return useMutation({
-    mutationFn: async ({ productId, isInWishlist }: { productId: string; isInWishlist: boolean }) => {
-      if (isInWishlist) {
-        return removeFromWishlist.mutateAsync(productId);
-      } else {
-        return addToWishlist.mutateAsync(productId);
+  const addToWishlist = (product: any) => {
+    setWishlistItems(prev => {
+      const exists = prev.find(item => item.id === product.id);
+      if (exists) {
+        toast.info('Product already in wishlist');
+        return prev;
       }
-    }
-  });
-};
+      return [...prev, {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image_url: product.image_url,
+        category: product.category,
+      }];
+    });
+  };
 
-export const useIsInWishlist = (productId: string) => {
-  const { user } = useAuth();
-  
-  return useQuery({
-    queryKey: ['is-in-wishlist', productId, user?.id],
-    queryFn: async () => {
-      // Mock implementation - always return false for now
-      return false;
-    },
-    enabled: !!user && !!productId,
-    initialData: false,
-  });
+  const removeFromWishlist = (productId: string) => {
+    setWishlistItems(prev => prev.filter(item => item.id !== productId));
+  };
+
+  const isInWishlist = (productId: string) => {
+    return wishlistItems.some(item => item.id === productId);
+  };
+
+  const clearWishlist = () => {
+    setWishlistItems([]);
+  };
+
+  return {
+    wishlistItems,
+    addToWishlist,
+    removeFromWishlist,
+    isInWishlist,
+    clearWishlist,
+  };
 };
