@@ -5,9 +5,9 @@ import { Users, ShoppingBag, DollarSign, TrendingUp, Calendar, Briefcase, Shield
 import { useAdminStats } from '@/hooks/useAdminStats';
 
 const AdminDashboardOverview = () => {
-  const { stats, loading, error } = useAdminStats();
+  const { data: stats, isLoading, error } = useAdminStats();
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[...Array(8)].map((_, i) => (
@@ -32,7 +32,7 @@ const AdminDashboardOverview = () => {
         <CardContent className="pt-6">
           <div className="text-center text-red-600">
             <p>Error loading dashboard statistics</p>
-            <p className="text-sm text-gray-500 mt-1">{error}</p>
+            <p className="text-sm text-gray-500 mt-1">{error.message}</p>
           </div>
         </CardContent>
       </Card>
@@ -42,49 +42,49 @@ const AdminDashboardOverview = () => {
   const statCards = [
     {
       title: 'Total Users',
-      value: stats.totalUsers.toLocaleString(),
+      value: stats?.totalUsers?.toLocaleString() || '0',
       icon: Users,
       color: 'text-blue-600'
     },
     {
       title: 'Products',
-      value: stats.totalProducts.toLocaleString(),
+      value: stats?.totalProducts?.toLocaleString() || '0',
       icon: ShoppingBag,
       color: 'text-green-600'
     },
     {
       title: 'Revenue',
-      value: `KSh ${stats.totalRevenue.toLocaleString()}`,
+      value: `KSh ${stats?.totalRevenue?.toLocaleString() || '0'}`,
       icon: DollarSign,
       color: 'text-orange-600'
     },
     {
       title: 'Orders',
-      value: stats.totalOrders.toLocaleString(),
+      value: stats?.totalOrders?.toLocaleString() || '0',
       icon: TrendingUp,
       color: 'text-purple-600'
     },
     {
-      title: 'Restaurants',
-      value: stats.totalRestaurants.toLocaleString(),
-      icon: UtensilsCrossed,
+      title: 'Vendors',
+      value: stats?.totalVendors?.toLocaleString() || '0',
+      icon: Users,
       color: 'text-red-600'
     },
     {
-      title: 'Events',
-      value: stats.totalEvents.toLocaleString(),
+      title: 'Drivers',
+      value: stats?.totalDrivers?.toLocaleString() || '0',
       icon: Calendar,
       color: 'text-indigo-600'
     },
     {
-      title: 'Jobs',
-      value: stats.totalJobs.toLocaleString(),
+      title: 'Properties',
+      value: stats?.totalProperties?.toLocaleString() || '0',
       icon: Briefcase,
       color: 'text-yellow-600'
     },
     {
-      title: 'Insurance Plans',
-      value: stats.totalInsurancePlans.toLocaleString(),
+      title: 'Pending Orders',
+      value: stats?.pendingOrders?.toLocaleString() || '0',
       icon: Shield,
       color: 'text-cyan-600'
     }

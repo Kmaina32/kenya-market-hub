@@ -19,10 +19,23 @@ import {
   ArrowDownRight
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { AdminStats } from '@/hooks/useAdminStats';
+
+interface AdminStats {
+  totalUsers: number;
+  totalProducts: number;
+  totalOrders: number;
+  totalRevenue: number;
+  totalVendors: number;
+  totalProperties: number;
+  totalDrivers: number;
+  totalServiceProviders?: number;
+  pendingVendorApplications?: number;
+  pendingDriverApprovals?: number;
+  pendingServiceProviders?: number;
+}
 
 interface ModernStatsGridProps {
-  stats: AdminStats;
+  stats: AdminStats | undefined;
   isLoading: boolean;
 }
 
