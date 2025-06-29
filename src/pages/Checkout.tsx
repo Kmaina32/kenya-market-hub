@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,7 +17,7 @@ import CouponInput from '@/components/CouponInput';
 const Checkout = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { cartItems, getCartTotal, clearCart } = useCartContext();
+  const { items, getTotalPrice, clearCart } = useCartContext();
   const { toast } = useToast();
   
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
@@ -29,7 +30,7 @@ const Checkout = () => {
     specialInstructions: ''
   });
 
-  const subtotal = getCartTotal();
+  const subtotal = getTotalPrice();
   const shippingCost = 500; // Fixed shipping cost
   const discount = appliedCoupon?.discount_amount || 0;
   const total = subtotal + shippingCost - discount;
@@ -56,7 +57,7 @@ const Checkout = () => {
       return;
     }
 
-    if (cartItems.length === 0) {
+    if (items.length === 0) {
       toast({
         title: 'Your cart is empty',
         variant: 'destructive'
@@ -116,7 +117,7 @@ const Checkout = () => {
     );
   }
 
-  if (cartItems.length === 0) {
+  if (items.length === 0) {
     return (
       <FrontendLayout>
         <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
@@ -237,7 +238,7 @@ const Checkout = () => {
                   <CardTitle>Order Summary</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {cartItems.map((item) => (
+                  {items.map((item) => (
                     <div key={item.id} className="flex justify-between">
                       <div>
                         <p className="font-medium">{item.name}</p>
