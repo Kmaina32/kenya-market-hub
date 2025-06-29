@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -26,7 +25,7 @@ const ImprovedForumsList: React.FC = () => {
     categoryId: ''
   });
 
-  const { data: categories = [] } = useChatForums();
+  const { data: categories = [] } = useForumCategories();
   const { data: posts = [], isLoading } = useForumPosts(selectedCategory === 'all' ? undefined : selectedCategory);
   const createPostMutation = useCreateForumPost();
   const toggleLikeMutation = useTogglePostLike();
