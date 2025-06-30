@@ -1,17 +1,18 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { LoadingButton } from '@/components/ui/LoadingButton';
 import { InputField, TextareaField, SelectField } from '@/components/ui/FormField';
 import { useFormValidation } from '@/hooks/useFormValidation';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
-import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-interface CreatePropertyModalProps {
+interface EditPropertyModalProps {
   isOpen: boolean;
   onClose: () => void;
+  propertyId: string;
+  propertyData?: any;
 }
 
 const propertyTypes = [
@@ -38,25 +39,29 @@ const validationSchema = {
   bathrooms: { required: true }
 };
 
-const CreatePropertyModal: React.FC<CreatePropertyModalProps> = ({ isOpen, onClose }) => {
-  const { user } = useAuth();
+const EditPropertyModal: React.FC<EditPropertyModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  propertyId, 
+  propertyData 
+}) => {
   const queryClient = useQueryClient();
   const { handleError, handleSuccess } = useErrorHandler();
   
   const initialValues = {
-    title: '',
-    description: '',
-    price: '',
-    property_type: '',
-    listing_type: '',
-    location_address: '',
-    city: '',
-    county: '',
-    bedrooms: '',
-    bathrooms: '',
-    area_sqm: '',
-    contact_phone: '',
-    contact_email: ''
+    title: propertyData?.title || '',
+    description: propertyData?.description || '',
+    price: propertyData?.price?.toString() || '',
+    property_type: propertyData?.property_type || '',
+    listing_type: propertyData?.listing_type || '',
+    location_address: propertyData?.location_address || '',
+    city: propertyData?.city || '',
+    county: propertyData?.county || '',
+    bedrooms: propertyData?.bedrooms?.toString() || '',
+    bathrooms: propertyData?.bathrooms?.toString() || '',
+    area_sqm: propertyData?.area_sqm?.toString() || '',
+    contact_phone: propertyData?.contact_phone || '',
+    contact_email: propertyData?.contact_email || ''
   };
 
   const { values, errors, handleChange, handleBlur, validateForm, reset } = useFormValidation(
@@ -64,19 +69,19 @@ const CreatePropertyModal: React.FC<CreatePropertyModalProps> = ({ isOpen, onClo
     validationSchema
   );
 
-  const createPropertyMutation = useMutation({
+  const updatePropertyMutation = useMutation({
     mutationFn: async (propertyData: any) => {
       const { data, error } = await supabase
         .from('properties')
-        .insert({
+        .update({
           ...propertyData,
-          owner_id: user?.id,
           price: parseFloat(propertyData.price),
           bedrooms: parseInt(propertyData.bedrooms),
           bathrooms: parseInt(propertyData.bathrooms),
           area_sqm: propertyData.area_sqm ? parseFloat(propertyData.area_sqm) : null,
-          status: 'available'
+          updated_at: new Date().toISOString()
         })
+        .eq('id', propertyId)
         .select()
         .single();
 
@@ -84,20 +89,19 @@ const CreatePropertyModal: React.FC<CreatePropertyModalProps> = ({ isOpen, onClo
       return data;
     },
     onSuccess: () => {
-      handleSuccess('Property created successfully!');
+      handleSuccess('Property updated successfully!');
       queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
       onClose();
-      reset();
     },
     onError: (error: any) => {
-      handleError(error, { customMessage: 'Failed to create property' });
+      handleError(error, { customMessage: 'Failed to update property' });
     }
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      createPropertyMutation.mutate(values);
+      updatePropertyMutation.mutate(values);
     }
   };
 
@@ -105,7 +109,7 @@ const CreatePropertyModal: React.FC<CreatePropertyModalProps> = ({ isOpen, onClo
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create New Property</DialogTitle>
+          <DialogTitle>Edit Property</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -117,7 +121,6 @@ const CreatePropertyModal: React.FC<CreatePropertyModalProps> = ({ isOpen, onClo
             onBlur={() => handleBlur('title')}
             error={errors.title}
             required
-            placeholder="e.g. Beautiful 3-bedroom house in Westlands"
           />
 
           <div className="grid grid-cols-2 gap-4">
@@ -152,7 +155,6 @@ const CreatePropertyModal: React.FC<CreatePropertyModalProps> = ({ isOpen, onClo
               onBlur={() => handleBlur('price')}
               error={errors.price}
               required
-              placeholder="e.g. 5000000"
             />
 
             <InputField
@@ -186,7 +188,6 @@ const CreatePropertyModal: React.FC<CreatePropertyModalProps> = ({ isOpen, onClo
             onBlur={() => handleBlur('location_address')}
             error={errors.location_address}
             required
-            placeholder="Full address of the property"
           />
 
           <div className="grid grid-cols-2 gap-4">
@@ -195,7 +196,6 @@ const CreatePropertyModal: React.FC<CreatePropertyModalProps> = ({ isOpen, onClo
               name="city"
               value={values.city}
               onChange={(value) => handleChange('city', value)}
-              placeholder="e.g. Nairobi"
             />
 
             <InputField
@@ -203,7 +203,6 @@ const CreatePropertyModal: React.FC<CreatePropertyModalProps> = ({ isOpen, onClo
               name="county"
               value={values.county}
               onChange={(value) => handleChange('county', value)}
-              placeholder="e.g. Nairobi County"
             />
           </div>
 
@@ -214,7 +213,6 @@ const CreatePropertyModal: React.FC<CreatePropertyModalProps> = ({ isOpen, onClo
               type="number"
               value={values.area_sqm}
               onChange={(value) => handleChange('area_sqm', value)}
-              placeholder="e.g. 150"
             />
 
             <InputField
@@ -223,7 +221,6 @@ const CreatePropertyModal: React.FC<CreatePropertyModalProps> = ({ isOpen, onClo
               type="tel"
               value={values.contact_phone}
               onChange={(value) => handleChange('contact_phone', value)}
-              placeholder="+254712345678"
             />
           </div>
 
@@ -233,7 +230,6 @@ const CreatePropertyModal: React.FC<CreatePropertyModalProps> = ({ isOpen, onClo
             type="email"
             value={values.contact_email}
             onChange={(value) => handleChange('contact_email', value)}
-            placeholder="contact@example.com"
           />
 
           <TextareaField
@@ -241,7 +237,6 @@ const CreatePropertyModal: React.FC<CreatePropertyModalProps> = ({ isOpen, onClo
             name="description"
             value={values.description}
             onChange={(value) => handleChange('description', value)}
-            placeholder="Describe the property features, amenities, and any other details..."
             rows={4}
           />
 
@@ -255,10 +250,10 @@ const CreatePropertyModal: React.FC<CreatePropertyModalProps> = ({ isOpen, onClo
             </LoadingButton>
             <LoadingButton
               type="submit"
-              loading={createPropertyMutation.isPending}
+              loading={updatePropertyMutation.isPending}
               className="flex-1"
             >
-              Create Property
+              Update Property
             </LoadingButton>
           </div>
         </form>
@@ -267,4 +262,4 @@ const CreatePropertyModal: React.FC<CreatePropertyModalProps> = ({ isOpen, onClo
   );
 };
 
-export default CreatePropertyModal;
+export default EditPropertyModal;

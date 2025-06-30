@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,13 +7,18 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, UtensilsCrossed, Search, Edit, Trash2, Eye } from 'lucide-react';
+import { Plus, UtensilsCrossed, Search } from 'lucide-react';
 import { EditButton, DeleteButton, ViewButton } from '@/components/ui/action-buttons';
 import CreateRestaurantModal from '@/components/admin/CreateRestaurantModal';
+import EditRestaurantModal from '@/components/admin/EditRestaurantModal';
+import DeleteConfirmationModal from '@/components/ui/DeleteConfirmationModal';
+import { useDeleteConfirmation } from '@/hooks/useDeleteConfirmation';
 
 const AdminFoodDelivery: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedRestaurant, setSelectedRestaurant] = useState<any>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   const { data: restaurants, isLoading } = useQuery({
     queryKey: ['admin-restaurants', searchTerm],
@@ -32,19 +38,24 @@ const AdminFoodDelivery: React.FC = () => {
     }
   });
 
-  const handleEdit = (restaurantId: string) => {
-    console.log('Edit restaurant:', restaurantId);
-    // TODO: Open edit modal
+  const deleteConfirmation = useDeleteConfirmation({
+    tableName: 'restaurants',
+    queryKey: ['admin-restaurants'],
+    itemName: 'restaurant'
+  });
+
+  const handleEdit = (restaurant: any) => {
+    setSelectedRestaurant(restaurant);
+    setEditModalOpen(true);
   };
 
   const handleDelete = (restaurantId: string) => {
-    console.log('Delete restaurant:', restaurantId);
-    // TODO: Implement delete functionality
+    deleteConfirmation.openConfirmation(restaurantId);
   };
 
   const handleView = (restaurantId: string) => {
     console.log('View restaurant:', restaurantId);
-    // TODO: Open view modal
+    // TODO: Implement view functionality
   };
 
   return (
@@ -126,7 +137,7 @@ const AdminFoodDelivery: React.FC = () => {
                       <TableCell>
                         <div className="flex items-center space-x-2">
                           <ViewButton onClick={() => handleView(restaurant.id)} />
-                          <EditButton onClick={() => handleEdit(restaurant.id)} />
+                          <EditButton onClick={() => handleEdit(restaurant)} />
                           <DeleteButton onClick={() => handleDelete(restaurant.id)} />
                         </div>
                       </TableCell>
@@ -141,7 +152,7 @@ const AdminFoodDelivery: React.FC = () => {
               <h3 className="text-xl font-semibold text-gray-900 mb-2">No restaurants found</h3>
               <p className="text-gray-600 mb-4">Start by adding your first restaurant partner.</p>
               <Button 
-                onClick={() => {}}
+                onClick={() => setIsCreateModalOpen(true)}
                 className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
               >
                 <Plus className="h-5 w-5 mr-2" />
@@ -155,6 +166,26 @@ const AdminFoodDelivery: React.FC = () => {
       <CreateRestaurantModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+      />
+
+      <EditRestaurantModal
+        isOpen={editModalOpen}
+        onClose={() => {
+          setEditModalOpen(false);
+          setSelectedRestaurant(null);
+        }}
+        restaurantId={selectedRestaurant?.id}
+        restaurantData={selectedRestaurant}
+      />
+
+      <DeleteConfirmationModal
+        isOpen={deleteConfirmation.isOpen}
+        onClose={deleteConfirmation.closeConfirmation}
+        onConfirm={deleteConfirmation.confirmDelete}
+        isLoading={deleteConfirmation.isDeleting}
+        itemName="restaurant"
+        title="Delete Restaurant"
+        description="Are you sure you want to delete this restaurant? This will also remove all associated menu items and orders."
       />
     </div>
   );

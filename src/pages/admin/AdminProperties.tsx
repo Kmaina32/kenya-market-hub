@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,13 +7,20 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Building, Search, Edit, Trash2, Eye } from 'lucide-react';
+import { Plus, Building, Search } from 'lucide-react';
 import { EditButton, DeleteButton, ViewButton } from '@/components/ui/action-buttons';
 import CreatePropertyModal from '@/components/admin/CreatePropertyModal';
+import EditPropertyModal from '@/components/admin/EditPropertyModal';
+import ViewPropertyModal from '@/components/admin/ViewPropertyModal';
+import DeleteConfirmationModal from '@/components/ui/DeleteConfirmationModal';
+import { useDeleteConfirmation } from '@/hooks/useDeleteConfirmation';
 
 const AdminProperties: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedProperty, setSelectedProperty] = useState<any>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
 
   const { data: properties, isLoading } = useQuery({
     queryKey: ['admin-properties', searchTerm],
@@ -32,19 +40,24 @@ const AdminProperties: React.FC = () => {
     }
   });
 
-  const handleEdit = (propertyId: string) => {
-    console.log('Edit property:', propertyId);
-    // TODO: Open edit modal
+  const deleteConfirmation = useDeleteConfirmation({
+    tableName: 'properties',
+    queryKey: ['admin-properties'],
+    itemName: 'property'
+  });
+
+  const handleEdit = (property: any) => {
+    setSelectedProperty(property);
+    setEditModalOpen(true);
   };
 
   const handleDelete = (propertyId: string) => {
-    console.log('Delete property:', propertyId);
-    // TODO: Implement delete functionality
+    deleteConfirmation.openConfirmation(propertyId);
   };
 
-  const handleView = (propertyId: string) => {
-    console.log('View property:', propertyId);
-    // TODO: Open view modal
+  const handleView = (property: any) => {
+    setSelectedProperty(property);
+    setViewModalOpen(true);
   };
 
   return (
@@ -122,8 +135,8 @@ const AdminProperties: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
-                          <ViewButton onClick={() => handleView(property.id)} />
-                          <EditButton onClick={() => handleEdit(property.id)} />
+                          <ViewButton onClick={() => handleView(property)} />
+                          <EditButton onClick={() => handleEdit(property)} />
                           <DeleteButton onClick={() => handleDelete(property.id)} />
                         </div>
                       </TableCell>
@@ -138,7 +151,7 @@ const AdminProperties: React.FC = () => {
               <h3 className="text-xl font-semibold text-gray-900 mb-2">No properties found</h3>
               <p className="text-gray-600 mb-4">Start by adding your first property listing.</p>
               <Button 
-                onClick={() => {}}
+                onClick={() => setIsCreateModalOpen(true)}
                 className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
               >
                 <Plus className="h-5 w-5 mr-2" />
@@ -152,6 +165,35 @@ const AdminProperties: React.FC = () => {
       <CreatePropertyModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+      />
+
+      <EditPropertyModal
+        isOpen={editModalOpen}
+        onClose={() => {
+          setEditModalOpen(false);
+          setSelectedProperty(null);
+        }}
+        propertyId={selectedProperty?.id}
+        propertyData={selectedProperty}
+      />
+
+      <ViewPropertyModal
+        isOpen={viewModalOpen}
+        onClose={() => {
+          setViewModalOpen(false);
+          setSelectedProperty(null);
+        }}
+        property={selectedProperty}
+      />
+
+      <DeleteConfirmationModal
+        isOpen={deleteConfirmation.isOpen}
+        onClose={deleteConfirmation.closeConfirmation}
+        onConfirm={deleteConfirmation.confirmDelete}
+        isLoading={deleteConfirmation.isDeleting}
+        itemName="property"
+        title="Delete Property"
+        description="Are you sure you want to delete this property? This will also remove all associated inquiries and viewings."
       />
     </div>
   );

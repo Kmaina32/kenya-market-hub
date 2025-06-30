@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,13 +9,18 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus, Calendar, Search, MapPin, Users } from 'lucide-react';
 import { format } from 'date-fns';
+import { EditButton, DeleteButton, ViewButton } from '@/components/ui/action-buttons';
 import CreateEventModal from '@/components/admin/CreateEventModal';
+import EditEventModal from '@/components/admin/EditEventModal';
+import DeleteConfirmationModal from '@/components/ui/DeleteConfirmationModal';
+import { useDeleteConfirmation } from '@/hooks/useDeleteConfirmation';
 
 const AdminEvents: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
-  // Fetch events from database
   const { data: events, isLoading } = useQuery({
     queryKey: ['admin-events', searchTerm],
     queryFn: async () => {
@@ -32,6 +38,26 @@ const AdminEvents: React.FC = () => {
       return data;
     }
   });
+
+  const deleteConfirmation = useDeleteConfirmation({
+    tableName: 'events',
+    queryKey: ['admin-events'],
+    itemName: 'event'
+  });
+
+  const handleEdit = (event: any) => {
+    setSelectedEvent(event);
+    setEditModalOpen(true);
+  };
+
+  const handleDelete = (eventId: string) => {
+    deleteConfirmation.openConfirmation(eventId);
+  };
+
+  const handleView = (eventId: string) => {
+    console.log('View event:', eventId);
+    // TODO: Implement view functionality
+  };
 
   return (
     <div className="space-y-6">
@@ -86,6 +112,7 @@ const AdminEvents: React.FC = () => {
                     <TableHead>Price</TableHead>
                     <TableHead>Attendees</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -133,6 +160,13 @@ const AdminEvents: React.FC = () => {
                           {event.is_active ? 'Active' : 'Inactive'}
                         </Badge>
                       </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <ViewButton onClick={() => handleView(event.id)} />
+                          <EditButton onClick={() => handleEdit(event)} />
+                          <DeleteButton onClick={() => handleDelete(event.id)} />
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -145,6 +179,13 @@ const AdminEvents: React.FC = () => {
               <p className="text-gray-600 mb-4">
                 {searchTerm ? 'No events match your search criteria.' : 'Start by creating your first event.'}
               </p>
+              <Button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Create Event
+              </Button>
             </div>
           )}
         </CardContent>
@@ -153,6 +194,26 @@ const AdminEvents: React.FC = () => {
       <CreateEventModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+      />
+
+      <EditEventModal
+        isOpen={editModalOpen}
+        onClose={() => {
+          setEditModalOpen(false);
+          setSelectedEvent(null);
+        }}
+        eventId={selectedEvent?.id}
+        eventData={selectedEvent}
+      />
+
+      <DeleteConfirmationModal
+        isOpen={deleteConfirmation.isOpen}
+        onClose={deleteConfirmation.closeConfirmation}
+        onConfirm={deleteConfirmation.confirmDelete}
+        isLoading={deleteConfirmation.isDeleting}
+        itemName="event"
+        title="Delete Event"
+        description="Are you sure you want to delete this event? This will also cancel all bookings and notify attendees."
       />
     </div>
   );

@@ -89,3 +89,60 @@ export const ViewButton: React.FC<UnifiedButtonProps> = (props) => (
     {props.loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
   </SecondaryButton>
 );
+
+// Specialized action buttons
+export const SaveButton: React.FC<UnifiedButtonProps> = (props) => (
+  <PrimaryButton {...props}>
+    {props.loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}
+    {props.children || 'Save'}
+  </PrimaryButton>
+);
+
+export const CancelButton: React.FC<UnifiedButtonProps> = (props) => (
+  <SecondaryButton {...props}>
+    <X className="h-4 w-4 mr-2" />
+    {props.children || 'Cancel'}
+  </SecondaryButton>
+);
+
+export const CallButton: React.FC<UnifiedButtonProps> = (props) => (
+  <PrimaryButton {...props} className={cn("bg-green-500 hover:bg-green-600", props.className)}>
+    <Phone className="h-4 w-4 mr-2" />
+    {props.children || 'Call'}
+  </PrimaryButton>
+);
+
+export const BookButton: React.FC<UnifiedButtonProps> = (props) => (
+  <PrimaryButton {...props} className={cn("bg-blue-500 hover:bg-blue-600", props.className)}>
+    <Calendar className="h-4 w-4 mr-2" />
+    {props.children || 'Book'}
+  </PrimaryButton>
+);
+
+export const CartButton: React.FC<UnifiedButtonProps> = (props) => (
+  <PrimaryButton {...props}>
+    <ShoppingCart className="h-4 w-4 mr-2" />
+    {props.children || 'Add to Cart'}
+  </PrimaryButton>
+);
+
+export const WishlistButton: React.FC<UnifiedButtonProps> = (props) => (
+  <SecondaryButton {...props}>
+    <Heart className="h-4 w-4 mr-2" />
+    {props.children || 'Wishlist'}
+  </SecondaryButton>
+);
+
+export const SearchButton: React.FC<UnifiedButtonProps> = (props) => (
+  <PrimaryButton {...props}>
+    <Search className="h-4 w-4 mr-2" />
+    {props.children || 'Search'}
+  </PrimaryButton>
+);
+
+export const FilterButton: React.FC<UnifiedButtonProps> = (props) => (
+  <SecondaryButton {...props}>
+    <Filter className="h-4 w-4 mr-2" />
+    {props.children || 'Filter'}
+  </SecondaryButton>
+);
