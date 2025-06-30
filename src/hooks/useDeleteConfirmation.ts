@@ -23,24 +23,13 @@ export const useDeleteConfirmation = ({
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      // Use dynamic table name approach to avoid TypeScript issues
-      const { error } = await supabase
-        .rpc('delete_record', {
-          table_name: tableName,
-          record_id: id
-        });
-
-      // Fallback to direct table access if RPC doesn't exist
-      if (error && error.message.includes('function delete_record')) {
-        const { error: directError } = await (supabase as any)
-          .from(tableName)
-          .delete()
-          .eq('id', id);
-        
-        if (directError) throw directError;
-      } else if (error) {
-        throw error;
-      }
+      // Use type assertion to handle dynamic table names
+      const { error } = await (supabase as any)
+        .from(tableName)
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
     },
     onSuccess: () => {
       handleSuccess(`${itemName} deleted successfully!`);
