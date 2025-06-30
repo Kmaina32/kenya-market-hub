@@ -65,16 +65,20 @@ export const useEnhancedAuth = () => {
     if (!user) return false;
 
     try {
-      const { data, error } = await supabase.rpc('is_admin_user', {
-        user_id: user.id
-      });
+      // Use the existing user_roles table to check admin status
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .single();
 
-      if (error) {
+      if (error && error.code !== 'PGRST116') {
         console.error('Admin check failed:', error);
         return false;
       }
 
-      return data || false;
+      return !!data;
     } catch (error) {
       console.error('Admin check error:', error);
       return false;

@@ -14,14 +14,23 @@ interface SecurityEvent {
 export const useSecurityAudit = () => {
   const logSecurityEvent = useMutation({
     mutationFn: async (event: SecurityEvent) => {
-      const { error } = await supabase.rpc('log_security_event', {
-        p_action: event.action,
-        p_resource_type: event.resourceType,
-        p_resource_id: event.resourceId || null,
-        p_success: event.success ?? true,
-        p_error_message: event.errorMessage || null,
-        p_metadata: event.metadata ? JSON.stringify(event.metadata) : null
-      });
+      // Since we don't have the security_audit_log table yet, 
+      // we'll log to notifications as a temporary solution
+      const { error } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+          title: event.action,
+          message: `${event.resourceType} - ${event.success ? 'Success' : 'Failed'}`,
+          type: 'security',
+          metadata: {
+            resource_type: event.resourceType,
+            resource_id: event.resourceId,
+            success: event.success ?? true,
+            error_message: event.errorMessage,
+            ...event.metadata
+          }
+        });
 
       if (error) {
         console.error('Failed to log security event:', error);
