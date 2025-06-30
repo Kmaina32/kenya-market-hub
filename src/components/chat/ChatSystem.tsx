@@ -40,7 +40,7 @@ const ChatSystem: React.FC = () => {
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [messageInput, setMessageInput] = useState('');
 
-  // Fetch conversations
+  // Fetch conversations with a simpler approach
   const { data: conversations = [] } = useQuery({
     queryKey: ['conversations', user?.id],
     queryFn: async () => {
@@ -48,20 +48,31 @@ const ChatSystem: React.FC = () => {
 
       const { data, error } = await supabase
         .from('chat_conversations')
-        .select(`
-          *,
-          participant1:profiles!chat_conversations_participant1_id_fkey(full_name, avatar_url),
-          participant2:profiles!chat_conversations_participant2_id_fkey(full_name, avatar_url)
-        `)
+        .select('*')
         .or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`)
         .order('last_message_at', { ascending: false });
 
       if (error) throw error;
 
-      return data?.map(conv => ({
-        ...conv,
-        other_participant: conv.participant1_id === user.id ? conv.participant2 : conv.participant1
-      })) || [];
+      // Get other participant info separately
+      const conversationsWithParticipants = await Promise.all(
+        (data || []).map(async (conv) => {
+          const otherParticipantId = conv.participant1_id === user.id ? conv.participant2_id : conv.participant1_id;
+          
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, avatar_url')
+            .eq('id', otherParticipantId)
+            .single();
+
+          return {
+            ...conv,
+            other_participant: profile || { full_name: 'Unknown User', avatar_url: null }
+          };
+        })
+      );
+
+      return conversationsWithParticipants;
     },
     enabled: !!user
   });
@@ -74,15 +85,29 @@ const ChatSystem: React.FC = () => {
 
       const { data, error } = await supabase
         .from('chat_messages')
-        .select(`
-          *,
-          sender:profiles(full_name, avatar_url)
-        `)
+        .select('*')
         .eq('conversation_id', selectedConversation)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      return data || [];
+
+      // Get sender info separately
+      const messagesWithSenders = await Promise.all(
+        (data || []).map(async (message) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, avatar_url')
+            .eq('id', message.sender_id)
+            .single();
+
+          return {
+            ...message,
+            sender: profile || { full_name: 'Unknown User', avatar_url: null }
+          };
+        })
+      );
+
+      return messagesWithSenders;
     },
     enabled: !!selectedConversation
   });
@@ -174,7 +199,7 @@ const ChatSystem: React.FC = () => {
             >
               <div className="flex items-center space-x-3">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={conversation.other_participant?.avatar_url} />
+                  <AvatarImage src={conversation.other_participant?.avatar_url || ''} />
                   <AvatarFallback>
                     <User className="h-4 w-4" />
                   </AvatarFallback>
