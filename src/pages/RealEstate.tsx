@@ -1,306 +1,272 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { useProperties } from '@/hooks/useProperties';
+import MainLayout from '@/components/MainLayout';
+import { UnifiedCard } from '@/components/ui/UnifiedCard';
+import { UnifiedButton } from '@/components/ui/UnifiedButton';
+import { UnifiedInput, UnifiedSelect } from '@/components/ui/UnifiedForm';
+import HeroSection from '@/components/shared/HeroSection';
 import { 
   Search, 
   MapPin, 
   Bed, 
   Bath, 
   Square, 
-  Building, 
-  Home, 
-  Filter,
+  Heart,
   Phone,
+  Mail,
   Eye
 } from 'lucide-react';
-import MainLayout from '@/components/MainLayout';
-import { useProperties } from '@/hooks/useProperties';
-import HeroSection from '@/components/shared/HeroSection';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
-
-interface Property {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  location_address: string;
-  property_type: string;
-  bedrooms?: number;
-  bathrooms?: number;
-  area_sqm?: number;
-  images?: string[];
-  status: string;
-  listing_type: string;
-  contact_phone?: string;
-  contact_email?: string;
-}
 
 const RealEstate = () => {
-  const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState({
-    propertyType: '',
-    priceRange: '',
-    location: ''
+  const [searchQuery, setSearchQuery] = useState('');
+  const [propertyType, setPropertyType] = useState('');
+  const [listingType, setListingType] = useState('');
+  const [location, setLocation] = useState('');
+  const { data: properties = [], isLoading } = useProperties();
+
+  const propertyTypes = [
+    { value: '', label: 'All Property Types' },
+    { value: 'house', label: 'House' },
+    { value: 'apartment', label: 'Apartment' },
+    { value: 'land', label: 'Land' },
+    { value: 'commercial', label: 'Commercial' },
+    { value: 'office', label: 'Office' }
+  ];
+
+  const listingTypes = [
+    { value: '', label: 'For Sale & Rent' },
+    { value: 'sale', label: 'For Sale' },
+    { value: 'rent', label: 'For Rent' }
+  ];
+
+  const locations = [
+    { value: '', label: 'All Locations' },
+    { value: 'Nairobi', label: 'Nairobi' },
+    { value: 'Mombasa', label: 'Mombasa' },
+    { value: 'Kisumu', label: 'Kisumu' },
+    { value: 'Nakuru', label: 'Nakuru' },
+    { value: 'Eldoret', label: 'Eldoret' }
+  ];
+
+  const filteredProperties = properties.filter(property => {
+    const matchesSearch = property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         property.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = !propertyType || property.property_type === propertyType;
+    const matchesListing = !listingType || property.listing_type === listingType;
+    const matchesLocation = !location || property.city === location;
+    return matchesSearch && matchesType && matchesListing && matchesLocation;
   });
-  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
-  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
-  const { data: properties = [], isLoading, error } = useProperties();
+  const featuredProperties = properties.filter(property => property.is_featured).slice(0, 6);
 
-  console.log('Properties data:', properties);
-  console.log('Loading:', isLoading);
-  console.log('Error:', error);
-
-  const filteredProperties = properties?.filter(property => {
-    const matchesSearch = property.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         property.location_address?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = !filters.propertyType || property.property_type === filters.propertyType;
-    const matchesLocation = !filters.location || property.location_address?.toLowerCase().includes(filters.location.toLowerCase());
+  const formatPrice = (price: number, listingType: string) => {
+    const formatted = new Intl.NumberFormat('en-KE', {
+      style: 'currency',
+      currency: 'KES',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(price);
     
-    return matchesSearch && matchesType && matchesLocation;
-  }) || [];
-
-  const handleViewDetails = (property: Property) => {
-    console.log('Viewing property details:', property);
-    navigate(`/property/${property.id}`);
-    toast.success(`Viewing details for ${property.title}`);
+    return listingType === 'rent' ? `${formatted}/month` : formatted;
   };
 
-  const handleContactOwner = (property: Property) => {
-    console.log('Contacting owner for property:', property);
-    setSelectedProperty(property);
-    setIsContactModalOpen(true);
+  const getPropertyFeatures = (property: any) => {
+    const features = [];
+    if (property.bedrooms) features.push(`${property.bedrooms} bed`);
+    if (property.bathrooms) features.push(`${property.bathrooms} bath`);
+    if (property.area_sqm) features.push(`${property.area_sqm} m²`);
+    return features.join(' • ');
   };
 
-  const handleCall = () => {
-    if (selectedProperty?.contact_phone) {
-      window.location.href = `tel:${selectedProperty.contact_phone}`;
-      toast.success('Opening phone dialer...');
-    } else {
-      toast.error('Phone number not available');
-    }
-  };
-
-  const handleEmail = () => {
-    if (selectedProperty?.contact_email) {
-      window.location.href = `mailto:${selectedProperty.contact_email}?subject=Inquiry about ${selectedProperty.title}`;
-      toast.success('Opening email client...');
-    } else {
-      toast.error('Email not available');
-    }
-  };
-
-  const propertyTypes = ['house', 'apartment', 'land', 'commercial'];
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="min-h-screen bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-white rounded-lg shadow-sm animate-pulse">
+                  <div className="h-64 bg-gray-200 rounded-t-lg"></div>
+                  <div className="p-6 space-y-4">
+                    <div className="h-6 bg-gray-200 rounded"></div>
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        <div className="px-4 sm:px-6 lg:px-8 pb-8">
-          <HeroSection
-            title="Real Estate"
-            subtitle="Find Your Dream Property"
-            description="Discover amazing properties across Kenya's prime locations."
-            imageUrl="photo-1483058712412-4245e9b90334"
-            className="mb-8 h-64"
-          />
+      <div className="min-h-screen bg-gray-50">
+        {/* Hero Section */}
+        <HeroSection
+          title="Find Your Dream Property"
+          subtitle="TukoPlace Real Estate"
+          description="Discover the perfect home or investment opportunity from our extensive listings across Kenya."
+          imageUrl="photo-1560518883-ce09059eeffa"
+          searchPlaceholder="Search by location, property type, or features..."
+          onSearch={setSearchQuery}
+          primaryAction={{
+            text: 'Browse Properties',
+            onClick: () => document.getElementById('properties')?.scrollIntoView({ behavior: 'smooth' }),
+          }}
+          secondaryAction={{
+            text: 'List Property',
+            onClick: () => {},
+          }}
+        />
 
-          <div className="max-w-6xl mx-auto space-y-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search properties by title or location..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 py-3 border-orange-200 focus:border-orange-500 focus:ring-orange-200 rounded-xl shadow-sm bg-white"
-                />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Search and Filters */}
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <UnifiedInput
+                label=""
+                name="search"
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Search properties..."
+                icon={<Search className="h-4 w-4" />}
+              />
+              <UnifiedSelect
+                label=""
+                name="propertyType"
+                value={propertyType}
+                onChange={setPropertyType}
+                options={propertyTypes}
+                placeholder="Property Type"
+              />
+              <UnifiedSelect
+                label=""
+                name="listingType"
+                value={listingType}
+                onChange={setListingType}
+                options={listingTypes}
+                placeholder="Listing Type"
+              />
+              <UnifiedSelect
+                label=""
+                name="location"
+                value={location}
+                onChange={setLocation}
+                options={locations}
+                placeholder="Location"
+              />
+            </div>
+          </div>
+
+          {/* Featured Properties */}
+          {featuredProperties.length > 0 && (
+            <div className="mb-12">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Featured Properties</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {featuredProperties.map((property) => (
+                  <UnifiedCard
+                    key={property.id}
+                    title={property.title}
+                    subtitle={getPropertyFeatures(property)}
+                    description={property.description}
+                    imageUrl={property.images?.[0]}
+                    price={formatPrice(property.price, property.listing_type)}
+                    location={`${property.city}, ${property.county}`}
+                    badge="Featured"
+                    badgeVariant="default"
+                    actions={
+                      <div className="grid grid-cols-3 gap-2">
+                        <UnifiedButton size="sm" variant="outline">
+                          <Heart className="h-4 w-4" />
+                        </UnifiedButton>
+                        <UnifiedButton size="sm" variant="outline">
+                          <Phone className="h-4 w-4" />
+                        </UnifiedButton>
+                        <UnifiedButton size="sm">
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </UnifiedButton>
+                      </div>
+                    }
+                  />
+                ))}
               </div>
-              
-              <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="border-orange-200 text-orange-600 hover:bg-orange-50 hover:border-orange-300 px-6 py-3 rounded-xl shadow-sm font-medium bg-white"
-                  >
-                    <Filter className="h-4 w-4 mr-2" />
-                    Filters
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md rounded-2xl bg-white">
-                  <DialogHeader>
-                    <DialogTitle className="text-xl font-bold text-gray-900">Filter Properties</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-6">
-                    <div>
-                      <label className="text-sm font-semibold mb-3 block text-gray-700">Property Type</label>
-                      <Select value={filters.propertyType} onValueChange={(value) => setFilters({...filters, propertyType: value})}>
-                        <SelectTrigger className="border-orange-200 focus:border-orange-500 rounded-lg bg-white">
-                          <SelectValue placeholder="Select property type" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white">
-                          <SelectItem value="">All Types</SelectItem>
-                          {propertyTypes.map(type => (
-                            <SelectItem key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="text-sm font-semibold mb-3 block text-gray-700">Location</label>
-                      <Input
-                        placeholder="Enter location"
-                        value={filters.location}
-                        onChange={(e) => setFilters({...filters, location: e.target.value})}
-                        className="border-orange-200 focus:border-orange-500 focus:ring-orange-200 rounded-lg bg-white"
-                      />
-                    </div>
-                    <Button 
-                      onClick={() => setIsFilterModalOpen(false)}
-                      className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 py-3 rounded-xl font-medium shadow-md"
-                    >
-                      Apply Filters
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
+            </div>
+          )}
+
+          {/* All Properties */}
+          <div id="properties" className="mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">
+                Properties
+                <span className="text-gray-500 font-normal ml-2">
+                  ({filteredProperties.length} listings)
+                </span>
+              </h2>
+              <select className="px-4 py-2 border border-gray-300 rounded-lg">
+                <option>Sort by: Featured</option>
+                <option>Price: Low to High</option>
+                <option>Price: High to Low</option>
+                <option>Newest First</option>
+                <option>Most Viewed</option>
+              </select>
             </div>
 
-            {isLoading ? (
+            {filteredProperties.length === 0 ? (
               <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
-                <p className="mt-4 text-gray-600">Loading properties...</p>
-              </div>
-            ) : filteredProperties.length === 0 ? (
-              <div className="text-center py-12">
-                <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No properties found</h3>
-                <p className="text-gray-600">Try adjusting your search or filters</p>
+                <div className="text-gray-400 mb-4">
+                  <Search className="h-16 w-16 mx-auto" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">No properties found</h3>
+                <p className="text-gray-600 mb-6">Try adjusting your search criteria</p>
+                <UnifiedButton 
+                  onClick={() => {
+                    setSearchQuery('');
+                    setPropertyType('');
+                    setListingType('');
+                    setLocation('');
+                  }}
+                >
+                  Clear Filters
+                </UnifiedButton>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredProperties.map((property) => (
-                  <Card key={property.id} className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-2 hover:border-orange-300 bg-white rounded-2xl overflow-hidden group">
-                    <div className="aspect-video bg-gray-200 relative">
-                      {property.images && property.images.length > 0 ? (
-                        <img 
-                          src={property.images[0]} 
-                          alt={property.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div 
-                          className="w-full h-full bg-cover bg-center"
-                          style={{ backgroundImage: `url(https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=400&h=300&fit=crop)` }}
-                        >
-                          <div className="w-full h-full bg-black bg-opacity-20 flex items-center justify-center">
-                            <Home className="h-12 w-12 text-white" />
-                          </div>
-                        </div>
-                      )}
-                      <Badge className="absolute top-3 right-3 bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md">
-                        {property.property_type}
-                      </Badge>
-                    </div>
-                    
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base text-gray-900 line-clamp-1 font-semibold">{property.title}</CardTitle>
-                      <div className="flex items-center gap-1 text-sm text-gray-600">
-                        <MapPin className="h-4 w-4 text-orange-500" />
-                        <span className="truncate">{property.location_address}</span>
+                  <UnifiedCard
+                    key={property.id}
+                    title={property.title}
+                    subtitle={getPropertyFeatures(property)}
+                    description={property.description}
+                    imageUrl={property.images?.[0]}
+                    price={formatPrice(property.price, property.listing_type)}
+                    location={`${property.city}, ${property.county}`}
+                    badge={property.listing_type === 'sale' ? 'For Sale' : 'For Rent'}
+                    badgeVariant={property.listing_type === 'sale' ? 'default' : 'secondary'}
+                    actions={
+                      <div className="grid grid-cols-3 gap-2">
+                        <UnifiedButton size="sm" variant="outline">
+                          <Heart className="h-4 w-4" />
+                        </UnifiedButton>
+                        <UnifiedButton size="sm" variant="outline">
+                          <Phone className="h-4 w-4" />
+                        </UnifiedButton>
+                        <UnifiedButton size="sm">
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </UnifiedButton>
                       </div>
-                    </CardHeader>
-
-                    <CardContent className="space-y-4 pt-0">
-                      <p className="text-sm text-gray-700 line-clamp-2">{property.description}</p>
-                      
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
-                        {property.bedrooms && (
-                          <div className="flex items-center gap-1">
-                            <Bed className="h-4 w-4" />
-                            <span>{property.bedrooms}</span>
-                          </div>
-                        )}
-                        {property.bathrooms && (
-                          <div className="flex items-center gap-1">
-                            <Bath className="h-4 w-4" />
-                            <span>{property.bathrooms}</span>
-                          </div>
-                        )}
-                        {property.area_sqm && (
-                          <div className="flex items-center gap-1">
-                            <Square className="h-4 w-4" />
-                            <span>{property.area_sqm} sqm</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="flex items-center justify-between pt-2">
-                        <span className="text-xl font-bold text-orange-600">
-                          KSh {property.price.toLocaleString()}
-                        </span>
-                        <div className="flex gap-2">
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => handleViewDetails(property)}
-                            className="bg-white border-orange-200 text-orange-600 hover:bg-orange-50"
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            View
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 font-medium shadow-md"
-                            onClick={() => handleContactOwner(property)}
-                          >
-                            <Phone className="h-4 w-4 mr-1" />
-                            Contact
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                    }
+                  />
                 ))}
               </div>
             )}
           </div>
         </div>
-
-        {/* Contact Modal */}
-        <Dialog open={isContactModalOpen} onOpenChange={setIsContactModalOpen}>
-          <DialogContent className="sm:max-w-md bg-white">
-            <DialogHeader>
-              <DialogTitle className="text-xl font-bold text-gray-900">Contact Property Owner</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <p className="text-gray-600">How would you like to contact the owner of "{selectedProperty?.title}"?</p>
-              <div className="flex flex-col gap-3">
-                <Button
-                  onClick={handleCall}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  <Phone className="h-4 w-4 mr-2" />
-                  Call Now
-                </Button>
-                <Button
-                  onClick={handleEmail}
-                  variant="outline"
-                  className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 bg-white"
-                >
-                  Send Email
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     </MainLayout>
   );

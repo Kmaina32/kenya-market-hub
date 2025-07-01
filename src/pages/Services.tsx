@@ -1,236 +1,379 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Wrench, 
-  Home, 
-  Car, 
-  Scissors, 
-  Truck, 
-  PaintBucket, 
-  Search, 
-  Star,
-  MapPin,
-  Phone,
-  Calendar
-} from 'lucide-react';
+import { useServiceProviders } from '@/hooks/useServiceProviders';
+import { useCreateServiceBooking } from '@/hooks/useServiceBookings';
 import MainLayout from '@/components/MainLayout';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import ServiceProviderCard from '@/components/ServiceProviderCard';
+import { UnifiedInput, UnifiedSelect } from '@/components/ui/UnifiedForm';
+import { UnifiedButton } from '@/components/ui/UnifiedButton';
 import HeroSection from '@/components/shared/HeroSection';
-import ServiceBookingModal from '@/components/modals/ServiceBookingModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { 
+  Search, 
+  Wrench, 
+  Zap, 
+  Paintbrush, 
+  Hammer, 
+  Scissors,
+  GraduationCap,
+  Camera,
+  Utensils,
+  Car
+} from 'lucide-react';
 
 const Services = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedService, setSelectedService] = useState<any>(null);
-  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [location, setLocation] = useState('');
+  const [selectedProvider, setSelectedProvider] = useState<any>(null);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  
+  const { data: providers = [], isLoading } = useServiceProviders();
+  const { mutate: createBooking, isPending: isBookingPending } = useCreateServiceBooking();
   const { toast } = useToast();
 
-  const { data: services, isLoading } = useQuery({
-    queryKey: ['service-providers'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('service_provider_profiles')
-        .select('*')
-        .eq('is_active', true)
-        .eq('verification_status', 'verified');
-      
-      if (error) throw error;
-      return data || [];
-    }
-  });
-
   const serviceCategories = [
-    { id: 'all', name: 'All Services', icon: Wrench },
-    { id: 'home', name: 'Home Services', icon: Home },
-    { id: 'automotive', name: 'Automotive', icon: Car },
-    { id: 'beauty', name: 'Beauty & Wellness', icon: Scissors },
-    { id: 'moving', name: 'Moving & Delivery', icon: Truck },
-    { id: 'maintenance', name: 'Maintenance', icon: PaintBucket },
+    { value: '', label: 'All Services', icon: Wrench },
+    { value: 'plumber', label: 'Plumbing', icon: Wrench },
+    { value: 'electrician', label: 'Electrical', icon: Zap },
+    { value: 'painter', label: 'Painting', icon: Paintbrush },
+    { value: 'carpenter', label: 'Carpentry', icon: Hammer },
+    { value: 'barber', label: 'Hair & Beauty', icon: Scissors },
+    { value: 'tutor', label: 'Tutoring', icon: GraduationCap },
+    { value: 'photographer', label: 'Photography', icon: Camera },
+    { value: 'caterer', label: 'Catering', icon: Utensils },
+    { value: 'mechanic', label: 'Auto Repair', icon: Car }
   ];
 
-  const filteredServices = services?.filter(service => {
-    const matchesSearch = service.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         service.business_description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         service.provider_type?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || 
-                           service.provider_type?.toLowerCase().includes(selectedCategory.toLowerCase());
-    return matchesSearch && matchesCategory;
-  }) || [];
+  const locations = [
+    { value: '', label: 'All Locations' },
+    { value: 'Nairobi', label: 'Nairobi' },
+    { value: 'Mombasa', label: 'Mombasa' },
+    { value: 'Kisumu', label: 'Kisumu' },
+    { value: 'Nakuru', label: 'Nakuru' },
+    { value: 'Eldoret', label: 'Eldoret' }
+  ];
 
-  const handleBookService = (service: any) => {
-    setSelectedService({
-      id: service.id,
-      title: service.business_name,
-      provider: service.business_name,
-      type: service.provider_type
+  const filteredProviders = providers.filter(provider => {
+    const matchesSearch = provider.business_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         provider.provider_type.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = !selectedCategory || provider.provider_type === selectedCategory;
+    const matchesLocation = !location || provider.location_address?.includes(location);
+    const isActive = provider.is_active && provider.verification_status === 'approved';
+    return matchesSearch && matchesCategory && matchesLocation && isActive;
+  });
+
+  const handleBookService = (provider: any) => {
+    setSelectedProvider(provider);
+    setIsBookingModalOpen(true);
+  };
+
+  const handleContactProvider = (provider: any) => {
+    setSelectedProvider(provider);
+    setIsContactModalOpen(true);
+  };
+
+  const submitBooking = (bookingData: any) => {
+    createBooking({
+      service_type: selectedProvider.provider_type,
+      service_description: bookingData.description,
+      booking_date: bookingData.date,
+      booking_time: bookingData.time,
+      booking_address: bookingData.address,
+      total_amount: 0, // Will be determined by provider
+      provider_id: selectedProvider.user_id
+    }, {
+      onSuccess: () => {
+        setIsBookingModalOpen(false);
+        setSelectedProvider(null);
+        toast({
+          title: 'Booking Request Sent',
+          description: 'The service provider will contact you shortly to confirm details and pricing.'
+        });
+      }
     });
-    setShowBookingModal(true);
   };
 
-  const handleContactProvider = (service: any) => {
-    if (service.phone_number) {
-      window.location.href = `tel:${service.phone_number}`;
-      toast({
-        title: "Calling Provider",
-        description: "Opening phone dialer...",
-      });
-    } else {
-      toast({
-        title: "Contact Information",
-        description: "Phone number not available for this provider.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleViewProfile = (serviceId: string) => {
-    toast({
-      title: "Provider Profile",
-      description: "Opening provider profile...",
-    });
-  };
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="min-h-screen bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-white rounded-lg shadow-sm animate-pulse">
+                  <div className="h-48 bg-gray-200 rounded-t-lg"></div>
+                  <div className="p-6 space-y-4">
+                    <div className="h-6 bg-gray-200 rounded"></div>
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-10 bg-gray-200 rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
+      <div className="min-h-screen bg-gray-50">
+        {/* Hero Section */}
         <HeroSection
-          title="Professional Services"
-          subtitle="Find Trusted Service Providers"
-          description="Connect with verified professionals for home services, repairs, beauty treatments, and more across Kenya."
-          imageUrl="photo-1521791136064-7986c2920216"
-          className="mb-8"
+          title="Professional Services at Your Doorstep"
+          subtitle="TukoPlace Services"
+          description="Connect with skilled and verified professionals for all your service needs. From home repairs to personal services, find trusted providers near you."
+          imageUrl="photo-1581578731548-c64695cc6952"
+          searchPlaceholder="Search for services or providers..."
+          onSearch={setSearchQuery}
+          primaryAction={{
+            text: 'Browse Services',
+            onClick: () => document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' }),
+          }}
+          secondaryAction={{
+            text: 'Become a Provider',
+            onClick: () => {},
+          }}
         />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Search and Categories */}
-          <div className="mb-8">
-            <div className="max-w-2xl mx-auto mb-6">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input
-                  placeholder="Search for services..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-12 pr-4 py-3 text-base border-orange-200 focus:border-orange-400 rounded-xl"
-                />
-              </div>
-            </div>
-
-            <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-              <TabsList className="grid grid-cols-3 lg:grid-cols-6 gap-2 h-auto p-2">
-                {serviceCategories.map((category) => {
-                  const Icon = category.icon;
-                  return (
-                    <TabsTrigger
-                      key={category.id}
-                      value={category.id}
-                      className="flex flex-col items-center gap-2 p-3 data-[state=active]:bg-orange-50 data-[state=active]:text-orange-600"
-                    >
-                      <Icon className="h-5 w-5" />
-                      <span className="text-xs">{category.name}</span>
-                    </TabsTrigger>
-                  );
-                })}
-              </TabsList>
-            </Tabs>
-          </div>
-
-          {isLoading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading services...</p>
-            </div>
-          ) : filteredServices.length === 0 ? (
-            <div className="text-center py-12">
-              <Wrench className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No Services Available</h3>
-              <p className="text-gray-600 mb-6">
-                {searchTerm || selectedCategory !== 'all' 
-                  ? 'No services match your current criteria.' 
-                  : 'Service providers will be available soon.'
-                }
-              </p>
-              <Button onClick={() => { setSearchTerm(''); setSelectedCategory('all'); }} variant="outline">
-                Clear Filters
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredServices.map((service) => (
-                <Card key={service.id} className="hover:shadow-xl transition-all duration-300 border-2 hover:border-orange-300">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <Badge variant="outline" className="text-orange-600 border-orange-200">
-                        {service.provider_type}
-                      </Badge>
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        <span className="text-sm text-gray-600">4.8</span>
-                      </div>
-                    </div>
-                    <CardTitle className="text-lg text-gray-900 line-clamp-1">
-                      {service.business_name}
-                    </CardTitle>
-                    <p className="text-sm text-gray-600 line-clamp-2">
-                      {service.business_description}
-                    </p>
-                  </CardHeader>
-
-                  <CardContent className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <MapPin className="h-4 w-4 text-orange-500" />
-                      <span className="truncate">{service.location_address || 'Location available'}</span>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Badge 
-                        variant={service.verification_status === 'verified' ? 'default' : 'secondary'}
-                        className={service.verification_status === 'verified' ? 'bg-green-100 text-green-800' : ''}
-                      >
-                        {service.verification_status === 'verified' ? 'Verified' : 'Pending'}
-                      </Badge>
-                    </div>
-
-                    <div className="flex gap-2 pt-2">
-                      <Button
-                        size="sm"
-                        onClick={() => handleBookService(service)}
-                        className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-                      >
-                        <Calendar className="h-4 w-4 mr-1" />
-                        Book Now
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleContactProvider(service)}
-                        className="border-orange-200 text-orange-600 hover:bg-orange-50"
-                      >
-                        <Phone className="h-4 w-4 mr-1" />
-                        Call
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+          {/* Service Categories */}
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Browse by Category</h3>
+            <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 gap-4">
+              {serviceCategories.map((category) => (
+                <button
+                  key={category.value}
+                  onClick={() => setSelectedCategory(category.value)}
+                  className={`flex flex-col items-center p-4 rounded-lg border-2 transition-all duration-200 ${
+                    selectedCategory === category.value
+                      ? 'border-orange-500 bg-orange-50 text-orange-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  <category.icon className="h-6 w-6 mb-2" />
+                  <span className="text-xs font-medium text-center">{category.label}</span>
+                </button>
               ))}
             </div>
-          )}
+          </div>
+
+          {/* Search and Filters */}
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <UnifiedInput
+                label=""
+                name="search"
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Search providers..."
+                icon={<Search className="h-4 w-4" />}
+              />
+              <UnifiedSelect
+                label=""
+                name="category"
+                value={selectedCategory}
+                onChange={setSelectedCategory}
+                options={serviceCategories.map(cat => ({ value: cat.value, label: cat.label }))}
+                placeholder="Service Category"
+              />
+              <UnifiedSelect
+                label=""
+                name="location"
+                value={location}
+                onChange={setLocation}
+                options={locations}
+                placeholder="Location"
+              />
+            </div>
+          </div>
+
+          {/* Service Providers */}
+          <div id="services" className="mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">
+                Available Providers
+                <span className="text-gray-500 font-normal ml-2">
+                  ({filteredProviders.length} providers)
+                </span>
+              </h2>
+              <select className="px-4 py-2 border border-gray-300 rounded-lg">
+                <option>Sort by: Rating</option>
+                <option>Most Reviews</option>
+                <option>Nearest</option>
+                <option>Most Experienced</option>
+              </select>
+            </div>
+
+            {filteredProviders.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-gray-400 mb-4">
+                  <Search className="h-16 w-16 mx-auto" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">No providers found</h3>
+                <p className="text-gray-600 mb-6">Try adjusting your search criteria or location</p>
+                <UnifiedButton 
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSelectedCategory('');
+                    setLocation('');
+                  }}
+                >
+                  Clear Filters
+                </UnifiedButton>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredProviders.map((provider) => (
+                  <ServiceProviderCard
+                    key={provider.id}
+                    provider={provider}
+                    onBookService={handleBookService}
+                    onContactProvider={handleContactProvider}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
+        {/* Booking Modal */}
         <ServiceBookingModal
-          isOpen={showBookingModal}
-          onClose={() => setShowBookingModal(false)}
-          service={selectedService}
+          isOpen={isBookingModalOpen}
+          onClose={() => setIsBookingModalOpen(false)}
+          provider={selectedProvider}
+          onSubmit={submitBooking}
+          isLoading={isBookingPending}
+        />
+
+        {/* Contact Modal */}
+        <ProviderContactModal
+          isOpen={isContactModalOpen}
+          onClose={() => setIsContactModalOpen(false)}
+          provider={selectedProvider}
         />
       </div>
     </MainLayout>
+  );
+};
+
+// Service Booking Modal Component
+const ServiceBookingModal = ({ isOpen, onClose, provider, onSubmit, isLoading }: any) => {
+  const [formData, setFormData] = useState({
+    date: '',
+    time: '09:00',
+    address: '',
+    description: ''
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Book Service with {provider?.business_name}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <UnifiedInput
+            label="Preferred Date"
+            name="date"
+            type="date"
+            value={formData.date}
+            onChange={(value) => setFormData({...formData, date: value})}
+            required
+          />
+          <UnifiedInput
+            label="Preferred Time"
+            name="time"
+            type="time"
+            value={formData.time}
+            onChange={(value) => setFormData({...formData, time: value})}
+            required
+          />
+          <UnifiedInput
+            label="Service Address"
+            name="address"
+            value={formData.address}
+            onChange={(value) => setFormData({...formData, address: value})}
+            placeholder="Where should the service be performed?"
+            required
+          />
+          <UnifiedInput
+            label="Service Description"
+            name="description"
+            value={formData.description}
+            onChange={(value) => setFormData({...formData, description: value})}
+            placeholder="Describe what you need help with..."
+            required
+          />
+          <div className="flex gap-3 pt-4">
+            <UnifiedButton type="button" variant="outline" onClick={onClose} className="flex-1">
+              Cancel
+            </UnifiedButton>
+            <UnifiedButton type="submit" loading={isLoading} className="flex-1">
+              Send Booking Request
+            </UnifiedButton>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Provider Contact Modal Component  
+const ProviderContactModal = ({ isOpen, onClose, provider }: any) => {
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Contact {provider?.business_name}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-white text-xl font-bold">
+                {provider?.business_name?.charAt(0) || 'P'}
+              </span>
+            </div>
+            <h3 className="text-lg font-semibold">{provider?.business_name}</h3>
+            <p className="text-gray-600">{provider?.provider_type}</p>
+          </div>
+          
+          <div className="space-y-3">
+            {provider?.phone_number && (
+              <UnifiedButton 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => window.open(`tel:${provider.phone_number}`)}
+              >
+                📞 Call {provider.phone_number}
+              </UnifiedButton>
+            )}
+            {provider?.email && (
+              <UnifiedButton 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => window.open(`mailto:${provider.email}`)}
+              >
+                ✉️ Email {provider.email}
+              </UnifiedButton>
+            )}
+          </div>
+          
+          <UnifiedButton onClick={onClose} className="w-full">
+            Close
+          </UnifiedButton>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
