@@ -224,27 +224,27 @@ const Index = () => {
     <FrontendLayout>
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
         {/* Hero Section with Slideshow - Added proper padding */}
-        <div className="relative h-[70vh] min-h-[500px] overflow-hidden mx-4 sm:mx-6 lg:mx-8 rounded-b-3xl">
+        <div className="relative h-[70vh] min-h-[500px] overflow-hidden mx-4 sm:mx-6 lg:mx-8 mt-4 px-4 sm:px-6 lg:px-8 rounded-3xl">
           {/* Background Image with Overlay */}
           <div 
-            className="absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out rounded-b-3xl"
+            className="absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out rounded-3xl"
             style={{ 
               backgroundImage: `url(https://images.unsplash.com/${currentSlideData.image})`,
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent rounded-b-3xl" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent rounded-3xl" />
           
           {/* Navigation Controls */}
           <button
             onClick={prevSlide}
-            className="absolute left-3 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-all duration-200"
+            className="absolute left-6 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-all duration-200"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
           
           <button
             onClick={nextSlide}
-            className="absolute right-3 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-all duration-200"
+            className="absolute right-6 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-all duration-200"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
@@ -252,13 +252,13 @@ const Index = () => {
           {/* Play/Pause Button */}
           <button
             onClick={() => setIsPlaying(!isPlaying)}
-            className="absolute top-3 right-3 z-20 p-2 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-all duration-200"
+            className="absolute top-6 right-6 z-20 p-2 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-all duration-200"
           >
             {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </button>
 
           {/* Hero Content */}
-          <div className="relative z-10 flex items-center justify-center h-full px-4">
+          <div className="relative z-10 flex items-center justify-center h-full px-6 sm:px-8 lg:px-12">
             <div className="text-center text-white max-w-4xl mx-auto">
               {/* Brand Name */}
               <h1 className="text-3xl md:text-5xl font-bold mb-3 animate-fade-in">
@@ -300,7 +300,7 @@ const Index = () => {
           </div>
 
           {/* Slide Indicators */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex space-x-2">
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex space-x-2">
             {heroSlides.map((_, index) => (
               <button
                 key={index}
