@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,6 +13,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/hooks/useCart';
 import { useWishlist } from '@/hooks/useWishlist';
+import { useCartOperations } from '@/hooks/useCartOperations';
+import { QuantitySelector } from '@/components/shop/QuantitySelector';
 import { toast } from 'sonner';
 
 const Shop: React.FC = () => {
@@ -22,8 +25,8 @@ const Shop: React.FC = () => {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
 
-  const { addToCart } = useCart();
   const { addToWishlist, isInWishlist } = useWishlist();
+  const { quantities, getQuantity, setQuantity, handleAddToCart } = useCartOperations();
 
   // Fetch products from database
   const { data: products, isLoading } = useQuery({
@@ -81,12 +84,6 @@ const Shop: React.FC = () => {
     setIsQuickViewOpen(true);
   };
 
-  const handleAddToCart = (product: any) => {
-    // Pass only the product ID to addToCart
-    addToCart(product.id);
-    toast.success(`${product.name} added to cart!`);
-  };
-
   const handleAddToWishlist = (product: any) => {
     addToWishlist(product);
     toast.success(`${product.name} added to wishlist!`);
@@ -102,7 +99,7 @@ const Shop: React.FC = () => {
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
             <ShoppingBag className="h-16 w-16 text-gray-400" />
           </div>
         )}
@@ -135,7 +132,7 @@ const Shop: React.FC = () => {
       </div>
       
       <CardContent className="p-4">
-        <div className="space-y-2">
+        <div className="space-y-3">
           <Badge variant="outline" className="text-xs">{product.category}</Badge>
           <h3 className="font-semibold text-gray-900 line-clamp-2 group-hover:text-orange-600 transition-colors">
             {product.name}
@@ -147,17 +144,22 @@ const Shop: React.FC = () => {
             KSh {product.price.toLocaleString()}
           </p>
           
-          <div className="flex gap-2 pt-2">
-            <Button 
-              size="sm" 
-              className="flex-1"
-              onClick={() => handleAddToCart(product)}
-              disabled={!product.in_stock}
-            >
-              <ShoppingCart className="h-4 w-4 mr-2" />
-              {product.in_stock ? 'Add to Cart' : 'Out of Stock'}
-            </Button>
+          <div className="flex items-center justify-between pt-2">
+            <QuantitySelector
+              quantity={getQuantity(product.id)}
+              onQuantityChange={(qty) => setQuantity(product.id, qty)}
+              size="sm"
+            />
           </div>
+
+          <Button 
+            className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+            onClick={() => handleAddToCart(product)}
+            disabled={!product.in_stock}
+          >
+            <ShoppingCart className="h-4 w-4 mr-2" />
+            {product.in_stock ? 'Add to Cart' : 'Out of Stock'}
+          </Button>
         </div>
       </CardContent>
     </Card>
@@ -166,9 +168,9 @@ const Shop: React.FC = () => {
   return (
     <MainLayout>
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        {/* Hero Section - Added proper padding */}
+        {/* Hero Section - Updated with consistent styling */}
         <div 
-          className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-600 to-red-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4 px-4 sm:px-6 lg:px-8"
+          className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-600 to-red-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4"
           style={{
             backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')`,
             backgroundSize: 'cover',

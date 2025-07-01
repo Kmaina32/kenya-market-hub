@@ -23,6 +23,7 @@ const PaymentModal = ({ open, onOpenChange, total, items }: PaymentModalProps) =
   const [paymentMethod, setPaymentMethod] = useState<'mpesa' | 'paypal' | 'stripe'>('mpesa');
   const [processing, setProcessing] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [showMpesaPayment, setShowMpesaPayment] = useState(false);
   const [customerInfo, setCustomerInfo] = useState({
     fullName: '',
     email: '',
@@ -91,13 +92,30 @@ const PaymentModal = ({ open, onOpenChange, total, items }: PaymentModalProps) =
   };
 
   const handleMpesaSuccess = async (transactionId: string) => {
-    toast({
-      title: "Payment Successful!",
-      description: "Your M-Pesa payment has been completed successfully.",
-    });
+    try {
+      // Update order status to paid
+      if (orderId) {
+        await supabase
+          .from('orders')
+          .update({ 
+            payment_status: 'paid',
+            status: 'processing'
+          })
+          .eq('id', orderId);
+      }
 
-    clearCart();
-    onOpenChange(false);
+      toast({
+        title: "Payment Successful!",
+        description: "Your M-Pesa payment has been completed successfully.",
+      });
+
+      clearCart();
+      onOpenChange(false);
+      setShowMpesaPayment(false);
+      setOrderId(null);
+    } catch (error) {
+      console.error('Error updating order:', error);
+    }
   };
 
   const handleMpesaError = (error: string) => {
@@ -106,6 +124,15 @@ const PaymentModal = ({ open, onOpenChange, total, items }: PaymentModalProps) =
       description: error,
       variant: "destructive"
     });
+    setShowMpesaPayment(false);
+  };
+
+  const startMpesaPayment = async () => {
+    const createdOrderId = await createOrder();
+    if (createdOrderId) {
+      setOrderId(createdOrderId);
+      setShowMpesaPayment(true);
+    }
   };
 
   const handleOtherPayments = async () => {
@@ -164,13 +191,6 @@ const PaymentModal = ({ open, onOpenChange, total, items }: PaymentModalProps) =
     }
   };
 
-  const startMpesaPayment = async () => {
-    const createdOrderId = await createOrder();
-    if (createdOrderId) {
-      setOrderId(createdOrderId);
-    }
-  };
-
   const paymentMethods = [
     {
       id: 'mpesa' as const,
@@ -203,105 +223,7 @@ const PaymentModal = ({ open, onOpenChange, total, items }: PaymentModalProps) =
         </DialogHeader>
         
         <div className="space-y-6">
-          {/* Customer Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Customer Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="fullName">Full Name *</Label>
-                <Input
-                  id="fullName"
-                  value={customerInfo.fullName}
-                  onChange={(e) => setCustomerInfo(prev => ({ ...prev, fullName: e.target.value }))}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="email">Email *</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={customerInfo.email}
-                  onChange={(e) => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="phone">Phone Number *</Label>
-                <Input
-                  id="phone"
-                  value={customerInfo.phone}
-                  onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
-                  placeholder="+254 700 123 456"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="address">Delivery Address</Label>
-                <Input
-                  id="address"
-                  value={customerInfo.address}
-                  onChange={(e) => setCustomerInfo(prev => ({ ...prev, address: e.target.value }))}
-                  placeholder="123 Main Street, Nairobi"
-                />
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Payment Method Selection */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Payment Method</h3>
-            <div className="space-y-3">
-              {paymentMethods.map((method) => (
-                <div
-                  key={method.id}
-                  className={`flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                    paymentMethod === method.id 
-                      ? `${method.color} border-current` 
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                  onClick={() => setPaymentMethod(method.id)}
-                >
-                  <input
-                    type="radio"
-                    checked={paymentMethod === method.id}
-                    onChange={() => setPaymentMethod(method.id)}
-                    className="text-orange-600"
-                  />
-                  {method.icon}
-                  <div>
-                    <p className="font-medium">{method.name}</p>
-                    <p className="text-sm text-gray-600">{method.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Order Summary */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Order Summary</h3>
-            <div className="space-y-2">
-              {items.map((item) => (
-                <div key={item.id} className="flex justify-between text-sm">
-                  <span>{item.name} (x{item.quantity})</span>
-                  <span>KSh {(item.price * item.quantity).toLocaleString()}</span>
-                </div>
-              ))}
-            </div>
-            <Separator />
-            <div className="flex justify-between font-semibold text-lg">
-              <span>Total</span>
-              <span>KSh {total.toLocaleString()}</span>
-            </div>
-          </div>
-
-          {/* Payment Section */}
-          {paymentMethod === 'mpesa' && orderId ? (
+          {showMpesaPayment && orderId ? (
             <MpesaPayment
               amount={total}
               orderId={orderId}
@@ -309,23 +231,123 @@ const PaymentModal = ({ open, onOpenChange, total, items }: PaymentModalProps) =
               onError={handleMpesaError}
             />
           ) : (
-            <div className="flex space-x-3 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                className="flex-1"
-                disabled={processing}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={paymentMethod === 'mpesa' ? startMpesaPayment : handleOtherPayments}
-                className="flex-1 bg-orange-600 hover:bg-orange-700"
-                disabled={processing}
-              >
-                {processing ? 'Processing...' : `Pay KSh ${total.toLocaleString()}`}
-              </Button>
-            </div>
+            <>
+              {/* Customer Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Customer Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="fullName">Full Name *</Label>
+                    <Input
+                      id="fullName"
+                      value={customerInfo.fullName}
+                      onChange={(e) => setCustomerInfo(prev => ({ ...prev, fullName: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="email">Email *</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={customerInfo.email}
+                      onChange={(e) => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="phone">Phone Number *</Label>
+                    <Input
+                      id="phone"
+                      value={customerInfo.phone}
+                      onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
+                      placeholder="+254 700 123 456"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="address">Delivery Address</Label>
+                    <Input
+                      id="address"
+                      value={customerInfo.address}
+                      onChange={(e) => setCustomerInfo(prev => ({ ...prev, address: e.target.value }))}
+                      placeholder="123 Main Street, Nairobi"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Payment Method Selection */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Payment Method</h3>
+                <div className="space-y-3">
+                  {paymentMethods.map((method) => (
+                    <div
+                      key={method.id}
+                      className={`flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        paymentMethod === method.id 
+                          ? `${method.color} border-current` 
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      onClick={() => setPaymentMethod(method.id)}
+                    >
+                      <input
+                        type="radio"
+                        checked={paymentMethod === method.id}
+                        onChange={() => setPaymentMethod(method.id)}
+                        className="text-orange-600"
+                      />
+                      {method.icon}
+                      <div>
+                        <p className="font-medium">{method.name}</p>
+                        <p className="text-sm text-gray-600">{method.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Order Summary */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Order Summary</h3>
+                <div className="space-y-2">
+                  {items.map((item) => (
+                    <div key={item.id} className="flex justify-between text-sm">
+                      <span>{item.name} (x{item.quantity})</span>
+                      <span>KSh {(item.price * item.quantity).toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+                <Separator />
+                <div className="flex justify-between font-semibold text-lg">
+                  <span>Total</span>
+                  <span>KSh {total.toLocaleString()}</span>
+                </div>
+              </div>
+
+              {/* Payment Section */}
+              <div className="flex space-x-3 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  className="flex-1"
+                  disabled={processing}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={paymentMethod === 'mpesa' ? startMpesaPayment : handleOtherPayments}
+                  className="flex-1 bg-orange-600 hover:bg-orange-700"
+                  disabled={processing}
+                >
+                  {processing ? 'Processing...' : `Pay KSh ${total.toLocaleString()}`}
+                </Button>
+              </div>
+            </>
           )}
         </div>
       </DialogContent>
