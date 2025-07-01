@@ -21,7 +21,6 @@ import {
 import MainLayout from '@/components/MainLayout';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import HeroSection from '@/components/shared/HeroSection';
 import ServiceBookingModal from '@/components/modals/ServiceBookingModal';
 import { useToast } from '@/hooks/use-toast';
 
@@ -100,13 +99,26 @@ const Services = () => {
   return (
     <MainLayout>
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        <HeroSection
-          title="Professional Services"
-          subtitle="Find Trusted Service Providers"
-          description="Connect with verified professionals for home services, repairs, beauty treatments, and more across Kenya."
-          imageUrl="photo-1521791136064-7986c2920216"
-          className="mb-8"
-        />
+        {/* Hero Section with Background Image - Added proper padding and rounded borders */}
+        <div 
+          className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-600 to-red-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4 px-4 sm:px-6 lg:px-8"
+          style={{
+            backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1521791136064-7986c2920216?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
+        >
+          <div className="absolute inset-0 bg-black bg-opacity-40 rounded-3xl" />
+          <div className="relative z-10 flex items-center justify-center h-full px-6 sm:px-8 lg:px-12">
+            <div className="text-center text-white max-w-3xl mx-auto">
+              <Wrench className="h-16 w-16 mx-auto mb-4" />
+              <h1 className="text-3xl md:text-4xl font-bold mb-4">Professional Services</h1>
+              <p className="text-lg text-orange-100 mb-6">
+                Connect with verified professionals for home services, repairs, beauty treatments, and more across Kenya
+              </p>
+            </div>
+          </div>
+        </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Search and Categories */}
