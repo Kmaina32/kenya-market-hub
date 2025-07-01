@@ -1,226 +1,382 @@
 
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import MainLayout from '@/components/MainLayout';
-import HeroSection from '@/components/shared/HeroSection';
-import { UnifiedCard } from '@/components/ui/UnifiedCard';
-import { UnifiedButton } from '@/components/ui/UnifiedButton';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { 
   ShoppingBag, 
+  Building, 
   Car, 
-  Home as HomeIcon, 
   Wrench, 
   Stethoscope, 
-  Calendar,
-  TrendingUp,
-  Star,
-  Users
+  Shield, 
+  UtensilsCrossed, 
+  Calendar, 
+  Briefcase, 
+  MessageCircle,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  Play,
+  Pause
 } from 'lucide-react';
+import FrontendLayout from '@/components/layouts/FrontendLayout';
+import Footer from '@/components/Footer';
+import { useNavigate } from 'react-router-dom';
+import { useHomeStats } from '@/hooks/useHomeStats';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 const Index = () => {
   const navigate = useNavigate();
+  const { data: stats, isLoading: statsLoading } = useHomeStats();
 
-  const mainServices = [
+  // Slideshow state
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(true);
+
+  const heroSlides = [
     {
-      id: 'shop',
-      title: 'Marketplace',
-      description: 'Browse thousands of products from verified vendors',
-      icon: ShoppingBag,
-      path: '/shop',
-      color: 'bg-gradient-to-br from-orange-500 to-red-600',
-      stats: '10,000+ Products',
-      image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=300&fit=crop'
+      id: 1,
+      title: "Kenya's Complete Digital Marketplace",
+      subtitle: "Everything you need in one place",
+      description: "From shopping to services, we connect you to the best Kenya has to offer",
+      image: "photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80",
+      cta: "Start Shopping",
+      ctaAction: () => navigate('/shop')
     },
     {
-      id: 'rides',
-      title: 'Ride Hailing',
-      description: 'Book safe and reliable rides with verified drivers',
-      icon: Car,
-      path: '/rides',
-      color: 'bg-gradient-to-br from-blue-500 to-indigo-600',
-      stats: '500+ Drivers',
-      image: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400&h=300&fit=crop'
+      id: 2,
+      title: "Find Your Dream Property",
+      subtitle: "Real Estate Made Simple",
+      description: "Discover homes and commercial properties across Kenya's prime locations",
+      image: "photo-1483058712412-4245e9b90334?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80",
+      cta: "Browse Properties",
+      ctaAction: () => navigate('/real-estate')
+    },
+    {
+      id: 3,
+      title: "Professional Services at Your Fingertips",
+      subtitle: "Trusted Service Providers",
+      description: "Connect with verified professionals for all your service needs",
+      image: "photo-1473091534298-04dcbce3278c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80",
+      cta: "Book Services",
+      ctaAction: () => navigate('/services')
+    },
+    {
+      id: 4,
+      title: "Ride & Delivery Solutions",
+      subtitle: "Get Moving with Ease",
+      description: "Safe, reliable transportation and delivery services across Kenya",
+      image: "photo-1487887235947-a955ef187fcc?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80",
+      cta: "Book a Ride",
+      ctaAction: () => navigate('/rides')
+    },
+    {
+      id: 5,
+      title: "Join Our Growing Community",
+      subtitle: "Become a Partner",
+      description: "Grow your business with thousands of customers across Kenya",
+      image: "photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80",
+      cta: "Become a Partner",
+      ctaAction: () => navigate('/service-hub')
+    }
+  ];
+
+  // Auto-advance slideshow
+  useEffect(() => {
+    if (!isPlaying) return;
+    
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [isPlaying, heroSlides.length]);
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
+  };
+
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index);
+  };
+
+  const currentSlideData = heroSlides[currentSlide];
+
+  const miniApps = [
+    {
+      id: 'ecommerce',
+      title: 'E-commerce',
+      description: 'Buy and sell products online',
+      icon: ShoppingBag,
+      color: 'from-orange-500 to-red-500',
+      route: '/shop',
+      image: 'photo-1649972904349-6e44c42644a7',
+      stats: `${stats?.products || 0}+ Products`
     },
     {
       id: 'real-estate',
       title: 'Real Estate',
-      description: 'Find your dream home or investment property',
-      icon: HomeIcon,
-      path: '/real-estate',
-      color: 'bg-gradient-to-br from-purple-500 to-violet-600',
-      stats: '2,000+ Properties',
-      image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=300&fit=crop'
+      description: 'Find your dream home or property',
+      icon: Building,
+      color: 'from-orange-500 to-red-500',
+      route: '/real-estate',
+      image: 'photo-1483058712412-4245e9b90334',
+      stats: `${stats?.properties || 0}+ Properties`
+    },
+    {
+      id: 'transportation',
+      title: 'Transportation',
+      description: 'Book rides and delivery services',
+      icon: Car,
+      color: 'from-orange-500 to-red-500',
+      route: '/rides',
+      image: 'photo-1487887235947-a955ef187fcc',
+      stats: `${stats?.rides || 0}+ Rides`
     },
     {
       id: 'services',
-      title: 'Professional Services',
-      description: 'Connect with skilled professionals for any task',
+      title: 'Services',
+      description: 'Book professional services and experts',
       icon: Wrench,
-      path: '/services',
-      color: 'bg-gradient-to-br from-green-500 to-teal-600',
-      stats: '1,000+ Providers',
-      image: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&h=300&fit=crop'
+      color: 'from-orange-500 to-red-500',
+      route: '/services',
+      image: 'photo-1473091534298-04dcbce3278c',
+      stats: `${stats?.vendors || 0}+ Providers`
     },
     {
       id: 'medical',
-      title: 'Healthcare',
-      description: 'Access quality healthcare services and consultations',
+      title: 'Medical',
+      description: 'Access health services and appointments',
       icon: Stethoscope,
-      path: '/medical',
-      color: 'bg-gradient-to-br from-red-500 to-pink-600',
-      stats: '200+ Providers',
-      image: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=300&fit=crop'
+      color: 'from-orange-500 to-red-500',
+      route: '/medical',
+      image: 'photo-1581090464777-f3220bbe1b8b',
+      stats: '0+ Doctors'
+    },
+    {
+      id: 'insurance',
+      title: 'Insurance',
+      description: 'Compare and subscribe to insurance plans',
+      icon: Shield,
+      color: 'from-orange-500 to-red-500',
+      route: '/insurance',
+      image: 'photo-1524230572899-a752b3835840',
+      stats: '0+ Plans'
+    },
+    {
+      id: 'food',
+      title: 'Food Delivery',
+      description: 'Order from restaurants',
+      icon: UtensilsCrossed,
+      color: 'from-orange-500 to-red-500',
+      route: '/food',
+      image: 'photo-1721322800607-8c38375eef04',
+      stats: `${stats?.vendors || 0}+ Restaurants`
     },
     {
       id: 'events',
-      title: 'Events & Community',
-      description: 'Discover local events and community activities',
+      title: 'Events',
+      description: 'Book and discover events',
       icon: Calendar,
-      path: '/events',
-      color: 'bg-gradient-to-br from-amber-500 to-orange-600',
-      stats: '50+ Events',
-      image: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=400&h=300&fit=crop'
+      color: 'from-orange-500 to-red-500',
+      route: '/events',
+      image: 'photo-1605810230434-7631ac76ec81',
+      stats: '0+ Events'
+    },
+    {
+      id: 'jobs',
+      title: 'Job Board',
+      description: 'Apply for jobs and hire talent',
+      icon: Briefcase,
+      color: 'from-orange-500 to-red-500',
+      route: '/jobs',
+      image: 'photo-1486312338219-ce68d2c6f44d',
+      stats: '0+ Jobs'
+    },
+    {
+      id: 'chat',
+      title: 'Chat & Forums',
+      description: 'Chat privately or post in community groups',
+      icon: MessageCircle,
+      color: 'from-orange-500 to-red-500',
+      route: '/chat-forums',
+      image: 'photo-1460925895917-afdab827c52f',
+      stats: `${stats?.users || 0}+ Members`
     }
   ];
 
-  const features = [
-    {
-      icon: TrendingUp,
-      title: 'Growing Marketplace',
-      description: 'Join thousands of users in Kenya\'s fastest-growing digital marketplace'
-    },
-    {
-      icon: Star,
-      title: 'Quality Assured',
-      description: 'All vendors and service providers are verified for your safety'
-    },
-    {
-      icon: Users,
-      title: 'Community Driven',
-      description: 'Built by Kenyans, for Kenyans - supporting local businesses'
-    }
-  ];
+  if (statsLoading) {
+    return (
+      <FrontendLayout>
+        <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50 flex items-center justify-center">
+          <LoadingSpinner />
+        </div>
+      </FrontendLayout>
+    );
+  }
 
   return (
-    <MainLayout>
-      <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white">
-        {/* Hero Section */}
-        <HeroSection
-          title="Kenya's Digital Marketplace"
-          subtitle="Welcome to TukoPlace"
-          description="Your one-stop platform for shopping, services, rides, real estate, and healthcare. Connecting Kenyan communities with trusted local businesses."
-          imageUrl="photo-1559757148-5c350d0d3c56"
-          primaryAction={{
-            text: 'Explore Marketplace',
-            onClick: () => navigate('/shop'),
-          }}
-          secondaryAction={{
-            text: 'Join as Provider',
-            onClick: () => navigate('/service-provider-hub'),
-          }}
-          searchPlaceholder="Search for products, services, or properties..."
-          onSearch={(query) => navigate(`/shop?search=${encodeURIComponent(query)}`)}
-        />
+    <FrontendLayout>
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
+        {/* Hero Section with Slideshow - Added proper padding */}
+        <div className="relative h-[70vh] min-h-[500px] overflow-hidden mx-4 sm:mx-6 lg:mx-8 rounded-b-3xl">
+          {/* Background Image with Overlay */}
+          <div 
+            className="absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out rounded-b-3xl"
+            style={{ 
+              backgroundImage: `url(https://images.unsplash.com/${currentSlideData.image})`,
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent rounded-b-3xl" />
+          
+          {/* Navigation Controls */}
+          <button
+            onClick={prevSlide}
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-all duration-200"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          
+          <button
+            onClick={nextSlide}
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-all duration-200"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
 
-        {/* Main Services Grid */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Everything You Need in One Place
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              From daily essentials to professional services, we've got you covered with trusted local providers.
-            </p>
+          {/* Play/Pause Button */}
+          <button
+            onClick={() => setIsPlaying(!isPlaying)}
+            className="absolute top-3 right-3 z-20 p-2 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-all duration-200"
+          >
+            {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+          </button>
+
+          {/* Hero Content */}
+          <div className="relative z-10 flex items-center justify-center h-full px-4">
+            <div className="text-center text-white max-w-4xl mx-auto">
+              {/* Brand Name */}
+              <h1 className="text-3xl md:text-5xl font-bold mb-3 animate-fade-in">
+                Sokko Sasa
+              </h1>
+
+              {/* Slide Content */}
+              <div className="animate-fade-in" key={currentSlide}>
+                <p className="text-orange-200 text-sm font-medium mb-2">
+                  {currentSlideData.subtitle}
+                </p>
+                <h2 className="text-xl md:text-3xl font-bold mb-3">
+                  {currentSlideData.title}
+                </h2>
+                <p className="text-base md:text-lg text-orange-100 mb-6 max-w-3xl mx-auto">
+                  {currentSlideData.description}
+                </p>
+                
+                <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                  <Button
+                    size="sm"
+                    onClick={currentSlideData.ctaAction}
+                    className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-6 py-2 text-sm rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200"
+                  >
+                    {currentSlideData.cta}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => navigate('/service-hub')}
+                    className="border-2 border-white text-white hover:bg-white hover:text-orange-600 px-6 py-2 text-sm rounded-xl backdrop-blur-sm bg-white/10"
+                  >
+                    Become a Partner
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {mainServices.map((service) => (
-              <UnifiedCard
-                key={service.id}
-                title={service.title}
-                description={service.description}
-                imageUrl={service.image}
-                badge={service.stats}
-                onClick={() => navigate(service.path)}
-                className="group cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl"
-                actions={
-                  <UnifiedButton
-                    size="sm"
-                    className={`w-full ${service.color} text-white hover:opacity-90`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(service.path);
-                    }}
-                  >
-                    <service.icon className="h-4 w-4 mr-2" />
-                    Explore {service.title}
-                  </UnifiedButton>
-                }
+          {/* Slide Indicators */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex space-x-2">
+            {heroSlides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => goToSlide(index)}
+                className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                  index === currentSlide 
+                    ? 'bg-white shadow-lg scale-125' 
+                    : 'bg-white/50 hover:bg-white/75'
+                }`}
               />
             ))}
           </div>
         </div>
 
-        {/* Features Section */}
-        <div className="bg-white py-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                Why Choose TukoPlace?
-              </h2>
-              <p className="text-xl text-gray-600">
-                Built with Kenyan values and modern technology
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {features.map((feature, index) => (
-                <div key={index} className="text-center group">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 to-red-600 text-white rounded-2xl mb-6 group-hover:scale-110 transition-transform duration-300">
-                    <feature.icon className="h-8 w-8" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                    {feature.title}
-                  </h3>
-                  <p className="text-gray-600 leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* CTA Section */}
-        <div className="bg-gradient-to-r from-orange-600 to-red-600 py-16">
-          <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-              Ready to Get Started?
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          {/* Mini Apps Grid */}
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              All Services in One Platform
             </h2>
-            <p className="text-xl text-orange-100 mb-8 leading-relaxed">
-              Join thousands of Kenyans who trust TukoPlace for their daily needs.
+            <p className="text-sm text-gray-600 max-w-2xl mx-auto">
+              From shopping to services, we've got everything you need to live, work, and thrive in Kenya
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <UnifiedButton
-                size="lg"
-                className="bg-white text-orange-600 hover:bg-orange-50 shadow-lg"
-                onClick={() => navigate('/shop')}
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {miniApps.map((app) => (
+              <Card 
+                key={app.id} 
+                className="group hover:shadow-lg transition-all duration-300 border hover:border-orange-200 cursor-pointer rounded-2xl overflow-hidden transform hover:scale-105"
+                onClick={() => navigate(app.route)}
               >
-                Start Shopping
-              </UnifiedButton>
-              <UnifiedButton
-                variant="outline"
-                size="lg"
-                className="border-white text-white hover:bg-white/10"
-                onClick={() => navigate('/service-provider-hub')}
-              >
-                Become a Provider
-              </UnifiedButton>
-            </div>
+                <div className="relative overflow-hidden aspect-square">
+                  <div 
+                    className="h-full bg-cover bg-center"
+                    style={{ 
+                      backgroundImage: `url(https://images.unsplash.com/${app.image})`,
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="absolute top-2 right-2">
+                    <Badge className="bg-white/90 text-gray-800 text-xs rounded-lg">
+                      {app.stats}
+                    </Badge>
+                  </div>
+                  <div className="absolute bottom-2 left-2">
+                    <div className={`p-2 rounded-xl bg-gradient-to-r ${app.color} text-white`}>
+                      <app.icon className="h-4 w-4" />
+                    </div>
+                  </div>
+                </div>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm group-hover:text-orange-600 transition-colors">
+                    {app.title}
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    {app.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button 
+                    size="sm"
+                    className={`w-full bg-gradient-to-r ${app.color} hover:opacity-90 text-white text-xs rounded-xl`}
+                  >
+                    Explore
+                    <ArrowRight className="ml-1 h-3 w-3" />
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </div>
-    </MainLayout>
+      
+      <Footer />
+    </FrontendLayout>
   );
 };
 

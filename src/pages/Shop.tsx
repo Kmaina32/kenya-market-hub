@@ -1,222 +1,303 @@
-
 import React, { useState } from 'react';
-import { useProducts } from '@/hooks/useProducts';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Search, ShoppingBag, Filter, Grid, List, Heart, Eye, ShoppingCart } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
-import { UnifiedCard } from '@/components/ui/UnifiedCard';
-import { UnifiedButton } from '@/components/ui/UnifiedButton';
-import { UnifiedInput } from '@/components/ui/UnifiedForm';
-import HeroSection from '@/components/shared/HeroSection';
-import { 
-  Search, 
-  Filter, 
-  Star, 
-  ShoppingCart, 
-  Heart,
-  MapPin
-} from 'lucide-react';
+import OptimizedProductCard from '@/components/OptimizedProductCard';
+import ProductQuickView from '@/components/shop/ProductQuickView';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useCart } from '@/hooks/useCart';
+import { useWishlist } from '@/hooks/useWishlist';
+import { toast } from 'sonner';
 
-const Shop = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const { data: products = [], isLoading } = useProducts();
+const Shop: React.FC = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('newest');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
 
-  const categories = [
-    'All Categories',
-    'Electronics',
-    'Fashion',
-    'Home & Garden',
-    'Sports',
-    'Books',
-    'Beauty',
-    'Food & Beverages',
-    'Automotive',
-    'Health'
-  ];
+  const { addToCart } = useCart();
+  const { addToWishlist, isInWishlist } = useWishlist();
 
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         product.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = !selectedCategory || selectedCategory === 'All Categories' ||
-                           product.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+  // Fetch products from database
+  const { data: products, isLoading } = useQuery({
+    queryKey: ['products', searchTerm, selectedCategory, sortBy],
+    queryFn: async () => {
+      let query = supabase
+        .from('products')
+        .select(`
+          *,
+          vendors (
+            business_name,
+            logo_url
+          )
+        `)
+        .eq('in_stock', true);
+
+      if (searchTerm) {
+        query = query.or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+      }
+
+      if (selectedCategory !== 'all') {
+        query = query.eq('category', selectedCategory);
+      }
+
+      // Apply sorting
+      switch (sortBy) {
+        case 'price_low':
+          query = query.order('price', { ascending: true });
+          break;
+        case 'price_high':
+          query = query.order('price', { ascending: false });
+          break;
+        case 'rating':
+          query = query.order('rating', { ascending: false });
+          break;
+        case 'name':
+          query = query.order('name', { ascending: true });
+          break;
+        default:
+          query = query.order('created_at', { ascending: false });
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    }
   });
 
-  const featuredProducts = products.filter(product => product.rating >= 4.5).slice(0, 6);
+  const categories = ['Electronics', 'Fashion', 'Home & Garden', 'Sports', 'Books', 'Beauty'];
 
-  if (isLoading) {
-    return (
-      <MainLayout>
-        <div className="min-h-screen bg-gray-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {[...Array(8)].map((_, i) => (
-                <div key={i} className="bg-white rounded-lg shadow-sm animate-pulse">
-                  <div className="h-48 bg-gray-200 rounded-t-lg"></div>
-                  <div className="p-4 space-y-3">
-                    <div className="h-4 bg-gray-200 rounded"></div>
-                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                    <div className="h-6 bg-gray-200 rounded w-1/2"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
+  const filteredProducts = products || [];
+
+  const handleQuickView = (product: any) => {
+    setSelectedProduct(product);
+    setIsQuickViewOpen(true);
+  };
+
+  const handleAddToCart = (product: any) => {
+    // Pass only the product ID to addToCart
+    addToCart(product.id);
+    toast.success(`${product.name} added to cart!`);
+  };
+
+  const handleAddToWishlist = (product: any) => {
+    addToWishlist(product);
+    toast.success(`${product.name} added to wishlist!`);
+  };
+
+  const EnhancedProductCard = ({ product }: { product: any }) => (
+    <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-2 hover:border-orange-300 bg-white rounded-2xl overflow-hidden">
+      <div className="aspect-square bg-gray-200 relative overflow-hidden">
+        {product.image_url ? (
+          <img 
+            src={product.image_url} 
+            alt={product.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <ShoppingBag className="h-16 w-16 text-gray-400" />
+          </div>
+        )}
+        
+        {/* Quick action buttons */}
+        <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button
+            size="sm"
+            variant="secondary"
+            className="p-2 rounded-full bg-white/90 hover:bg-white"
+            onClick={() => handleQuickView(product)}
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            className={`p-2 rounded-full bg-white/90 hover:bg-white ${isInWishlist(product.id) ? 'text-red-500' : ''}`}
+            onClick={() => handleAddToWishlist(product)}
+          >
+            <Heart className={`h-4 w-4 ${isInWishlist(product.id) ? 'fill-current' : ''}`} />
+          </Button>
+        </div>
+
+        {!product.in_stock && (
+          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <Badge variant="destructive">Out of Stock</Badge>
+          </div>
+        )}
+      </div>
+      
+      <CardContent className="p-4">
+        <div className="space-y-2">
+          <Badge variant="outline" className="text-xs">{product.category}</Badge>
+          <h3 className="font-semibold text-gray-900 line-clamp-2 group-hover:text-orange-600 transition-colors">
+            {product.name}
+          </h3>
+          {product.vendors && (
+            <p className="text-xs text-gray-500">by {product.vendors.business_name}</p>
+          )}
+          <p className="text-lg font-bold text-orange-600">
+            KSh {product.price.toLocaleString()}
+          </p>
+          
+          <div className="flex gap-2 pt-2">
+            <Button 
+              size="sm" 
+              className="flex-1"
+              onClick={() => handleAddToCart(product)}
+              disabled={!product.in_stock}
+            >
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              {product.in_stock ? 'Add to Cart' : 'Out of Stock'}
+            </Button>
           </div>
         </div>
-      </MainLayout>
-    );
-  }
+      </CardContent>
+    </Card>
+  );
 
   return (
     <MainLayout>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
         {/* Hero Section */}
-        <HeroSection
-          title="Shop with Confidence"
-          subtitle="TukoPlace Marketplace"
-          description="Discover quality products from verified vendors across Kenya. From electronics to fashion, find everything you need in one place."
-          imageUrl="photo-1556742049-0cfed4f6a45d"
-          searchPlaceholder="Search for products..."
-          onSearch={setSearchQuery}
-          primaryAction={{
-            text: 'Browse Categories',
-            onClick: () => document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth' }),
+        <div 
+          className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-600 to-red-600 rounded-b-3xl mx-4 sm:mx-6 lg:mx-8 mt-4"
+          style={{
+            backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
           }}
-        />
+        >
+          <div className="absolute inset-0 bg-black bg-opacity-40 rounded-b-3xl" />
+          <div className="relative z-10 flex items-center justify-center h-full px-6 sm:px-8 lg:px-12">
+            <div className="text-center text-white max-w-3xl mx-auto">
+              <ShoppingBag className="h-16 w-16 mx-auto mb-4" />
+              <h1 className="text-3xl md:text-4xl font-bold mb-4">
+                Shop Everything
+              </h1>
+              <p className="text-lg text-orange-100 mb-6">
+                Discover amazing products from trusted vendors across Kenya
+              </p>
+            </div>
+          </div>
+        </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Search and Filters */}
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-            <div className="flex flex-col lg:flex-row gap-4">
-              <div className="flex-1">
-                <UnifiedInput
-                  label=""
-                  name="search"
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  placeholder="Search products..."
-                  icon={<Search className="h-4 w-4" />}
-                />
-              </div>
-              <div className="lg:w-64">
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                >
-                  {categories.map(category => (
-                    <option key={category} value={category === 'All Categories' ? '' : category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <UnifiedButton variant="outline" className="lg:w-auto">
-                <Filter className="h-4 w-4 mr-2" />
-                More Filters
-              </UnifiedButton>
-            </div>
-          </div>
-
-          {/* Featured Products */}
-          {featuredProducts.length > 0 && (
-            <div className="mb-12">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Featured Products</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {featuredProducts.map((product) => (
-                  <UnifiedCard
-                    key={product.id}
-                    title={product.name}
-                    description={product.description}
-                    imageUrl={product.image_url}
-                    price={product.price}
-                    originalPrice={product.original_price}
-                    rating={product.rating}
-                    reviews={product.reviews_count}
-                    location={product.location}
-                    badge={product.condition === 'new' ? 'New' : 'Used'}
-                    badgeVariant={product.condition === 'new' ? 'default' : 'secondary'}
-                    actions={
-                      <div className="grid grid-cols-2 gap-2">
-                        <UnifiedButton size="sm" variant="outline">
-                          <Heart className="h-4 w-4" />
-                        </UnifiedButton>
-                        <UnifiedButton size="sm">
-                          <ShoppingCart className="h-4 w-4 mr-1" />
-                          Add to Cart
-                        </UnifiedButton>
-                      </div>
-                    }
+          <Card className="mb-8">
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div className="relative md:col-span-2">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Search products..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
                   />
-                ))}
+                </div>
+                
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories.map(category => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">Newest</SelectItem>
+                    <SelectItem value="price_low">Price: Low to High</SelectItem>
+                    <SelectItem value="price_high">Price: High to Low</SelectItem>
+                    <SelectItem value="rating">Highest Rated</SelectItem>
+                    <SelectItem value="name">Name A-Z</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant={viewMode === 'grid' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setViewMode('grid')}
+                  >
+                    <Grid className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === 'list' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setViewMode('list')}
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Products Grid */}
+          {isLoading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading products...</p>
+            </div>
+          ) : filteredProducts.length > 0 ? (
+            <div className={`grid gap-6 ${
+              viewMode === 'grid' 
+                ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
+                : 'grid-cols-1'
+            }`}>
+              {filteredProducts.map((product) => (
+                <EnhancedProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <ShoppingBag className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">No Products Found</h3>
+              <p className="text-gray-600 mb-6">
+                {searchTerm || selectedCategory !== 'all' 
+                  ? 'No products match your current search criteria.' 
+                  : 'Products will be added soon. Check back later!'
+                }
+              </p>
+              <Button 
+                onClick={() => {
+                  setSearchTerm('');
+                  setSelectedCategory('all');
+                }}
+                className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+              >
+                Clear Filters
+              </Button>
             </div>
           )}
-
-          {/* All Products */}
-          <div id="categories" className="mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">
-                {selectedCategory || 'All Products'} 
-                <span className="text-gray-500 font-normal ml-2">
-                  ({filteredProducts.length} items)
-                </span>
-              </h2>
-              <select className="px-4 py-2 border border-gray-300 rounded-lg">
-                <option>Sort by: Featured</option>
-                <option>Price: Low to High</option>
-                <option>Price: High to Low</option>
-                <option>Newest First</option>
-                <option>Best Rating</option>
-              </select>
-            </div>
-
-            {filteredProducts.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="text-gray-400 mb-4">
-                  <Search className="h-16 w-16 mx-auto" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">No products found</h3>
-                <p className="text-gray-600 mb-6">Try adjusting your search or filters</p>
-                <UnifiedButton onClick={() => {setSearchQuery(''); setSelectedCategory('');}}>
-                  Clear Filters
-                </UnifiedButton>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredProducts.map((product) => (
-                  <UnifiedCard
-                    key={product.id}
-                    title={product.name}
-                    description={product.description}
-                    imageUrl={product.image_url}
-                    price={product.price}
-                    originalPrice={product.original_price}
-                    rating={product.rating}
-                    reviews={product.reviews_count}
-                    location={product.location}
-                    badge={!product.in_stock ? 'Out of Stock' : product.condition === 'new' ? 'New' : 'Used'}
-                    badgeVariant={!product.in_stock ? 'destructive' : product.condition === 'new' ? 'default' : 'secondary'}
-                    className={!product.in_stock ? 'opacity-75' : ''}
-                    actions={
-                      <div className="grid grid-cols-2 gap-2">
-                        <UnifiedButton size="sm" variant="outline">
-                          <Heart className="h-4 w-4" />
-                        </UnifiedButton>
-                        <UnifiedButton 
-                          size="sm" 
-                          disabled={!product.in_stock}
-                        >
-                          <ShoppingCart className="h-4 w-4 mr-1" />
-                          {product.in_stock ? 'Add to Cart' : 'Sold Out'}
-                        </UnifiedButton>
-                      </div>
-                    }
-                  />
-                ))}
-              </div>
-            )}
-          </div>
         </div>
+
+        {/* Quick View Modal */}
+        <ProductQuickView
+          product={selectedProduct}
+          isOpen={isQuickViewOpen}
+          onClose={() => setIsQuickViewOpen(false)}
+          onAddToCart={handleAddToCart}
+          onAddToWishlist={handleAddToWishlist}
+        />
       </div>
     </MainLayout>
   );

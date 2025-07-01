@@ -1,152 +1,128 @@
 
-import React from 'react';
-import { UnifiedCard } from '@/components/ui/UnifiedCard';
-import { UnifiedButton } from '@/components/ui/UnifiedButton';
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Star, 
-  MapPin, 
-  Phone, 
-  Mail, 
-  Clock, 
-  CheckCircle,
-  Award
-} from 'lucide-react';
+import { Phone, Calendar, Star, MapPin, Clock } from 'lucide-react';
+import AppointmentBookingModal from './AppointmentBookingModal';
+import ContactProviderModal from './ContactProviderModal';
 
 interface ServiceProvider {
   id: string;
-  user_id: string;
+  business_name: string;
   provider_type: string;
-  business_name?: string;
   business_description?: string;
+  location_address?: string;
   phone_number?: string;
   email?: string;
-  location_address?: string;
-  verification_status: string;
-  is_active: boolean;
-  documents?: any;
   rating?: number;
-  reviews_count?: number;
-  experience_years?: number;
+  is_verified: boolean;
+  is_active: boolean;
 }
 
 interface ServiceProviderCardProps {
   provider: ServiceProvider;
-  onBookService: (provider: ServiceProvider) => void;
-  onContactProvider: (provider: ServiceProvider) => void;
+  onApply?: (providerType: string) => void;
 }
 
-const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
-  provider,
-  onBookService,
-  onContactProvider
-}) => {
-  const getProviderImage = (type: string) => {
-    const images = {
-      plumber: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&h=300&fit=crop',
-      electrician: 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=400&h=300&fit=crop',
-      carpenter: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=300&fit=crop',
-      painter: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400&h=300&fit=crop',
-      cleaner: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop',
-      gardener: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=300&fit=crop',
-      mechanic: 'https://images.unsplash.com/photo-1632053002002-85aca12da26c?w=400&h=300&fit=crop',
-      tutor: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop'
-    };
-    return images[type as keyof typeof images] || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=300&fit=crop';
+const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({ provider, onApply }) => {
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
+
+  const handleBookAppointment = () => {
+    setShowAppointmentModal(true);
   };
 
-  const getVerificationBadge = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return (
-          <Badge className="bg-green-100 text-green-800 border-green-200">
-            <CheckCircle className="w-3 h-3 mr-1" />
-            Verified
-          </Badge>
-        );
-      case 'pending':
-        return (
-          <Badge variant="outline" className="text-orange-600 border-orange-200">
-            <Clock className="w-3 h-3 mr-1" />
-            Pending
-          </Badge>
-        );
-      default:
-        return null;
-    }
-  };
-
-  const formatProviderType = (type: string) => {
-    return type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  const handleContact = () => {
+    setShowContactModal(true);
   };
 
   return (
-    <UnifiedCard
-      title={provider.business_name || `Professional ${formatProviderType(provider.provider_type)}`}
-      subtitle={formatProviderType(provider.provider_type)}
-      description={provider.business_description || `Experienced ${formatProviderType(provider.provider_type)} providing quality services.`}
-      imageUrl={getProviderImage(provider.provider_type)}
-      rating={provider.rating || 4.5}
-      reviews={provider.reviews_count || Math.floor(Math.random() * 50) + 10}
-      location={provider.location_address || 'Nairobi, Kenya'}
-      className="h-full group hover:shadow-lg transition-all duration-300"
-    >
-      <div className="space-y-3 mt-4">
-        {/* Status and Experience */}
-        <div className="flex items-center justify-between">
-          {getVerificationBadge(provider.verification_status)}
-          {provider.experience_years && (
-            <div className="flex items-center text-sm text-gray-600">
-              <Award className="h-4 w-4 mr-1 text-orange-500" />
-              {provider.experience_years}+ years
+    <>
+      <Card className="hover:shadow-lg transition-shadow duration-300 border border-gray-200">
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <CardTitle className="text-lg font-semibold text-gray-900 line-clamp-1">
+                {provider.business_name || 'Service Provider'}
+              </CardTitle>
+              <div className="flex items-center gap-2 mt-1">
+                <Badge variant="outline" className="text-xs">
+                  {provider.provider_type}
+                </Badge>
+                {provider.is_verified && (
+                  <Badge className="text-xs bg-green-100 text-green-800">
+                    Verified
+                  </Badge>
+                )}
+              </div>
             </div>
-          )}
-        </div>
+            {provider.rating && (
+              <div className="flex items-center gap-1">
+                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                <span className="text-sm font-medium">{provider.rating.toFixed(1)}</span>
+              </div>
+            )}
+          </div>
+        </CardHeader>
 
-        {/* Contact Information */}
-        <div className="space-y-2 text-sm text-gray-600">
-          {provider.phone_number && (
-            <div className="flex items-center">
-              <Phone className="h-4 w-4 mr-2 text-gray-400" />
-              <span className="truncate">{provider.phone_number}</span>
-            </div>
+        <CardContent className="space-y-3">
+          {provider.business_description && (
+            <p className="text-sm text-gray-600 line-clamp-2">
+              {provider.business_description}
+            </p>
           )}
-          {provider.email && (
-            <div className="flex items-center">
-              <Mail className="h-4 w-4 mr-2 text-gray-400" />
-              <span className="truncate">{provider.email}</span>
-            </div>
-          )}
-        </div>
 
-        {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-3 pt-3">
-          <UnifiedButton
-            variant="outline"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              onContactProvider(provider);
-            }}
-            className="text-sm"
-          >
-            <Phone className="h-4 w-4 mr-1" />
-            Contact
-          </UnifiedButton>
-          <UnifiedButton
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              onBookService(provider);
-            }}
-            disabled={provider.verification_status !== 'approved' || !provider.is_active}
-            className="text-sm"
-          >
-            Book Service
-          </UnifiedButton>
-        </div>
-      </div>
-    </UnifiedCard>
+          {provider.location_address && (
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <MapPin className="h-3 w-3" />
+              <span className="line-clamp-1">{provider.location_address}</span>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Clock className="h-3 w-3" />
+            <span>Available for booking</span>
+          </div>
+
+          <div className="flex gap-2 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleContact}
+              className="flex-1 border-green-200 text-green-700 hover:bg-green-50"
+            >
+              <Phone className="h-3 w-3 mr-1" />
+              Contact
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleBookAppointment}
+              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            >
+              <Calendar className="h-3 w-3 mr-1" />
+              Book
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <AppointmentBookingModal
+        open={showAppointmentModal}
+        onOpenChange={setShowAppointmentModal}
+        providerName={provider.business_name || 'Service Provider'}
+        serviceType={provider.provider_type}
+      />
+
+      <ContactProviderModal
+        open={showContactModal}
+        onOpenChange={setShowContactModal}
+        providerName={provider.business_name || 'Service Provider'}
+        providerPhone={provider.phone_number}
+        providerEmail={provider.email}
+        serviceType={provider.provider_type}
+      />
+    </>
   );
 };
 
