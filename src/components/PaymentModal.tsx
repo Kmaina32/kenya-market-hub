@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
+import MpesaPayment from '@/components/MpesaPayment';
 
 interface PaymentModalProps {
   open: boolean;
@@ -21,6 +22,7 @@ interface PaymentModalProps {
 const PaymentModal = ({ open, onOpenChange, total, items }: PaymentModalProps) => {
   const [paymentMethod, setPaymentMethod] = useState<'mpesa' | 'paypal' | 'stripe'>('mpesa');
   const [processing, setProcessing] = useState(false);
+  const [orderId, setOrderId] = useState<string | null>(null);
   const [customerInfo, setCustomerInfo] = useState({
     fullName: '',
     email: '',
@@ -31,20 +33,17 @@ const PaymentModal = ({ open, onOpenChange, total, items }: PaymentModalProps) =
   const { user } = useAuth();
   const { clearCart } = useCart();
 
-  const handlePayment = async () => {
+  const createOrder = async () => {
     if (!customerInfo.fullName || !customerInfo.email || !customerInfo.phone) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields",
         variant: "destructive"
       });
-      return;
+      return null;
     }
 
-    setProcessing(true);
-
     try {
-      // Create order in database
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert([{
@@ -80,14 +79,50 @@ const PaymentModal = ({ open, onOpenChange, total, items }: PaymentModalProps) =
 
       if (itemsError) throw itemsError;
 
-      // Simulate payment processing based on method
+      return order.id;
+    } catch (error: any) {
+      toast({
+        title: "Order Creation Failed",
+        description: error.message || "Failed to create order",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
+  const handleMpesaSuccess = async (transactionId: string) => {
+    toast({
+      title: "Payment Successful!",
+      description: "Your M-Pesa payment has been completed successfully.",
+    });
+
+    clearCart();
+    onOpenChange(false);
+  };
+
+  const handleMpesaError = (error: string) => {
+    toast({
+      title: "Payment Failed",
+      description: error,
+      variant: "destructive"
+    });
+  };
+
+  const handleOtherPayments = async () => {
+    const createdOrderId = await createOrder();
+    if (!createdOrderId) return;
+
+    setProcessing(true);
+
+    try {
+      // Simulate other payment processing
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Create transaction record
       const { error: transactionError } = await supabase
         .from('transactions')
         .insert([{
-          order_id: order.id,
+          order_id: createdOrderId,
           payment_method: paymentMethod,
           amount: total,
           status: 'completed',
@@ -108,11 +143,11 @@ const PaymentModal = ({ open, onOpenChange, total, items }: PaymentModalProps) =
           payment_status: 'paid',
           status: 'processing'
         })
-        .eq('id', order.id);
+        .eq('id', createdOrderId);
 
       toast({
         title: "Payment Successful!",
-        description: `Your order has been placed successfully. Order ID: ${order.id.slice(0, 8)}`,
+        description: `Your order has been placed successfully. Order ID: ${createdOrderId.slice(0, 8)}`,
       });
 
       clearCart();
@@ -126,6 +161,13 @@ const PaymentModal = ({ open, onOpenChange, total, items }: PaymentModalProps) =
       });
     } finally {
       setProcessing(false);
+    }
+  };
+
+  const startMpesaPayment = async () => {
+    const createdOrderId = await createOrder();
+    if (createdOrderId) {
+      setOrderId(createdOrderId);
     }
   };
 
@@ -258,24 +300,33 @@ const PaymentModal = ({ open, onOpenChange, total, items }: PaymentModalProps) =
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex space-x-3 pt-4">
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="flex-1"
-              disabled={processing}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handlePayment}
-              className="flex-1 bg-orange-600 hover:bg-orange-700"
-              disabled={processing}
-            >
-              {processing ? 'Processing...' : `Pay KSh ${total.toLocaleString()}`}
-            </Button>
-          </div>
+          {/* Payment Section */}
+          {paymentMethod === 'mpesa' && orderId ? (
+            <MpesaPayment
+              amount={total}
+              orderId={orderId}
+              onSuccess={handleMpesaSuccess}
+              onError={handleMpesaError}
+            />
+          ) : (
+            <div className="flex space-x-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                className="flex-1"
+                disabled={processing}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={paymentMethod === 'mpesa' ? startMpesaPayment : handleOtherPayments}
+                className="flex-1 bg-orange-600 hover:bg-orange-700"
+                disabled={processing}
+              >
+                {processing ? 'Processing...' : `Pay KSh ${total.toLocaleString()}`}
+              </Button>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

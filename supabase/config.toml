@@ -1,1 +1,33 @@
+
 project_id = "qkiupbzdobltnmpkacsu"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[auth]
+enabled = true
+port = 54320
+site_url = "https://qkiupbzdobltnmpkacsu.lovable.app"
+additional_redirect_urls = ["https://localhost:3000"]
+jwt_expiry = 3600
+enable_signup = true
+enable_confirmations = false
+
+[functions]
+enabled = true
+
+[functions.mpesa-payment]
+verify_jwt = true
+
+[functions.mpesa-callback]
+verify_jwt = false
+
+[db]
+enabled = true
+port = 54322
+shadow_port = 54320
+major_version = 15
