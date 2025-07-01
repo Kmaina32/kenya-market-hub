@@ -55,7 +55,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     try {
       await updateProduct.mutateAsync({
         id: product.id,
-        updates: {
+        data: {
           ...formData,
           price: parseFloat(formData.price),
           stock_quantity: parseInt(formData.stock_quantity) || 0,

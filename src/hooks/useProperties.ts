@@ -8,15 +8,18 @@ export interface Property {
   title: string;
   description?: string;
   price: number;
-  location: string;
+  location_address: string;
   bedrooms?: number;
   bathrooms?: number;
-  area?: number;
-  property_type: string;
+  area_sqm?: number;
+  property_type: 'house' | 'apartment' | 'land' | 'commercial' | 'office';
   image_url?: string;
   is_featured?: boolean;
   amenities?: string[];
-  owner_id?: string;
+  agent_id?: string;
+  listing_type: string;
+  city: string;
+  county: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -31,7 +34,7 @@ export const useProperties = () => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as Property[];
+      return data || [];
     }
   });
 };
@@ -40,14 +43,29 @@ export const useCreateProperty = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (propertyData: Omit<Property, 'id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (propertyData: {
+      title: string;
+      description?: string;
+      price: number;
+      location_address: string;
+      bedrooms?: number;
+      bathrooms?: number;
+      area_sqm?: number;
+      property_type: 'house' | 'apartment' | 'land' | 'commercial' | 'office';
+      image_url?: string;
+      is_featured?: boolean;
+      amenities?: string[];
+      listing_type: string;
+      city: string;
+      county: string;
+    }) => {
       const { data: { user } } = await supabase.auth.getUser();
       
       const { data, error } = await supabase
         .from('properties')
         .insert({
           ...propertyData,
-          owner_id: user?.id || null
+          agent_id: user?.id || null
         })
         .select()
         .single();

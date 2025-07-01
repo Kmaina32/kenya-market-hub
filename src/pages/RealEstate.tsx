@@ -31,7 +31,8 @@ const RealEstate = () => {
 
   const filteredProperties = properties?.filter(property =>
     property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    property.location.toLowerCase().includes(searchTerm.toLowerCase())
+    property.location_address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    property.city.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
   const handleViewDetails = (property: any) => {
@@ -140,8 +141,8 @@ const RealEstate = () => {
                         <Eye className="h-4 w-4" />
                       </Button>
                     </div>
-                    <Badge className="absolute top-3 left-3 bg-green-500 text-white">
-                      For Sale
+                    <Badge className="absolute top-3 left-3 bg-green-500 text-white capitalize">
+                      {property.listing_type === 'sale' ? 'For Sale' : 'For Rent'}
                     </Badge>
                   </div>
                   
@@ -159,7 +160,7 @@ const RealEstate = () => {
                     </CardTitle>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <MapPin className="h-4 w-4 text-orange-500" />
-                      <span>{property.location}</span>
+                      <span>{property.city}, {property.county}</span>
                     </div>
                   </CardHeader>
 
@@ -184,7 +185,7 @@ const RealEstate = () => {
                         </div>
                         <div className="flex items-center gap-1">
                           <Square className="h-4 w-4 text-orange-500" />
-                          <span>{property.area}m²</span>
+                          <span>{property.area_sqm}m²</span>
                         </div>
                       </div>
                     )}

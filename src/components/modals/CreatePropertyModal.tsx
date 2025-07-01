@@ -18,11 +18,14 @@ const CreatePropertyModal: React.FC<CreatePropertyModalProps> = ({ open, onOpenC
     title: '',
     description: '',
     price: '',
-    location: '',
+    location_address: '',
+    city: '',
+    county: '',
     bedrooms: '',
     bathrooms: '',
-    area: '',
-    property_type: 'house',
+    area_sqm: '',
+    property_type: 'house' as const,
+    listing_type: 'sale',
     image_url: ''
   });
 
@@ -35,11 +38,14 @@ const CreatePropertyModal: React.FC<CreatePropertyModalProps> = ({ open, onOpenC
       title: formData.title,
       description: formData.description,
       price: parseFloat(formData.price),
-      location: formData.location,
+      location_address: formData.location_address,
+      city: formData.city,
+      county: formData.county,
       bedrooms: parseInt(formData.bedrooms) || 0,
       bathrooms: parseInt(formData.bathrooms) || 0,
-      area: parseInt(formData.area) || 0,
+      area_sqm: parseInt(formData.area_sqm) || 0,
       property_type: formData.property_type,
+      listing_type: formData.listing_type,
       image_url: formData.image_url,
       is_featured: false,
       amenities: []
@@ -50,11 +56,14 @@ const CreatePropertyModal: React.FC<CreatePropertyModalProps> = ({ open, onOpenC
           title: '',
           description: '',
           price: '',
-          location: '',
+          location_address: '',
+          city: '',
+          county: '',
           bedrooms: '',
           bathrooms: '',
-          area: '',
+          area_sqm: '',
           property_type: 'house',
+          listing_type: 'sale',
           image_url: ''
         });
       }
@@ -103,17 +112,38 @@ const CreatePropertyModal: React.FC<CreatePropertyModalProps> = ({ open, onOpenC
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="location">Location *</Label>
+              <Label htmlFor="location_address">Location Address *</Label>
               <Input
-                id="location"
-                value={formData.location}
-                onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                id="location_address"
+                value={formData.location_address}
+                onChange={(e) => setFormData(prev => ({ ...prev, location_address: e.target.value }))}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="city">City *</Label>
+              <Input
+                id="city"
+                value={formData.city}
+                onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="county">County *</Label>
+              <Input
+                id="county"
+                value={formData.county}
+                onChange={(e) => setFormData(prev => ({ ...prev, county: e.target.value }))}
                 required
               />
             </div>
             <div>
               <Label htmlFor="property_type">Property Type</Label>
-              <Select value={formData.property_type} onValueChange={(value) => setFormData(prev => ({ ...prev, property_type: value }))}>
+              <Select value={formData.property_type} onValueChange={(value: any) => setFormData(prev => ({ ...prev, property_type: value }))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -122,12 +152,13 @@ const CreatePropertyModal: React.FC<CreatePropertyModalProps> = ({ open, onOpenC
                   <SelectItem value="apartment">Apartment</SelectItem>
                   <SelectItem value="commercial">Commercial</SelectItem>
                   <SelectItem value="land">Land</SelectItem>
+                  <SelectItem value="office">Office</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-4 gap-4">
             <div>
               <Label htmlFor="bedrooms">Bedrooms</Label>
               <Input
@@ -147,13 +178,25 @@ const CreatePropertyModal: React.FC<CreatePropertyModalProps> = ({ open, onOpenC
               />
             </div>
             <div>
-              <Label htmlFor="area">Area (m²)</Label>
+              <Label htmlFor="area_sqm">Area (m²)</Label>
               <Input
-                id="area"
+                id="area_sqm"
                 type="number"
-                value={formData.area}
-                onChange={(e) => setFormData(prev => ({ ...prev, area: e.target.value }))}
+                value={formData.area_sqm}
+                onChange={(e) => setFormData(prev => ({ ...prev, area_sqm: e.target.value }))}
               />
+            </div>
+            <div>
+              <Label htmlFor="listing_type">Listing Type</Label>
+              <Select value={formData.listing_type} onValueChange={(value) => setFormData(prev => ({ ...prev, listing_type: value }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sale">For Sale</SelectItem>
+                  <SelectItem value="rent">For Rent</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
