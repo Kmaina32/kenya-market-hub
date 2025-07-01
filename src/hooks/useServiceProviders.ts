@@ -4,25 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
-export const useServiceProviders = () => {
-  return useQuery({
-    queryKey: ['service-providers'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('service_provider_profiles')
-        .select('*')
-        .eq('is_active', true);
-
-      if (error) {
-        console.error('Error fetching service providers:', error);
-        throw error;
-      }
-
-      return data || [];
-    }
-  });
-};
-
 export const useServiceProviderProfile = (providerType?: string) => {
   const { user } = useAuth();
 
@@ -95,7 +76,6 @@ export const useCreateServiceProviderProfile = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-provider-profile'] });
       queryClient.invalidateQueries({ queryKey: ['all-service-provider-profiles'] });
-      queryClient.invalidateQueries({ queryKey: ['service-providers'] });
       toast({
         title: 'Profile Created',
         description: 'Your service provider profile has been created successfully.'
