@@ -10,20 +10,22 @@ interface UnifiedButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   loading?: boolean;
   icon?: React.ReactNode;
   fullWidth?: boolean;
+  asChild?: boolean;
   children: React.ReactNode;
 }
 
-export const UnifiedButton: React.FC<UnifiedButtonProps> = ({
+export const UnifiedButton = React.forwardRef<HTMLButtonElement, UnifiedButtonProps>(({
   variant = 'primary',
   size = 'default',
   loading = false,
   icon,
   fullWidth = false,
+  asChild = false,
   className,
   children,
   disabled,
   ...props
-}) => {
+}, ref) => {
   const getVariantStyles = () => {
     switch (variant) {
       case 'primary':
@@ -43,6 +45,8 @@ export const UnifiedButton: React.FC<UnifiedButtonProps> = ({
 
   return (
     <Button
+      ref={ref}
+      asChild={asChild}
       className={cn(
         'transition-all duration-200 font-medium',
         getVariantStyles(),
@@ -54,11 +58,20 @@ export const UnifiedButton: React.FC<UnifiedButtonProps> = ({
       {...props}
     >
       {loading ? (
-        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+        <>
+          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          {children}
+        </>
       ) : icon ? (
-        <span className="mr-2">{icon}</span>
-      ) : null}
-      {children}
+        <>
+          <span className="mr-2">{icon}</span>
+          {children}
+        </>
+      ) : (
+        children
+      )}
     </Button>
   );
-};
+});
+
+UnifiedButton.displayName = 'UnifiedButton';

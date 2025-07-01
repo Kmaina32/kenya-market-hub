@@ -1,62 +1,46 @@
 
 import React from 'react';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
-interface BaseFieldProps {
+interface UnifiedInputProps {
   label: string;
   name: string;
-  error?: string;
+  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'date' | 'time';
+  value: string | number;
+  onChange: (value: string) => void;
+  placeholder?: string;
   required?: boolean;
-  className?: string;
-  description?: string;
-}
-
-interface UnifiedInputProps extends BaseFieldProps {
-  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'date';
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
+  disabled?: boolean;
+  error?: string;
   icon?: React.ReactNode;
-}
-
-interface UnifiedTextareaProps extends BaseFieldProps {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  rows?: number;
-}
-
-interface UnifiedSelectProps extends BaseFieldProps {
-  value: string;
-  onChange: (value: string) => void;
-  options: Array<{ value: string; label: string }>;
-  placeholder?: string;
+  className?: string;
 }
 
 export const UnifiedInput: React.FC<UnifiedInputProps> = ({
   label,
   name,
-  error,
-  required,
-  className,
-  description,
   type = 'text',
   value,
   onChange,
   placeholder,
-  icon
+  required = false,
+  disabled = false,
+  error,
+  icon,
+  className
 }) => {
   return (
-    <div className={cn('space-y-2', className)}>
-      <Label htmlFor={name} className="text-sm font-medium text-gray-700">
-        {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
-      </Label>
-      
+    <div className="space-y-2">
+      {label && (
+        <Label htmlFor={name} className="text-sm font-medium text-gray-700">
+          {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </Label>
+      )}
       <div className="relative">
         {icon && (
           <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
@@ -65,114 +49,142 @@ export const UnifiedInput: React.FC<UnifiedInputProps> = ({
         )}
         <Input
           id={name}
+          name={name}
           type={type}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
+          required={required}
+          disabled={disabled}
           className={cn(
-            'border-gray-300 focus:border-orange-500 focus:ring-orange-500',
+            'w-full transition-all duration-200',
             icon && 'pl-10',
-            error && 'border-red-500 focus:border-red-500 focus:ring-red-500'
+            error && 'border-red-500 focus:border-red-500',
+            'focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500',
+            className
           )}
         />
       </div>
-      
-      {description && (
-        <p className="text-xs text-gray-500">{description}</p>
-      )}
-      
       {error && (
-        <p className="text-sm text-red-500">{error}</p>
+        <p className="text-sm text-red-600 mt-1">{error}</p>
       )}
     </div>
   );
 };
+
+interface UnifiedTextareaProps {
+  label: string;
+  name: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  required?: boolean;
+  disabled?: boolean;
+  error?: string;
+  rows?: number;
+  className?: string;
+}
 
 export const UnifiedTextarea: React.FC<UnifiedTextareaProps> = ({
   label,
   name,
-  error,
-  required,
-  className,
-  description,
   value,
   onChange,
   placeholder,
-  rows = 3
+  required = false,
+  disabled = false,
+  error,
+  rows = 3,
+  className
 }) => {
   return (
-    <div className={cn('space-y-2', className)}>
+    <div className="space-y-2">
       <Label htmlFor={name} className="text-sm font-medium text-gray-700">
         {label}
         {required && <span className="text-red-500 ml-1">*</span>}
       </Label>
-      
       <Textarea
         id={name}
+        name={name}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        required={required}
+        disabled={disabled}
         rows={rows}
         className={cn(
-          'border-gray-300 focus:border-orange-500 focus:ring-orange-500',
-          error && 'border-red-500 focus:border-red-500 focus:ring-red-500'
+          'w-full transition-all duration-200',
+          error && 'border-red-500 focus:border-red-500',
+          'focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500',
+          className
         )}
       />
-      
-      {description && (
-        <p className="text-xs text-gray-500">{description}</p>
-      )}
-      
       {error && (
-        <p className="text-sm text-red-500">{error}</p>
+        <p className="text-sm text-red-600 mt-1">{error}</p>
       )}
     </div>
   );
 };
 
+interface SelectOption {
+  value: string;
+  label: string;
+}
+
+interface UnifiedSelectProps {
+  label: string;
+  name: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: SelectOption[];
+  placeholder?: string;
+  required?: boolean;
+  disabled?: boolean;
+  error?: string;
+  className?: string;
+}
+
 export const UnifiedSelect: React.FC<UnifiedSelectProps> = ({
   label,
   name,
-  error,
-  required,
-  className,
-  description,
   value,
   onChange,
   options,
-  placeholder
+  placeholder,
+  required = false,
+  disabled = false,
+  error,
+  className
 }) => {
   return (
-    <div className={cn('space-y-2', className)}>
-      <Label htmlFor={name} className="text-sm font-medium text-gray-700">
-        {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
-      </Label>
-      
-      <Select value={value} onValueChange={onChange}>
+    <div className="space-y-2">
+      {label && (
+        <Label htmlFor={name} className="text-sm font-medium text-gray-700">
+          {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </Label>
+      )}
+      <Select value={value} onValueChange={onChange} disabled={disabled}>
         <SelectTrigger 
           className={cn(
-            'border-gray-300 focus:border-orange-500 focus:ring-orange-500',
-            error && 'border-red-500 focus:border-red-500 focus:ring-red-500'
+            'w-full transition-all duration-200',
+            error && 'border-red-500 focus:border-red-500',
+            'focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500',
+            className
           )}
         >
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
-          {options.map(option => (
+          {options.map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
-      
-      {description && (
-        <p className="text-xs text-gray-500">{description}</p>
-      )}
-      
       {error && (
-        <p className="text-sm text-red-500">{error}</p>
+        <p className="text-sm text-red-600 mt-1">{error}</p>
       )}
     </div>
   );
