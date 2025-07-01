@@ -14,53 +14,44 @@ import {
   Square,
   Heart,
   Phone,
-  Eye
+  Eye,
+  Plus
 } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
+import CreatePropertyModal from '@/components/modals/CreatePropertyModal';
+import { useProperties, useDeleteProperty } from '@/hooks/useProperties';
+import { toast } from 'sonner';
 
 const RealEstate = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [propertyType, setPropertyType] = useState('all');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  
+  const { data: properties, isLoading } = useProperties();
+  const deleteProperty = useDeleteProperty();
 
-  // Mock data - will be replaced with real data from database
-  const properties = [
-    {
-      id: 1,
-      title: "Modern 3BR Apartment in Westlands",
-      price: 45000000,
-      location: "Westlands, Nairobi",
-      bedrooms: 3,
-      bathrooms: 2,
-      parking: 1,
-      area: 120,
-      type: "apartment",
-      image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=300&fit=crop",
-      description: "Luxurious apartment with modern amenities and city views"
-    },
-    {
-      id: 2,
-      title: "Spacious 4BR Villa in Karen",
-      price: 85000000,
-      location: "Karen, Nairobi",
-      bedrooms: 4,
-      bathrooms: 3,
-      parking: 2,
-      area: 250,
-      type: "house",
-      image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop",
-      description: "Beautiful villa with garden and swimming pool"
-    }
-  ];
-
-  const filteredProperties = properties.filter(property =>
+  const filteredProperties = properties?.filter(property =>
     property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     property.location.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ) || [];
+
+  const handleViewDetails = (property: any) => {
+    toast.info(`Viewing details for ${property.title}`);
+  };
+
+  const handleContactOwner = (property: any) => {
+    toast.info(`Contacting owner for ${property.title}`);
+  };
+
+  const handleDelete = (propertyId: string) => {
+    if (confirm('Are you sure you want to delete this property?')) {
+      deleteProperty.mutate(propertyId);
+    }
+  };
 
   return (
     <MainLayout>
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        {/* Hero Section with Background Image - Added proper padding and rounded borders */}
+        {/* Hero Section with Background Image */}
         <div 
           className="relative h-64 overflow-hidden bg-gradient-to-r from-green-600 to-blue-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4"
           style={{
@@ -82,9 +73,9 @@ const RealEstate = () => {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Search Bar */}
-          <div className="max-w-2xl mx-auto mb-8">
-            <div className="relative">
+          {/* Search Bar and Add Button */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-8">
+            <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               <Input
                 placeholder="Search properties by location or name..."
@@ -93,9 +84,21 @@ const RealEstate = () => {
                 className="pl-12 pr-4 py-3 text-base border-orange-200 focus:border-orange-400 rounded-xl"
               />
             </div>
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Property
+            </Button>
           </div>
 
-          {filteredProperties.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading properties...</p>
+            </div>
+          ) : filteredProperties.length === 0 ? (
             <div className="text-center py-12">
               <Home className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 mb-2">No Properties Available</h3>
@@ -113,16 +116,27 @@ const RealEstate = () => {
               {filteredProperties.map((property) => (
                 <Card key={property.id} className="hover:shadow-xl transition-all duration-300 border-2 hover:border-orange-300 overflow-hidden">
                   <div className="aspect-video bg-gray-200 relative overflow-hidden">
-                    <img 
-                      src={property.image} 
-                      alt={property.title}
-                      className="w-full h-full object-cover"
-                    />
+                    {property.image_url ? (
+                      <img 
+                        src={property.image_url} 
+                        alt={property.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                        <Home className="h-16 w-16 text-gray-400" />
+                      </div>
+                    )}
                     <div className="absolute top-3 right-3 flex gap-2">
                       <Button size="sm" variant="secondary" className="p-2 rounded-full bg-white/90">
                         <Heart className="h-4 w-4" />
                       </Button>
-                      <Button size="sm" variant="secondary" className="p-2 rounded-full bg-white/90">
+                      <Button 
+                        size="sm" 
+                        variant="secondary" 
+                        className="p-2 rounded-full bg-white/90"
+                        onClick={() => handleViewDetails(property)}
+                      >
                         <Eye className="h-4 w-4" />
                       </Button>
                     </div>
@@ -134,7 +148,7 @@ const RealEstate = () => {
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between mb-2">
                       <Badge variant="outline" className="text-orange-600 border-orange-200 capitalize">
-                        {property.type}
+                        {property.property_type}
                       </Badge>
                       <span className="text-2xl font-bold text-orange-600">
                         KSh {(property.price / 1000000).toFixed(1)}M
@@ -154,31 +168,48 @@ const RealEstate = () => {
                       {property.description}
                     </p>
                     
-                    <div className="grid grid-cols-4 gap-2 text-sm">
-                      <div className="flex items-center gap-1">
-                        <BedDouble className="h-4 w-4 text-orange-500" />
-                        <span>{property.bedrooms}</span>
+                    {property.bedrooms && (
+                      <div className="grid grid-cols-4 gap-2 text-sm">
+                        <div className="flex items-center gap-1">
+                          <BedDouble className="h-4 w-4 text-orange-500" />
+                          <span>{property.bedrooms}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Bath className="h-4 w-4 text-orange-500" />
+                          <span>{property.bathrooms}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Car className="h-4 w-4 text-orange-500" />
+                          <span>1</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Square className="h-4 w-4 text-orange-500" />
+                          <span>{property.area}m²</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Bath className="h-4 w-4 text-orange-500" />
-                        <span>{property.bathrooms}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Car className="h-4 w-4 text-orange-500" />
-                        <span>{property.parking}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Square className="h-4 w-4 text-orange-500" />
-                        <span>{property.area}m²</span>
-                      </div>
-                    </div>
+                    )}
 
                     <div className="flex gap-2">
-                      <Button className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600">
+                      <Button 
+                        className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                        onClick={() => handleViewDetails(property)}
+                      >
                         View Details
                       </Button>
-                      <Button variant="outline" size="sm" className="border-orange-200 text-orange-600 hover:bg-orange-50">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="border-orange-200 text-orange-600 hover:bg-orange-50"
+                        onClick={() => handleContactOwner(property)}
+                      >
                         <Phone className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => handleDelete(property.id)}
+                      >
+                        Delete
                       </Button>
                     </div>
                   </CardContent>
@@ -187,6 +218,11 @@ const RealEstate = () => {
             </div>
           )}
         </div>
+
+        <CreatePropertyModal 
+          open={showCreateModal} 
+          onOpenChange={setShowCreateModal} 
+        />
       </div>
     </MainLayout>
   );

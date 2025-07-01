@@ -2,66 +2,34 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Calendar, MapPin, Clock, Users, Ticket, Search } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, MapPin, Clock, Users, DollarSign, Search } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import EventBookingModal from '@/components/modals/EventBookingModal';
-import { useToast } from '@/hooks/use-toast';
+import { useEvents, useBookEvent } from '@/hooks/useEvents';
 
 const Events = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
-  const [showBookingModal, setShowBookingModal] = useState(false);
-  const { toast } = useToast();
-
-  const { data: events, isLoading } = useQuery({
-    queryKey: ['events'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('is_active', true)
-        .order('date', { ascending: true });
-      
-      if (error) throw error;
-      return data || [];
-    }
-  });
+  
+  const { data: events, isLoading } = useEvents();
+  const bookEvent = useBookEvent();
 
   const filteredEvents = events?.filter(event =>
-    event.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    event.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    event.event_type?.toLowerCase().includes(searchTerm.toLowerCase())
+    event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    event.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    event.event_type.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
-  const handleBookEvent = (event: any) => {
-    setSelectedEvent(event);
-    setShowBookingModal(true);
-  };
-
-  const handleViewDetails = (eventId: string) => {
-    toast({
-      title: "Event Details",
-      description: "Opening detailed event information...",
-    });
-  };
-
-  const handleShareEvent = (eventId: string) => {
-    toast({
-      title: "Event Shared",
-      description: "Event link copied to clipboard!",
-    });
+  const handleBookEvent = (eventId: string) => {
+    bookEvent.mutate(eventId);
   };
 
   return (
     <MainLayout>
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        {/* Hero Section with Background Image - Added proper padding and rounded borders */}
+        {/* Hero Section */}
         <div 
-          className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-600 to-red-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4 px-4 sm:px-6 lg:px-8"
+          className="relative h-64 overflow-hidden bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4"
           style={{
             backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1492684223066-81342ee5ff30?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')`,
             backgroundSize: 'cover',
@@ -72,9 +40,9 @@ const Events = () => {
           <div className="relative z-10 flex items-center justify-center h-full px-6 sm:px-8 lg:px-12">
             <div className="text-center text-white max-w-3xl mx-auto">
               <Calendar className="h-16 w-16 mx-auto mb-4" />
-              <h1 className="text-3xl md:text-4xl font-bold mb-4">Events & Entertainment</h1>
-              <p className="text-lg text-orange-100 mb-6">
-                Find and book tickets for concerts, conferences, workshops, and social events happening around you
+              <h1 className="text-3xl md:text-4xl font-bold mb-4">Discover Events</h1>
+              <p className="text-lg text-purple-100 mb-6">
+                Find and book amazing events happening across Kenya
               </p>
             </div>
           </div>
@@ -104,7 +72,7 @@ const Events = () => {
               <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 mb-2">No Events Available</h3>
               <p className="text-gray-600 mb-6">
-                {searchTerm ? 'No events match your search criteria.' : 'Events will be available soon. Check back later!'}
+                {searchTerm ? 'No events match your search criteria.' : 'Events will be added soon. Check back later!'}
               </p>
               {searchTerm && (
                 <Button onClick={() => setSearchTerm('')} variant="outline">
@@ -124,11 +92,11 @@ const Events = () => {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
-                        <Calendar className="h-12 w-12 text-white" />
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-100 to-pink-100">
+                        <Calendar className="h-16 w-16 text-purple-400" />
                       </div>
                     )}
-                    <Badge className="absolute top-3 right-3 bg-orange-500 text-white">
+                    <Badge className="absolute top-3 left-3 bg-purple-500 text-white capitalize">
                       {event.event_type}
                     </Badge>
                   </div>
@@ -137,69 +105,56 @@ const Events = () => {
                     <CardTitle className="text-lg text-gray-900 line-clamp-2">
                       {event.title}
                     </CardTitle>
-                    <p className="text-sm text-gray-600 line-clamp-2">
-                      {event.description}
-                    </p>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <MapPin className="h-4 w-4 text-orange-500" />
+                      <span>{event.location}</span>
+                    </div>
                   </CardHeader>
 
                   <CardContent className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Calendar className="h-4 w-4 text-orange-500" />
-                      <span>{new Date(event.date).toLocaleDateString()}</span>
-                      {event.end_date && (
-                        <span>- {new Date(event.end_date).toLocaleDateString()}</span>
-                      )}
-                    </div>
+                    <p className="text-sm text-gray-600 line-clamp-3">
+                      {event.description}
+                    </p>
                     
                     <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <MapPin className="h-4 w-4 text-orange-500" />
-                      <span className="truncate">{event.location}</span>
+                      <Clock className="h-4 w-4 text-orange-500" />
+                      <span>{new Date(event.date).toLocaleDateString()} at {new Date(event.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg font-bold text-orange-600">
-                          {event.price > 0 ? `KSh ${event.price.toLocaleString()}` : 'Free'}
-                        </span>
-                        {event.max_attendees && (
-                          <div className="flex items-center gap-1 text-xs text-gray-500">
-                            <Users className="h-3 w-3" />
-                            <span>{event.current_attendees || 0}/{event.max_attendees}</span>
-                          </div>
-                        )}
+                    {event.price && event.price > 0 && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <DollarSign className="h-4 w-4 text-orange-500" />
+                        <span>KSh {event.price.toLocaleString()}</span>
                       </div>
-                    </div>
+                    )}
 
-                    <div className="flex gap-2 pt-2">
-                      <Button
-                        size="sm"
-                        onClick={() => handleBookEvent(event)}
-                        className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-                      >
-                        <Ticket className="h-4 w-4 mr-1" />
-                        Book Now
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleViewDetails(event.id)}
-                        className="border-orange-200 text-orange-600 hover:bg-orange-50"
-                      >
-                        Details
-                      </Button>
-                    </div>
+                    {event.max_attendees && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Users className="h-4 w-4 text-orange-500" />
+                        <span>{event.current_attendees || 0} / {event.max_attendees} attendees</span>
+                      </div>
+                    )}
+
+                    <Button 
+                      className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                      onClick={() => handleBookEvent(event.id)}
+                      disabled={bookEvent.isPending || (event.max_attendees && (event.current_attendees || 0) >= event.max_attendees)}
+                    >
+                      {bookEvent.isPending 
+                        ? 'Booking...' 
+                        : (event.max_attendees && (event.current_attendees || 0) >= event.max_attendees)
+                        ? 'Fully Booked'
+                        : event.price && event.price > 0 
+                        ? `Book Now - KSh ${event.price.toLocaleString()}`
+                        : 'Book Now - Free'
+                      }
+                    </Button>
                   </CardContent>
                 </Card>
               ))}
             </div>
           )}
         </div>
-
-        <EventBookingModal
-          isOpen={showBookingModal}
-          onClose={() => setShowBookingModal(false)}
-          event={selectedEvent}
-        />
       </div>
     </MainLayout>
   );

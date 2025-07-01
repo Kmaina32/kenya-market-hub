@@ -2,124 +2,105 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Product } from '@/types/product';
 
-interface UseProductsParams {
-  vendorId?: string;
-  category?: string;
-  searchQuery?: string;
-  limit?: number;
+export interface Product {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  category: string;
+  vendor_id?: string;
+  in_stock: boolean;
+  stock_quantity?: number;
+  image_url?: string;
+  rating?: number;
+  reviews_count?: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
-export const useProducts = (params: UseProductsParams = {}) => {
+export const useProducts = () => {
   return useQuery({
-    queryKey: ['products', params],
+    queryKey: ['products'],
     queryFn: async () => {
-      let query = supabase.from('products').select('*');
-      
-      if (params.vendorId) {
-        query = query.eq('vendor_id', params.vendorId);
-      }
-      
-      if (params.category) {
-        query = query.eq('category', params.category);
-      }
-      
-      if (params.searchQuery) {
-        query = query.ilike('name', `%${params.searchQuery}%`);
-      }
-      
-      if (params.limit) {
-        query = query.limit(params.limit);
-      }
-      
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
       
       if (error) throw error;
-      
-      // Transform data to include required fields with defaults
-      return (data || []).map(item => ({
-        ...item,
-        rating: item.rating || 4, // Use existing rating or default
-        reviews_count: item.reviews_count || 0 // Use existing count or default
-      })) as Product[];
+      return data as Product[];
     }
   });
 };
 
 export const useCreateProduct = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async (product: Omit<Product, 'id' | 'created_at' | 'rating' | 'reviews_count'>) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-      
+    mutationFn: async (productData: Omit<Product, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await supabase
         .from('products')
-        .insert([{
-          ...product,
-          vendor_id: product.vendor_id || user.id
-        }])
+        .insert(productData)
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
-      toast.success('Product created successfully');
+      toast.success('Product created successfully!');
     },
     onError: (error: any) => {
-      toast.error(`Error creating product: ${error.message}`);
+      toast.error('Failed to create product: ' + error.message);
     }
   });
 };
 
 export const useUpdateProduct = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Product> }) => {
-      const { error } = await supabase
+    mutationFn: async ({ id, data }: { id: string; data: Partial<Product> }) => {
+      const { data: updatedProduct, error } = await supabase
         .from('products')
-        .update(updates)
-        .eq('id', id);
-      
+        .update(data)
+        .eq('id', id)
+        .select()
+        .single();
+
       if (error) throw error;
+      return updatedProduct;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
-      toast.success('Product updated successfully');
+      toast.success('Product updated successfully!');
     },
     onError: (error: any) => {
-      toast.error(`Error updating product: ${error.message}`);
+      toast.error('Failed to update product: ' + error.message);
     }
   });
 };
 
 export const useDeleteProduct = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('products')
         .delete()
         .eq('id', id);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
-      toast.success('Product deleted successfully');
+      toast.success('Product deleted successfully!');
     },
     onError: (error: any) => {
-      toast.error(`Error deleting product: ${error.message}`);
+      toast.error('Failed to delete product: ' + error.message);
     }
   });
 };
