@@ -18,7 +18,7 @@ interface Driver {
   vehicle_model: string;
   vehicle_year: number;
   license_plate: string;
-  vehicle_type: 'sedan' | 'suv' | 'van' | 'motorcycle';
+  vehicle_type: 'taxi' | 'motorbike'; // Updated to match database
   rating: number;
   total_rides: number;
   status: 'available' | 'on_trip' | 'offline';
@@ -29,7 +29,7 @@ interface Driver {
 }
 
 interface VehicleType {
-  id: 'sedan' | 'suv' | 'van' | 'motorcycle';
+  id: 'taxi' | 'motorbike'; // Updated to match database
   name: string;
   icon: string;
   pricePerKm: number; // Changed to number for calculations
@@ -38,10 +38,8 @@ interface VehicleType {
 
 // --- Mock Data for demonstration (replace with actual API calls/real-time data) ---
 const VEHICLE_TYPES: VehicleType[] = [
-  { id: 'sedan', name: 'Sedan', icon: '🚗', pricePerKm: 80, description: '4 seats, Standard comfort' },
-  { id: 'suv', name: 'SUV', icon: '🚙', pricePerKm: 160, description: '7 seats, Premium comfort' },
-  { id: 'van', name: 'Van', icon: '🚐', pricePerKm: 100, description: '12+ seats, Group travel' },
-  { id: 'motorcycle', name: 'Boda Boda', icon: '🏍️', pricePerKm: 50, description: 'Quick & affordable' }
+  { id: 'taxi', name: 'Taxi', icon: '🚗', pricePerKm: 80, description: '4 seats, Standard comfort' },
+  { id: 'motorbike', name: 'Boda Boda', icon: '🏍️', pricePerKm: 50, description: 'Quick & affordable' }
 ];
 
 // In a real app, `calculateDistanceAndEta` would use a mapping API (e.g., Google Maps API)
@@ -61,7 +59,7 @@ const calculateDistanceAndEta = async (pickup: string, destination: string, driv
 const Rides: React.FC = () => {
   const [pickup, setPickup] = useState('');
   const [destination, setDestination] = useState('');
-  const [selectedVehicleType, setSelectedVehicleType] = useState<VehicleType['id']>('sedan');
+  const [selectedVehicleType, setSelectedVehicleType] = useState<VehicleType['id']>('taxi');
   const [estimatedFare, setEstimatedFare] = useState<number | null>(null);
   const [tripDetails, setTripDetails] = useState<{ distance: number; eta: number; } | null>(null);
   const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false); // State for booking confirmation modal
@@ -363,7 +361,7 @@ const Rides: React.FC = () => {
               {/* Vehicle Type Selection */}
               <div>
                 <label className="block text-base font-medium text-gray-800 mb-3">Select Vehicle Type</label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   {VEHICLE_TYPES.map((vehicle) => (
                     <div
                       key={vehicle.id}

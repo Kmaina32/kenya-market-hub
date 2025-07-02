@@ -50,7 +50,7 @@ export const useRides = () => {
     mutationFn: async (booking: RideBooking) => {
       if (!user) throw new Error('User not authenticated');
 
-      // Simple fare calculation
+      // Simple fare calculation based on vehicle type
       const baseFare = booking.vehicleType === 'taxi' ? 100 : 50;
       const estimatedFare = baseFare + 50; // Simple calculation
 

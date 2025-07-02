@@ -1585,6 +1585,7 @@ export type Database = {
           updated_at: string | null
           vendor: string | null
           vendor_id: string | null
+          views_count: number | null
           year: number | null
         }
         Insert: {
@@ -1609,6 +1610,7 @@ export type Database = {
           updated_at?: string | null
           vendor?: string | null
           vendor_id?: string | null
+          views_count?: number | null
           year?: number | null
         }
         Update: {
@@ -1633,6 +1635,7 @@ export type Database = {
           updated_at?: string | null
           vendor?: string | null
           vendor_id?: string | null
+          views_count?: number | null
           year?: number | null
         }
         Relationships: [
@@ -1878,6 +1881,7 @@ export type Database = {
         Row: {
           agency_name: string | null
           bio: string | null
+          company: string | null
           created_at: string | null
           email: string
           id: string
@@ -1897,6 +1901,7 @@ export type Database = {
         Insert: {
           agency_name?: string | null
           bio?: string | null
+          company?: string | null
           created_at?: string | null
           email: string
           id?: string
@@ -1916,6 +1921,7 @@ export type Database = {
         Update: {
           agency_name?: string | null
           bio?: string | null
+          company?: string | null
           created_at?: string | null
           email?: string
           id?: string
