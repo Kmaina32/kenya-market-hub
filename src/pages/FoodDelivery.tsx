@@ -1,173 +1,453 @@
-
-import React, { useState } from 'react';
-import { UtensilsCrossed, Star, Clock, MapPin, Phone, ShoppingCart } from 'lucide-react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { UtensilsCrossed, Star, Clock, MapPin, Phone, ShoppingCart, Search, Filter, Loader2, DollarSign, List, Grid } from 'lucide-react';
 import FrontendLayout from '@/components/layouts/FrontendLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useRestaurants } from '@/hooks/useRestaurants';
+import { Input } from '@/components/ui/input'; // Assuming Shadcn Input
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; // Assuming Shadcn Select
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'; // Assuming Shadcn Sheet
+import { Slider } from '@/components/ui/slider'; // Assuming Shadcn Slider
+import { useRestaurants } from '@/hooks/useRestaurants'; // Ensure this hook can accept filters
 import RestaurantMenuModal from '@/components/RestaurantMenuModal';
 import { toast } from 'sonner';
 
+// --- Interfaces for better type safety and clarity ---
+// Extend your Restaurant type to include potentially new fields or clarify existing ones
+interface Restaurant {
+  id: string;
+  business_name: string;
+  business_description?: string;
+  business_address?: string;
+  business_phone?: string;
+  banner_url?: string;
+  logo_url?: string;
+  average_rating?: number; // Assume your DB returns this or calculate it
+  total_reviews?: number; // Assume your DB returns this
+  delivery_time_min?: number; // Min delivery time in minutes
+  delivery_time_max?: number; // Max delivery time in minutes
+  min_order_value?: number; // Minimum order value for delivery
+  delivery_fee?: number; // Flat delivery fee
+  is_open?: boolean; // Real-time open/closed status
+  category?: string; // e.g., "African", "Italian", "Fast Food"
+  // Add other relevant fields for filtering/display
+}
+
+// --- Constants for filtering/sorting options ---
+const FOOD_CATEGORIES = [
+  'All', 'African', 'Italian', 'Asian', 'Fast Food',
+  'Desserts', 'Healthy', 'Grill', 'Seafood', 'Pizza', 'Vegetarian'
+];
+const SORT_OPTIONS = [
+  { value: 'relevance', label: 'Relevance' },
+  { value: 'rating_desc', label: 'Highest Rated' },
+  { value: 'delivery_time_asc', label: 'Fastest Delivery' },
+  { value: 'min_order_asc', label: 'Lowest Minimum Order' },
+];
+
 const FoodDelivery: React.FC = () => {
-  const { data: restaurants = [], isLoading } = useRestaurants();
-  const [selectedRestaurant, setSelectedRestaurant] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [sortBy, setSortBy] = useState('relevance');
+  const [deliveryFeeRange, setDeliveryFeeRange] = useState<[number, number]>([0, 1000]); // Example: KSh 0 - 1000
+  const [minDeliveryTime, setMinDeliveryTime] = useState<number>(0);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
 
-  const handleRestaurantClick = (restaurant: any) => {
+  // Debounced search term for better performance
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500); // Debounce for 500ms
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Assuming useRestaurants hook can accept filter/sort parameters
+  // You would modify useRestaurants to take these parameters and build the Supabase query
+  const { data: restaurants = [], isLoading, isFetching, refetch } = useRestaurants({
+    searchTerm: debouncedSearchTerm,
+    category: selectedCategory,
+    sortBy: sortBy,
+    deliveryFeeRange: deliveryFeeRange,
+    minDeliveryTime: minDeliveryTime,
+  });
+
+  const handleRestaurantClick = useCallback((restaurant: Restaurant) => {
     setSelectedRestaurant(restaurant);
     setIsMenuModalOpen(true);
     toast.success(`Opening menu for ${restaurant.business_name}`);
     console.log('Opening menu for restaurant:', restaurant);
-  };
+  }, []);
 
-  const handleCallRestaurant = (restaurant: any) => {
+  const handleCallRestaurant = useCallback((restaurant: Restaurant) => {
     if (restaurant.business_phone) {
       window.location.href = `tel:${restaurant.business_phone}`;
       toast.success('Opening phone dialer...');
     } else {
       toast.error('Phone number not available');
     }
-  };
+  }, []);
 
-  const handleOrderNow = (restaurant: any) => {
+  const handleOrderNow = useCallback((restaurant: Restaurant) => {
     toast.success(`Starting order from ${restaurant.business_name}`);
-    // This would typically redirect to cart/order page
-  };
+    // This would typically redirect to cart/order page or open a different modal
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
+    setSearchTerm('');
+    setSelectedCategory('All');
+    setSortBy('relevance');
+    setDeliveryFeeRange([0, 1000]);
+    setMinDeliveryTime(0);
+    refetch(); // Manually refetch after clearing filters
+    toast.info("Filters cleared!");
+  }, [refetch]);
+
+  // --- Restaurant Card Component (Memoized for performance) ---
+  const RestaurantCard = React.memo(({ restaurant }: { restaurant: Restaurant }) => {
+    const defaultBanner = 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop';
+    const defaultLogo = 'https://via.placeholder.com/60x60?text=Logo'; // Placeholder if no logo_url
+
+    const displayRating = restaurant.average_rating ? restaurant.average_rating.toFixed(1) : 'N/A';
+    const displayReviews = restaurant.total_reviews ? `(${restaurant.total_reviews})` : '';
+    const displayDeliveryTime = restaurant.delivery_time_min && restaurant.delivery_time_max
+      ? `${restaurant.delivery_time_min}-${restaurant.delivery_time_max} min`
+      : '30-45 min'; // Default if data is missing
+    const displayDeliveryFee = restaurant.delivery_fee === 0 ? 'Free' : `KSh ${restaurant.delivery_fee?.toFixed(0) || 'XX'}`;
+    const isOpen = restaurant.is_open ?? true; // Assume open if status is not explicitly set
+
+    return (
+      <Card
+        className={`cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-2 ${
+          isOpen ? 'hover:border-orange-300' : 'opacity-70 border-gray-200 cursor-not-allowed'
+        } bg-white rounded-2xl overflow-hidden group`}
+        onClick={() => isOpen && handleRestaurantClick(restaurant)}
+        aria-disabled={!isOpen}
+      >
+        <div className="aspect-video bg-gray-200 relative overflow-hidden">
+          {/* Banner Image */}
+          <img
+            src={restaurant.banner_url || defaultBanner}
+            alt={restaurant.business_name}
+            className={`w-full h-full object-cover transition-transform duration-300 ${isOpen ? 'group-hover:scale-105' : ''}`}
+            loading="lazy"
+          />
+          {/* Overlay for closed restaurants */}
+          {!isOpen && (
+            <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
+              <Badge variant="destructive" className="text-sm px-3 py-1 animate-pulse">Closed</Badge>
+            </div>
+          )}
+          {/* Logo */}
+          {restaurant.logo_url && (
+            <div className="absolute bottom-3 left-3 w-16 h-16 rounded-full border-3 border-white overflow-hidden shadow-lg transform translate-y-1/3 group-hover:translate-y-0 transition-transform duration-300">
+              <img
+                src={restaurant.logo_url || defaultLogo}
+                alt={`${restaurant.business_name} logo`}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+          {/* Status Badge */}
+          {isOpen && (
+            <Badge className="absolute top-3 right-3 bg-gradient-to-r from-green-500 to-green-600 text-white text-xs px-2 py-1 shadow-md">
+              Open Now
+            </Badge>
+          )}
+        </div>
+
+        <CardHeader className="pb-3 pt-8 px-4"> {/* Adjusted padding for logo */}
+          <CardTitle className="text-xl text-gray-900 line-clamp-1 font-bold group-hover:text-orange-600 transition-colors">
+            {restaurant.business_name}
+          </CardTitle>
+          {restaurant.category && (
+            <Badge variant="secondary" className="text-xs text-gray-700 w-fit">{restaurant.category}</Badge>
+          )}
+          <div className="flex items-center gap-1 text-sm text-gray-600 mt-1">
+            <MapPin className="h-4 w-4 text-orange-500" />
+            <span className="truncate font-medium">{restaurant.business_address || 'Kenya'}</span>
+          </div>
+        </CardHeader>
+
+        <CardContent className="space-y-3 pt-0 px-4 pb-4">
+          <p className="text-sm text-gray-700 line-clamp-2">
+            {restaurant.business_description || 'Delicious food delivered to your doorstep.'}
+          </p>
+
+          <div className="flex items-center justify-between text-sm text-gray-700">
+            <div className="flex items-center gap-2">
+              {restaurant.average_rating !== undefined && (
+                <div className="flex items-center gap-1">
+                  <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                  <span className="font-semibold">{displayRating}</span>
+                  <span className="text-xs text-gray-500">{displayReviews}</span>
+                </div>
+              )}
+              <div className="flex items-center gap-1">
+                <Clock className="h-4 w-4 text-gray-500" />
+                <span className="font-medium">{displayDeliveryTime}</span>
+              </div>
+            </div>
+            <div className="font-bold text-orange-600">
+              {displayDeliveryFee}
+            </div>
+          </div>
+
+          <div className="flex gap-2 pt-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent card click from firing
+                handleCallRestaurant(restaurant);
+              }}
+              className="flex-1 text-sm bg-white border-orange-200 text-orange-600 hover:bg-orange-50 shadow-sm"
+              disabled={!restaurant.business_phone}
+            >
+              <Phone className="h-4 w-4 mr-1" />
+              Call
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => handleRestaurantClick(restaurant)}
+              className="flex-1 text-sm bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-md"
+              disabled={!isOpen}
+            >
+              <ShoppingCart className="h-4 w-4 mr-1" />
+              {isOpen ? 'View Menu' : 'Closed'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  });
 
   return (
     <FrontendLayout>
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        {/* Hero Section with Background Image - Added proper padding and rounded borders */}
-        <div 
-          className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-600 to-red-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4 px-4 sm:px-6 lg:px-8"
+        {/* Hero Section */}
+        <div
+          className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-600 to-red-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4 px-4 sm:px-6 lg:px-8 shadow-xl"
           style={{
-            backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')`,
+            backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')`,
             backgroundSize: 'cover',
             backgroundPosition: 'center'
           }}
         >
-          <div className="absolute inset-0 bg-black bg-opacity-40 rounded-3xl" />
           <div className="relative z-10 flex items-center justify-center h-full px-6 sm:px-8 lg:px-12">
             <div className="text-center text-white max-w-3xl mx-auto">
-              <UtensilsCrossed className="h-16 w-16 mx-auto mb-4" />
-              <h1 className="text-3xl md:text-4xl font-bold mb-4">Food Delivery & Restaurants</h1>
-              <p className="text-lg text-orange-100 mb-6">
-                Order from verified restaurants across Kenya and get delicious meals delivered to your doorstep
+              <UtensilsCrossed className="h-16 w-16 mx-auto mb-4 text-orange-100 drop-shadow-lg" />
+              <h1 className="text-3xl md:text-4xl font-bold mb-3 drop-shadow-lg">Delicious Food, Delivered Fast</h1>
+              <p className="text-lg text-orange-100 font-light leading-relaxed">
+                Order from your favorite local restaurants across Kenya and enjoy hot meals at your doorstep.
               </p>
             </div>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {isLoading ? (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          {/* Filters and Search Bar */}
+          <Card className="mb-8 p-6 shadow-lg border border-gray-100">
+            <CardContent className="p-0">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                {/* Search Input */}
+                <div className="relative md:col-span-2">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                  <Input
+                    placeholder="Search restaurants or cuisines..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-4 py-2 border rounded-md focus:ring-orange-500 focus:border-orange-500"
+                    aria-label="Search restaurants"
+                  />
+                </div>
+
+                {/* Category Filter (Desktop) */}
+                <div className="hidden sm:block">
+                  <label htmlFor="category-select" className="block text-sm font-medium text-gray-700 mb-2">Cuisine</label>
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger id="category-select" className="w-full">
+                      <SelectValue placeholder="All Cuisines" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FOOD_CATEGORIES.map(category => (<SelectItem key={category} value={category}>{category}</SelectItem>))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Sort By (Desktop) */}
+                <div className="hidden sm:block">
+                  <label htmlFor="sort-select" className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger id="sort-select" className="w-full">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SORT_OPTIONS.map(option => (<SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* View Mode Buttons */}
+                <div className="flex gap-2 justify-end sm:justify-start">
+                  <Button variant={viewMode === 'grid' ? 'default' : 'outline'} className="shadow-sm" onClick={() => setViewMode('grid')} aria-label="Grid View">
+                    <Grid className="h-5 w-5" />
+                  </Button>
+                  <Button variant={viewMode === 'list' ? 'default' : 'outline'} className="shadow-sm" onClick={() => setViewMode('list')} aria-label="List View">
+                    <List className="h-5 w-5" />
+                  </Button>
+                </div>
+
+                {/* Mobile Filter Sheet */}
+                <div className="sm:hidden col-span-full">
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant="outline" className="w-full flex items-center gap-2 shadow-sm">
+                        <Filter className="h-5 w-5" /> More Filters
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="right">
+                      <SheetHeader>
+                        <SheetTitle className="flex items-center gap-2">
+                          <Filter /> Filters
+                        </SheetTitle>
+                      </SheetHeader>
+                      <div className="py-6 space-y-6">
+                        {/* Mobile Category Filter */}
+                        <div>
+                          <label htmlFor="mobile-category-select" className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                            <UtensilsCrossed className="h-4 w-4" /> Cuisine
+                          </label>
+                          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                            <SelectTrigger id="mobile-category-select" className="w-full">
+                              <SelectValue placeholder="All Cuisines" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {FOOD_CATEGORIES.map(category => (<SelectItem key={category} value={category}>{category}</SelectItem>))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Mobile Sort By */}
+                        <div>
+                          <label htmlFor="mobile-sort-select" className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                            <List className="h-4 w-4" /> Sort By
+                          </label>
+                          <Select value={sortBy} onValueChange={setSortBy}>
+                            <SelectTrigger id="mobile-sort-select" className="w-full">
+                              <SelectValue placeholder="Sort by" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {SORT_OPTIONS.map(option => (<SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Mobile Delivery Fee Filter */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-4 flex items-center gap-2">
+                            <DollarSign className="h-4 w-4" /> Max Delivery Fee: KSh {deliveryFeeRange[1].toLocaleString()}
+                          </label>
+                          <Slider
+                            min={0}
+                            max={500} // Adjust max based on typical delivery fees
+                            step={10}
+                            value={[deliveryFeeRange[1]]} // Control only max fee
+                            onValueChange={(val: number[]) => setDeliveryFeeRange([0, val[0]])}
+                            className="w-full"
+                          />
+                        </div>
+
+                        {/* Mobile Min Delivery Time Filter */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-4 flex items-center gap-2">
+                            <Clock className="h-4 w-4" /> Max Delivery Time: {minDeliveryTime === 0 ? 'Any' : `${minDeliveryTime} min`}
+                          </label>
+                          <Slider
+                            min={0}
+                            max={60} // Max 60 minutes
+                            step={5}
+                            value={[minDeliveryTime]}
+                            onValueChange={(val: number[]) => setMinDeliveryTime(val[0])}
+                            className="w-full"
+                          />
+                        </div>
+
+                        <Button onClick={handleClearFilters} variant="outline" className="w-full mt-4">
+                          Clear All Filters
+                        </Button>
+                      </div>
+                    </SheetContent>
+                  </Sheet>
+                </div>
+              </div>
+              {/* Desktop Filters below search/sort/view mode */}
+              <div className="mt-6 hidden sm:block grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                 {/* Max Delivery Fee Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-4 flex items-center gap-2">
+                    <DollarSign className="h-5 w-5" /> Max Delivery Fee: <span className="font-semibold">KSh {deliveryFeeRange[1].toLocaleString()}</span>
+                  </label>
+                  <Slider
+                    min={0}
+                    max={500}
+                    step={10}
+                    value={[deliveryFeeRange[1]]}
+                    onValueChange={(val: number[]) => setDeliveryFeeRange([0, val[0]])}
+                    className="w-full"
+                  />
+                </div>
+
+                {/* Max Delivery Time Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-4 flex items-center gap-2">
+                    <Clock className="h-5 w-5" /> Max Delivery Time: <span className="font-semibold">{minDeliveryTime === 0 ? 'Any' : `${minDeliveryTime} min`}</span>
+                  </label>
+                  <Slider
+                    min={0}
+                    max={60}
+                    step={5}
+                    value={[minDeliveryTime]}
+                    onValueChange={(val: number[]) => setMinDeliveryTime(val[0])}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Restaurant Listing */}
+          {(isLoading || isFetching) ? (
             <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading restaurants...</p>
+              <Loader2 className="h-10 w-10 text-orange-600 animate-spin mx-auto mb-4" />
+              <p className="text-lg text-gray-600">Loading delicious restaurants...</p>
             </div>
           ) : restaurants.length === 0 ? (
             <div className="text-center py-12">
-              <UtensilsCrossed className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No Restaurants Available</h3>
-              <p className="text-gray-600 mb-6">
-                Restaurants will be available soon. Check back later!
+              <UtensilsCrossed className="h-20 w-20 text-gray-400 mx-auto mb-6" />
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">No Restaurants Found</h3>
+              <p className="text-md text-gray-600 mb-8">
+                {searchTerm || selectedCategory !== 'All' || deliveryFeeRange[1] !== 1000 || minDeliveryTime !== 0
+                  ? 'No restaurants match your current search and filter criteria. Try adjusting them!'
+                  : 'It looks a bit empty here! Restaurants will be added soon. Check back later!'}
               </p>
+              <Button onClick={handleClearFilters} className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-md flex items-center gap-2">
+                <Filter className="h-5 w-5" /> Clear All Filters
+              </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4' : 'grid-cols-1'}`}>
               {restaurants.map((restaurant) => (
-                <Card 
-                  key={restaurant.id}
-                  className="cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-2 hover:border-orange-300 bg-white rounded-2xl overflow-hidden group"
-                >
-                  <div className="aspect-video bg-gray-200 relative overflow-hidden">
-                    {restaurant.banner_url ? (
-                      <img 
-                        src={restaurant.banner_url} 
-                        alt={restaurant.business_name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    ) : (
-                      <div 
-                        className="w-full h-full bg-cover bg-center"
-                        style={{ backgroundImage: `url(https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop)` }}
-                      >
-                        <div className="w-full h-full bg-black bg-opacity-20 flex items-center justify-center">
-                          <UtensilsCrossed className="h-12 w-12 text-white" />
-                        </div>
-                      </div>
-                    )}
-                    {restaurant.logo_url && (
-                      <div className="absolute bottom-3 left-3 w-14 h-14 rounded-full border-3 border-white overflow-hidden shadow-lg">
-                        <img 
-                          src={restaurant.logo_url} 
-                          alt={`${restaurant.business_name} logo`}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )}
-                    <Badge className="absolute top-3 right-3 bg-gradient-to-r from-green-500 to-green-600 text-white text-xs px-2 py-1">
-                      Open
-                    </Badge>
-                  </div>
-                  
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base text-gray-900 line-clamp-1 font-semibold">
-                      {restaurant.business_name}
-                    </CardTitle>
-                    <div className="flex items-center gap-1 text-xs text-gray-600">
-                      <MapPin className="h-3 w-3 text-orange-500" />
-                      <span className="truncate">{restaurant.business_address || 'Kenya'}</span>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="space-y-3 pt-0">
-                    <p className="text-xs text-gray-700 line-clamp-2">
-                      {restaurant.business_description || 'Delicious food delivered to your doorstep'}
-                    </p>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1">
-                          <Star className="h-3 w-3 text-yellow-500 fill-current" />
-                          <span className="text-xs font-medium">4.5</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-3 w-3 text-gray-500" />
-                          <span className="text-xs text-gray-600">25-35 min</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2 pt-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCallRestaurant(restaurant);
-                        }}
-                        className="flex-1 text-xs bg-white border-orange-200 text-orange-600 hover:bg-orange-50"
-                      >
-                        <Phone className="h-3 w-3 mr-1" />
-                        Call
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => handleRestaurantClick(restaurant)}
-                        className="flex-1 text-xs bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-                      >
-                        View Menu
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <RestaurantCard key={restaurant.id} restaurant={restaurant} />
               ))}
             </div>
           )}
         </div>
 
-        <RestaurantMenuModal 
+        <RestaurantMenuModal
           open={isMenuModalOpen}
           onOpenChange={setIsMenuModalOpen}
           restaurant={selectedRestaurant}

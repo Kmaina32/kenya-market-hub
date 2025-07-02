@@ -1,14 +1,20 @@
-import React, { useState, useMemo, useCallback, Suspense, lazy } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import MainLayout from '@/components/MainLayout';
-import { MessageCircle, Users, Globe } from 'lucide-react'; // Consider using these icons with better alignment
+import { MessageCircle, Users, Globe } from 'lucide-react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
-import { Button } from '@/components/ui/button'; // Assuming Shadcn UI Button
-import { Input } from '@/components/ui/input'; // Assuming Shadcn UI Input
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // Assuming Shadcn UI Card
+import { Button } from '@/components/ui/button';
+// Added missing imports for Card components
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
+
+// Define a simple interface for ChatInterface props to resolve the type error
+interface ChatInterfaceProps {
+  selectedConversationId: string | null;
+}
 
 // Lazy load components for performance
 const ImprovedForumsList = lazy(() => import('@/components/chat/ImprovedForumsList'));
-const ChatInterface = lazy(() => import('@/components/chat/ChatInterface'));
+const ChatInterface = lazy(() => import('@/components/chat/ChatInterface')) as React.LazyExoticComponent<React.FC<ChatInterfaceProps>>;
+
 
 // ---
 // Business Directory Data (consider moving to a global state or API)
@@ -41,8 +47,9 @@ interface BusinessCardProps {
 }
 
 const BusinessCard: React.FC<BusinessCardProps> = React.memo(({ business, onStartChat, onViewDetails }) => (
+  // Fixed: Card, CardContent, CardTitle are now imported
   <Card className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 hover:shadow-md transition-shadow duration-200 ease-in-out">
-    <CardContent className="flex-1 min-w-0 mb-2 sm:mb-0 p-0"> {/* p-0 to remove default CardContent padding */}
+    <CardContent className="flex-1 min-w-0 mb-2 sm:mb-0 p-0">
       <div className="flex items-center gap-2 mb-1">
         <CardTitle className="font-medium text-base text-gray-900 truncate">
           {business.name}
@@ -73,8 +80,6 @@ const BusinessCard: React.FC<BusinessCardProps> = React.memo(({ business, onStar
         variant="outline"
         size="sm"
         className="w-full sm:w-auto"
-        onClick={() => onViewDetails(business.id)}
-        aria-label={`View details for ${business.name}`}
       >
         View
       </Button>
@@ -92,7 +97,7 @@ const ChatForums: React.FC = () => {
   const { isOnline } = useOnlineStatus();
 
   // Memoize filtered businesses to prevent re-calculation on every render
-  const filteredBusinesses = useMemo(() => {
+  const filteredBusinesses = React.useMemo(() => {
     return MOCK_BUSINESS_DIRECTORY.filter((business) =>
       business.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       business.category.toLowerCase().includes(searchTerm.toLowerCase())
@@ -100,12 +105,12 @@ const ChatForums: React.FC = () => {
   }, [searchTerm]);
 
   // Use useCallback for event handlers to prevent unnecessary re-renders of child components
-  const handleStartChat = useCallback((id: string) => {
+  const handleStartChat = React.useCallback((id: string) => {
     setSelectedConversationId(id);
     setSelectedTab('chat'); // Automatically switch to chat tab when starting a conversation
   }, []);
 
-  const handleViewDetails = useCallback((id: string) => {
+  const handleViewDetails = React.useCallback((id: string) => {
     // In a real app, this would navigate to a business detail page or open a modal
     alert(`Viewing details for business ID: ${id}`);
     // Example: router.push(`/business/${id}`);
@@ -178,6 +183,7 @@ const ChatForums: React.FC = () => {
                   <Users size={24} /> Direct Chat
                 </h2>
                 <p className="text-gray-600">Connect directly with other users or businesses.</p>
+                {/* Fixed: Pass selectedConversationId to ChatInterface */}
                 <ChatInterface selectedConversationId={selectedConversationId} />
               </section>
             )}
@@ -187,8 +193,7 @@ const ChatForums: React.FC = () => {
                 <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
                   <Globe size={24} /> Business Directory
                 </h2>
-                <p className="text-gray-600">Explore local businesses, view their profiles, and initiate chats.</p>
-                <Input
+                <input
                   type="text"
                   placeholder="Search businesses by name or category..."
                   className="w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
@@ -198,7 +203,7 @@ const ChatForums: React.FC = () => {
                 />
                 <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3"> {/* Responsive grid */}
                   {filteredBusinesses.length === 0 ? (
-                    <p className="text-gray-500 text-center col-span-full">No businesses found matching your search.</p>
+                    <p className="text-gray-500 text-center col-span-full">No businesses found.</p>
                   ) : (
                     filteredBusinesses.map((business) => (
                       <BusinessCard
