@@ -16,7 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format, addDays, isPast } from 'date-fns';
-import { Calendar as CalendarPicker, DateRange } from '@/components/ui/calendar'; // Import DateRange type
+import { Calendar as CalendarPicker } from '@/components/ui/calendar';
+import { DateRange } from 'react-day-picker'; // Fixed: Import DateRange from react-day-picker
 
 // --- Interfaces for better type safety and clarity ---
 interface Event {
@@ -52,7 +53,7 @@ const Events: React.FC = () => {
   const [selectedEventType, setSelectedEventType] = useState('All');
   const [sortBy, setSortBy] = useState('date_asc');
   const [priceFilter, setPriceFilter] = useState<'all' | 'free' | 'paid'>('all');
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined); // Fixed: Use DateRange type
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
@@ -89,10 +90,10 @@ const Events: React.FC = () => {
         query = query.gt('price', 0);
       }
 
-      if (dateRange?.from) { // Use optional chaining
+      if (dateRange?.from) {
         query = query.gte('date', format(dateRange.from, 'yyyy-MM-dd'));
       }
-      if (dateRange?.to) { // Use optional chaining
+      if (dateRange?.to) {
         query = query.lte('date', format(addDays(dateRange.to, 1), 'yyyy-MM-dd'));
       }
 
@@ -133,7 +134,7 @@ const Events: React.FC = () => {
     setSelectedEventType('All');
     setSortBy('date_asc');
     setPriceFilter('all');
-    setDateRange(undefined); // Fixed: Clear date range
+    setDateRange(undefined);
     refetch();
     toast.info("All filters cleared!");
   }, [refetch]);
@@ -376,7 +377,7 @@ const Events: React.FC = () => {
                           </label>
                           <Select
                             value={priceFilter}
-                            onValueChange={(value: "all" | "free" | "paid") => setPriceFilter(value)} // Fixed: Explicit cast for onValueChange
+                            onValueChange={(value) => setPriceFilter(value as "all" | "free" | "paid")} // Fixed: Explicit cast for onValueChange
                           >
                             <SelectTrigger id="mobile-price-filter" className="w-full">
                               <SelectValue placeholder="All Prices" />
@@ -400,14 +401,14 @@ const Events: React.FC = () => {
                                 variant={"outline"}
                                 className={"w-full justify-start text-left font-normal"}
                               >
-                                {dateRange?.from ? ( // Fixed: Optional chaining
-                                  dateRange?.to ? ( // Fixed: Optional chaining
+                                {dateRange?.from ? (
+                                  dateRange.to ? (
                                     <>
-                                      {format(dateRange.from, "LLL dd, y")} -{" "}
-                                      {format(dateRange.to, "LLL dd, y")}
+                                      {format(dateRange.from, "LLL dd, yyyy")} -{" "}
+                                      {format(dateRange.to, "LLL dd, yyyy")}
                                     </>
                                   ) : (
-                                    format(dateRange.from, "LLL dd, y")
+                                    format(dateRange.from, "LLL dd, yyyy")
                                   )
                                 ) : (
                                   <span>Pick a date range</span>
@@ -419,7 +420,7 @@ const Events: React.FC = () => {
                                 initialFocus
                                 mode="range"
                                 selected={dateRange}
-                                onSelect={setDateRange} // Fixed: Remove any cast, as type is now compatible
+                                onSelect={setDateRange}
                                 numberOfMonths={1}
                               />
                             </PopoverContent>
@@ -443,7 +444,7 @@ const Events: React.FC = () => {
                   </label>
                   <Select
                     value={priceFilter}
-                    onValueChange={(value: "all" | "free" | "paid") => setPriceFilter(value)} // Fixed: Explicit cast for onValueChange
+                    onValueChange={(value) => setPriceFilter(value as "all" | "free" | "paid")} // Fixed: Explicit cast for onValueChange
                   >
                     <SelectTrigger id="price-filter" className="w-full">
                       <SelectValue placeholder="All Prices" />
@@ -467,14 +468,14 @@ const Events: React.FC = () => {
                         variant={"outline"}
                         className={"w-full justify-start text-left font-normal"}
                       >
-                        {dateRange?.from ? ( // Fixed: Optional chaining
-                          dateRange?.to ? ( // Fixed: Optional chaining
+                        {dateRange?.from ? (
+                          dateRange.to ? (
                             <>
-                              {format(dateRange.from, "LLL dd, y")} -{" "}
-                              {format(dateRange.to, "LLL dd, y")}
+                              {format(dateRange.from, "LLL dd, yyyy")} -{" "}
+                              {format(dateRange.to, "LLL dd, yyyy")}
                             </>
                           ) : (
-                            format(dateRange.from, "LLL dd, y")
+                            format(dateRange.from, "LLL dd, yyyy")
                           )
                         ) : (
                           <span>Pick a date range</span>
@@ -486,7 +487,7 @@ const Events: React.FC = () => {
                         initialFocus
                         mode="range"
                         selected={dateRange}
-                        onSelect={setDateRange} // Fixed: Remove any cast
+                        onSelect={setDateRange}
                         numberOfMonths={1}
                       />
                     </PopoverContent>
@@ -515,7 +516,7 @@ const Events: React.FC = () => {
               <Calendar className="h-20 w-20 text-gray-400 mx-auto mb-6" />
               <h3 className="text-2xl font-bold text-gray-900 mb-3">No Events Found</h3>
               <p className="text-md text-gray-600 mb-8">
-                {searchTerm || selectedEventType !== 'All' || priceFilter !== 'all' || dateRange
+                {searchTerm || selectedEventType !== 'All' || priceFilter !== 'all' || dateRange?.from
                   ? 'No events match your current search and filter criteria. Try adjusting them!'
                   : `There are no upcoming events in Nairobi right now. Check back soon for exciting new listings!`
                 }
@@ -540,8 +541,8 @@ const Events: React.FC = () => {
 // --- Event List Item Component (New for List View) ---
 interface EventListItemProps {
   event: Event;
-  handleBookEvent: (event: Event) => void; // Passed down from parent
-  handleShareEvent: (event: Event) => void; // Passed down from parent
+  handleBookEvent: (event: Event) => void;
+  handleShareEvent: (event: Event) => void;
 }
 
 const EventListItem = React.memo(({ event, handleBookEvent, handleShareEvent }: EventListItemProps) => {
