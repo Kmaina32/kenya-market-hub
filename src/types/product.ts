@@ -15,6 +15,7 @@ export interface Product {
   year?: number;
   rating: number;
   reviews_count: number;
+  views_count?: number;
   in_stock: boolean;
   stock_quantity: number;
   tags?: string[];
