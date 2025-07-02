@@ -165,9 +165,13 @@ export const useDeleteProduct = () => {
 export const useIncrementProductViews = () => {
   return useMutation({
     mutationFn: async (productId: string) => {
-      const { error } = await supabase.rpc('increment_product_views', {
-        product_id: productId
-      });
+      // Instead of using RPC function, directly update the views_count
+      const { error } = await supabase
+        .from('products')
+        .update({ 
+          views_count: supabase.raw('views_count + 1') 
+        })
+        .eq('id', productId);
 
       if (error) {
         console.error('Error incrementing product views:', error);

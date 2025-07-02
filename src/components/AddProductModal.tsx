@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -36,7 +35,8 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ open, onOpenChange, o
         price: parseFloat(formData.price),
         stock_quantity: parseInt(formData.stock_quantity) || 0,
         in_stock: parseInt(formData.stock_quantity) > 0,
-        updated_at: new Date().toISOString()
+        rating: 0,
+        reviews_count: 0
       });
       
       setFormData({

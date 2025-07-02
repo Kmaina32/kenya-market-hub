@@ -7,14 +7,14 @@ import { Separator } from '@/components/ui/separator';
 import { ShoppingCart, Package, MapPin, Phone, Mail } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
 import PaymentMethodSelector from '@/components/PaymentMethodSelector';
-import { useCart } from '@/contexts/CartContext';
+import { useCartContext } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { PaymentData } from '@/hooks/usePayments';
 
 const Checkout = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { cart, getTotalPrice, clearCart } = useCart();
+  const { items: cart, getTotalPrice, clearCart } = useCartContext();
   const { user } = useAuth();
   const [showPayment, setShowPayment] = useState(false);
   const [shippingInfo, setShippingInfo] = useState({
