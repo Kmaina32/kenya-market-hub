@@ -1585,7 +1585,6 @@ export type Database = {
           updated_at: string | null
           vendor: string | null
           vendor_id: string | null
-          views_count: number | null
           year: number | null
         }
         Insert: {
@@ -1610,7 +1609,6 @@ export type Database = {
           updated_at?: string | null
           vendor?: string | null
           vendor_id?: string | null
-          views_count?: number | null
           year?: number | null
         }
         Update: {
@@ -1635,7 +1633,6 @@ export type Database = {
           updated_at?: string | null
           vendor?: string | null
           vendor_id?: string | null
-          views_count?: number | null
           year?: number | null
         }
         Relationships: [
