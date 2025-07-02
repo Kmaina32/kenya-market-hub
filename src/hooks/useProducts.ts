@@ -165,12 +165,24 @@ export const useDeleteProduct = () => {
 export const useIncrementProductViews = () => {
   return useMutation({
     mutationFn: async (productId: string) => {
-      // Instead of using RPC function, directly update the views_count
+      // First get the current product to read its current views_count
+      const { data: product, error: fetchError } = await supabase
+        .from('products')
+        .select('views_count')
+        .eq('id', productId)
+        .single();
+
+      if (fetchError) {
+        console.error('Error fetching product:', fetchError);
+        throw fetchError;
+      }
+
+      // Increment the views_count by 1
+      const newViewsCount = (product.views_count || 0) + 1;
+      
       const { error } = await supabase
         .from('products')
-        .update({ 
-          views_count: supabase.raw('views_count + 1') 
-        })
+        .update({ views_count: newViewsCount })
         .eq('id', productId);
 
       if (error) {
