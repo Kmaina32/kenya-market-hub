@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -54,10 +55,12 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     try {
       await updateProduct.mutateAsync({
         id: product.id,
-        ...formData,
-        price: parseFloat(formData.price),
-        stock_quantity: parseInt(formData.stock_quantity) || 0,
-        in_stock: parseInt(formData.stock_quantity) > 0
+        updates: {
+          ...formData,
+          price: parseFloat(formData.price),
+          stock_quantity: parseInt(formData.stock_quantity) || 0,
+          in_stock: parseInt(formData.stock_quantity) > 0
+        }
       });
       
       onSuccess();

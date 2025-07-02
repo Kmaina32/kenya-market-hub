@@ -1,208 +1,304 @@
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { ShoppingCart, Package, MapPin, Phone, Mail } from 'lucide-react';
-import MainLayout from '@/components/MainLayout';
-import PaymentMethodSelector from '@/components/PaymentMethodSelector';
-import { useCartContext } from '@/contexts/CartContext';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { PaymentData } from '@/hooks/usePayments';
+import { useCartContext } from '@/contexts/CartContext';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
+import FrontendLayout from '@/components/layouts/FrontendLayout';
+import Footer from '@/components/Footer';
+import CouponInput from '@/components/CouponInput';
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { items: cart, getTotalPrice, clearCart } = useCartContext();
   const { user } = useAuth();
-  const [showPayment, setShowPayment] = useState(false);
+  const { items, getTotalPrice, clearCart } = useCartContext();
+  const { toast } = useToast();
+  
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [shippingInfo, setShippingInfo] = useState({
+    fullName: '',
     address: '',
     city: '',
     phone: '',
-    email: user?.email || ''
+    email: user?.email || '',
+    specialInstructions: ''
   });
 
-  const orderId = searchParams.get('orderId') || `ORDER-${Date.now()}`;
-  const totalAmount = getTotalPrice();
+  const subtotal = getTotalPrice();
+  const shippingCost = 500; // Fixed shipping cost
+  const discount = appliedCoupon?.discount_amount || 0;
+  const total = subtotal + shippingCost - discount;
 
-  useEffect(() => {
+  const handleCouponApplied = (couponData: any) => {
+    setAppliedCoupon(couponData);
+    toast({ title: 'Coupon applied successfully!' });
+  };
+
+  const handleCouponRemoved = () => {
+    setAppliedCoupon(null);
+    toast({ title: 'Coupon removed' });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
     if (!user) {
+      toast({
+        title: 'Please log in to complete your order',
+        variant: 'destructive'
+      });
       navigate('/auth');
       return;
     }
-    if (cart.length === 0) {
-      navigate('/marketplace');
+
+    if (items.length === 0) {
+      toast({
+        title: 'Your cart is empty',
+        variant: 'destructive'
+      });
       return;
     }
-  }, [user, cart, navigate]);
 
-  const handleProceedToPayment = () => {
-    if (!shippingInfo.address || !shippingInfo.city || !shippingInfo.phone) {
-      alert('Please fill in all shipping information');
-      return;
-    }
-    setShowPayment(true);
-  };
+    try {
+      // Create order in database
+      const orderData = {
+        user_id: user.id,
+        total_amount: total,
+        shipping_address: shippingInfo,
+        status: 'pending',
+        payment_status: 'pending',
+        coupon_id: appliedCoupon?.coupon_id || null,
+        discount_amount: discount
+      };
 
-  const handlePaymentSuccess = () => {
-    clearCart();
-    navigate('/orders', { 
-      state: { 
-        message: 'Payment successful! Your order has been placed.',
-        orderId 
-      }
-    });
-  };
-
-  const paymentData: PaymentData = {
-    amount: totalAmount,
-    currency: 'KSh',
-    orderId,
-    customerInfo: {
-      name: user?.user_metadata?.full_name || 'Customer',
-      email: shippingInfo.email,
-      phone: shippingInfo.phone
+      clearCart();
+      toast({ title: 'Order placed successfully!' });
+      navigate('/');
+      
+    } catch (error: any) {
+      console.error('Checkout error:', error);
+      toast({
+        title: 'Error placing order',
+        description: error.message,
+        variant: 'destructive'
+      });
     }
   };
 
-  if (showPayment) {
+  if (!user) {
     return (
-      <MainLayout>
-        <div className="max-w-2xl mx-auto p-6">
-          <PaymentMethodSelector
-            paymentData={paymentData}
-            onPaymentSuccess={handlePaymentSuccess}
-            onCancel={() => setShowPayment(false)}
-          />
+      <FrontendLayout>
+        <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
+          <div className="max-w-2xl mx-auto text-center py-12">
+            <Card className="rounded-2xl shadow-lg">
+              <CardContent className="p-8">
+                <h1 className="text-2xl font-bold mb-4">Please Log In</h1>
+                <p className="text-muted-foreground mb-6">
+                  You need to be logged in to complete your checkout.
+                </p>
+                <Button 
+                  onClick={() => navigate('/auth')}
+                  className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-xl px-8"
+                >
+                  Log In
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </MainLayout>
+        <Footer />
+      </FrontendLayout>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <FrontendLayout>
+        <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
+          <div className="max-w-2xl mx-auto text-center py-12">
+            <Card className="rounded-2xl shadow-lg">
+              <CardContent className="p-8">
+                <h1 className="text-2xl font-bold mb-4">Your Cart is Empty</h1>
+                <p className="text-muted-foreground mb-6">
+                  Add some items to your cart before checking out.
+                </p>
+                <Button 
+                  onClick={() => navigate('/shop')}
+                  className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-xl px-8"
+                >
+                  Continue Shopping
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+        <Footer />
+      </FrontendLayout>
     );
   }
 
   return (
-    <MainLayout>
-      <div className="max-w-4xl mx-auto p-6 space-y-6">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold mb-2">Checkout</h1>
-          <p className="text-gray-600">Review your order and complete your purchase</p>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* Order Summary */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ShoppingCart className="h-5 w-5" />
-                Order Summary
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {cart.map((item) => (
-                <div key={item.id} className="flex items-center gap-4">
-                  <img
-                    src={item.image || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=80'}
-                    alt={item.name}
-                    className="w-12 h-12 rounded-lg object-cover"
-                  />
-                  <div className="flex-1">
-                    <div className="font-medium">{item.name}</div>
-                    <div className="text-sm text-gray-600">Qty: {item.quantity}</div>
+    <FrontendLayout>
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Checkout</h1>
+            <p className="text-gray-600">Complete your order securely</p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Shipping Information */}
+            <Card className="rounded-2xl shadow-lg">
+              <CardHeader>
+                <CardTitle>Shipping Information</CardTitle>
+                <CardDescription>Enter your delivery details</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName">Full Name *</Label>
+                    <Input
+                      id="fullName"
+                      value={shippingInfo.fullName}
+                      onChange={(e) => setShippingInfo(prev => ({ ...prev, fullName: e.target.value }))}
+                      required
+                      className="rounded-xl"
+                    />
                   </div>
-                  <div className="font-medium">
-                    KSh {(item.price * item.quantity).toLocaleString()}
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email *</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={shippingInfo.email}
+                      onChange={(e) => setShippingInfo(prev => ({ ...prev, email: e.target.value }))}
+                      required
+                      className="rounded-xl"
+                    />
                   </div>
-                </div>
-              ))}
-              
-              <Separator />
-              
-              <div className="flex justify-between items-center text-lg font-bold">
-                <span>Total:</span>
-                <span className="text-green-600">KSh {totalAmount.toLocaleString()}</span>
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* Shipping Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                Shipping Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  <MapPin className="h-4 w-4 inline mr-1" />
-                  Delivery Address
-                </label>
-                <textarea
-                  value={shippingInfo.address}
-                  onChange={(e) => setShippingInfo(prev => ({ ...prev, address: e.target.value }))}
-                  placeholder="Enter your full delivery address"
-                  className="w-full p-3 border rounded-lg resize-none"
-                  rows={3}
-                  required
-                />
-              </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number *</Label>
+                    <Input
+                      id="phone"
+                      value={shippingInfo.phone}
+                      onChange={(e) => setShippingInfo(prev => ({ ...prev, phone: e.target.value }))}
+                      required
+                      className="rounded-xl"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">City</label>
-                <input
-                  type="text"
-                  value={shippingInfo.city}
-                  onChange={(e) => setShippingInfo(prev => ({ ...prev, city: e.target.value }))}
-                  placeholder="Enter your city"
-                  className="w-full p-3 border rounded-lg"
-                  required
-                />
-              </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Address *</Label>
+                    <Textarea
+                      id="address"
+                      value={shippingInfo.address}
+                      onChange={(e) => setShippingInfo(prev => ({ ...prev, address: e.target.value }))}
+                      required
+                      className="rounded-xl"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  <Phone className="h-4 w-4 inline mr-1" />
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  value={shippingInfo.phone}
-                  onChange={(e) => setShippingInfo(prev => ({ ...prev, phone: e.target.value }))}
-                  placeholder="254712345678"
-                  className="w-full p-3 border rounded-lg"
-                  required
-                />
-              </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="city">City *</Label>
+                    <Input
+                      id="city"
+                      value={shippingInfo.city}
+                      onChange={(e) => setShippingInfo(prev => ({ ...prev, city: e.target.value }))}
+                      required
+                      className="rounded-xl"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  <Mail className="h-4 w-4 inline mr-1" />
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  value={shippingInfo.email}
-                  onChange={(e) => setShippingInfo(prev => ({ ...prev, email: e.target.value }))}
-                  placeholder="your@email.com"
-                  className="w-full p-3 border rounded-lg"
-                  required
-                />
-              </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="instructions">Special Instructions</Label>
+                    <Textarea
+                      id="instructions"
+                      value={shippingInfo.specialInstructions}
+                      onChange={(e) => setShippingInfo(prev => ({ ...prev, specialInstructions: e.target.value }))}
+                      placeholder="Any special delivery instructions..."
+                      className="rounded-xl"
+                    />
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
 
-              <Button
-                onClick={handleProceedToPayment}
-                className="w-full mt-6 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
-                size="lg"
+            {/* Order Summary */}
+            <div className="space-y-6">
+              <Card className="rounded-2xl shadow-lg">
+                <CardHeader>
+                  <CardTitle>Order Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {items.map((item) => (
+                    <div key={item.id} className="flex justify-between">
+                      <div>
+                        <p className="font-medium">{item.name}</p>
+                        <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
+                      </div>
+                      <p className="font-medium">
+                        KSH {(Number(item.price) * item.quantity).toLocaleString()}
+                      </p>
+                    </div>
+                  ))}
+
+                  <Separator />
+
+                  <div className="flex justify-between">
+                    <span>Subtotal</span>
+                    <span>KSH {subtotal.toLocaleString()}</span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span>Shipping</span>
+                    <span>KSH {shippingCost.toLocaleString()}</span>
+                  </div>
+
+                  {discount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Discount</span>
+                      <span>-KSH {discount.toFixed(2)}</span>
+                    </div>
+                  )}
+
+                  <Separator />
+
+                  <div className="flex justify-between text-lg font-bold">
+                    <span>Total</span>
+                    <span>KSH {total.toLocaleString()}</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <CouponInput
+                orderAmount={subtotal}
+                onCouponApplied={handleCouponApplied}
+                onCouponRemoved={handleCouponRemoved}
+                appliedCoupon={appliedCoupon}
+              />
+
+              <Button 
+                onClick={handleSubmit} 
+                size="lg" 
+                className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-xl py-6 text-lg"
               >
-                Proceed to Payment
+                Place Order - KSH {total.toLocaleString()}
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
-    </MainLayout>
+      
+      <Footer />
+    </FrontendLayout>
   );
 };
 
