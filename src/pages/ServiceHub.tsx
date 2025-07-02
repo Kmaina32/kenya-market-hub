@@ -16,14 +16,19 @@ import {
   DollarSign
 } from 'lucide-react';
 import HeroSection from '@/components/shared/HeroSection';
+import { useNavigate } from 'react-router-dom';
 
 const ServiceHub = () => {
+  const navigate = useNavigate();
+
   const handleApplyProvider = () => {
-    console.log('Apply to become provider');
+    // Navigate to provider application page
+    navigate('/service-provider-registration');
   };
 
   const handleManageServices = () => {
-    console.log('Manage services');
+    // Navigate to manage services dashboard
+    navigate('/services-dashboard');
   };
 
   const serviceCategories = [
@@ -178,11 +183,26 @@ const ServiceHub = () => {
                               <span>KSh {provider.hourlyRate}/hr</span>
                             </div>
                             <div className="flex gap-2">
-                              <Button size="sm" variant="outline" className="border-orange-300 text-orange-700 hover:bg-orange-50 bg-white">
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="border-orange-300 text-orange-700 hover:bg-orange-50 bg-white"
+                                onClick={() => {
+                                  // Open contact modal or initiate call
+                                  alert(`Contacting ${provider.name}`);
+                                }}
+                              >
                                 <Phone className="h-4 w-4 mr-1" />
                                 Contact
                               </Button>
-                              <Button size="sm" className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600">
+                              <Button 
+                                size="sm" 
+                                className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                                onClick={() => {
+                                  // Open booking modal or navigate to booking page
+                                  alert(`Booking service with ${provider.name}`);
+                                }}
+                              >
                                 <Calendar className="h-4 w-4 mr-1" />
                                 Book
                               </Button>
