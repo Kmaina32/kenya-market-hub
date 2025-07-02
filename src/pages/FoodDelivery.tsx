@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { UtensilsCrossed, Star, Clock, MapPin, Phone, ShoppingCart, Search, Filter, Loader2, DollarSign, List, Grid } from 'lucide-react';
 import FrontendLayout from '@/components/layouts/FrontendLayout';
@@ -11,27 +12,7 @@ import { Slider } from '@/components/ui/slider'; // Assuming Shadcn Slider
 import { useRestaurants } from '@/hooks/useRestaurants'; // Ensure this hook can accept filters
 import RestaurantMenuModal from '@/components/RestaurantMenuModal';
 import { toast } from 'sonner';
-
-// --- Interfaces for better type safety and clarity ---
-// Extend your Restaurant type to include potentially new fields or clarify existing ones
-interface Restaurant {
-  id: string;
-  business_name: string;
-  business_description?: string;
-  business_address?: string;
-  business_phone?: string;
-  banner_url?: string;
-  logo_url?: string;
-  average_rating?: number; // Assume your DB returns this or calculate it
-  total_reviews?: number; // Assume your DB returns this
-  delivery_time_min?: number; // Min delivery time in minutes
-  delivery_time_max?: number; // Max delivery time in minutes
-  min_order_value?: number; // Minimum order value for delivery
-  delivery_fee?: number; // Flat delivery fee
-  is_open?: boolean; // Real-time open/closed status
-  category?: string; // e.g., "African", "Italian", "Fast Food"
-  // Add other relevant fields for filtering/display
-}
+import { Restaurant } from '@/types/restaurant';
 
 // --- Constants for filtering/sorting options ---
 const FOOD_CATEGORIES = [
@@ -117,7 +98,7 @@ const FoodDelivery: React.FC = () => {
       ? `${restaurant.delivery_time_min}-${restaurant.delivery_time_max} min`
       : '30-45 min'; // Default if data is missing
     const displayDeliveryFee = restaurant.delivery_fee === 0 ? 'Free' : `KSh ${restaurant.delivery_fee?.toFixed(0) || 'XX'}`;
-    const isOpen = restaurant.is_open ?? true; // Assume open if status is not explicitly set
+    const isOpen = restaurant.is_active ?? true; // Assume open if status is not explicitly set
 
     return (
       <Card
@@ -130,7 +111,7 @@ const FoodDelivery: React.FC = () => {
         <div className="aspect-video bg-gray-200 relative overflow-hidden">
           {/* Banner Image */}
           <img
-            src={restaurant.banner_url || defaultBanner}
+            src={restaurant.image_url || defaultBanner}
             alt={restaurant.business_name}
             className={`w-full h-full object-cover transition-transform duration-300 ${isOpen ? 'group-hover:scale-105' : ''}`}
             loading="lazy"
@@ -141,16 +122,6 @@ const FoodDelivery: React.FC = () => {
               <Badge variant="destructive" className="text-sm px-3 py-1 animate-pulse">Closed</Badge>
             </div>
           )}
-          {/* Logo */}
-          {restaurant.logo_url && (
-            <div className="absolute bottom-3 left-3 w-16 h-16 rounded-full border-3 border-white overflow-hidden shadow-lg transform translate-y-1/3 group-hover:translate-y-0 transition-transform duration-300">
-              <img
-                src={restaurant.logo_url || defaultLogo}
-                alt={`${restaurant.business_name} logo`}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          )}
           {/* Status Badge */}
           {isOpen && (
             <Badge className="absolute top-3 right-3 bg-gradient-to-r from-green-500 to-green-600 text-white text-xs px-2 py-1 shadow-md">
@@ -159,7 +130,7 @@ const FoodDelivery: React.FC = () => {
           )}
         </div>
 
-        <CardHeader className="pb-3 pt-8 px-4"> {/* Adjusted padding for logo */}
+        <CardHeader className="pb-3 pt-4 px-4">
           <CardTitle className="text-xl text-gray-900 line-clamp-1 font-bold group-hover:text-orange-600 transition-colors">
             {restaurant.business_name}
           </CardTitle>
@@ -425,7 +396,7 @@ const FoodDelivery: React.FC = () => {
               <Loader2 className="h-10 w-10 text-orange-600 animate-spin mx-auto mb-4" />
               <p className="text-lg text-gray-600">Loading delicious restaurants...</p>
             </div>
-          ) : restaurants.length === 0 ? (
+          ) : restaurants && restaurants.length === 0 ? (
             <div className="text-center py-12">
               <UtensilsCrossed className="h-20 w-20 text-gray-400 mx-auto mb-6" />
               <h3 className="text-2xl font-bold text-gray-900 mb-3">No Restaurants Found</h3>
@@ -440,7 +411,7 @@ const FoodDelivery: React.FC = () => {
             </div>
           ) : (
             <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4' : 'grid-cols-1'}`}>
-              {restaurants.map((restaurant) => (
+              {restaurants && restaurants.map((restaurant) => (
                 <RestaurantCard key={restaurant.id} restaurant={restaurant} />
               ))}
             </div>

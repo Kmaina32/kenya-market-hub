@@ -12,7 +12,7 @@ import AppointmentBookingModal from '@/components/AppointmentBookingModal';
 interface MedicalProvider {
   id: string;
   full_name: string;
-  provider_type: 'doctor' | 'nurse' | 'pharmacist' | 'therapist';
+  provider_type: 'doctor' | 'nurse' | 'pharmacist' | 'lab_technician' | 'ambulance_driver' | 'dentist' | 'physiotherapist';
   specialization_id?: string;
   rating: number;
   is_verified: boolean;
@@ -465,9 +465,9 @@ const Medical: React.FC = () => {
         {selectedProvider && (
           <AppointmentBookingModal
             open={isBookingModalOpen}
-            onClose={() => {
-              setIsBookingModalOpen(false);
-              setSelectedProvider(null);
+            onOpenChange={(open) => {
+              setIsBookingModalOpen(open);
+              if (!open) setSelectedProvider(null);
             }}
             provider={selectedProvider}
           />
