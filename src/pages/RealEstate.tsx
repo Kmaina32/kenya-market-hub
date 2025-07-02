@@ -32,7 +32,7 @@ const RealEstate = () => {
   const filteredProperties = properties?.filter(property =>
     property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     property.location_address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    property.city.toLowerCase().includes(searchTerm.toLowerCase())
+    property.city?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
   const handleViewDetails = (property: any) => {
@@ -117,9 +117,9 @@ const RealEstate = () => {
               {filteredProperties.map((property) => (
                 <Card key={property.id} className="hover:shadow-xl transition-all duration-300 border-2 hover:border-orange-300 overflow-hidden">
                   <div className="aspect-video bg-gray-200 relative overflow-hidden">
-                    {property.image_url ? (
+                    {property.images && property.images.length > 0 ? (
                       <img 
-                        src={property.image_url} 
+                        src={property.images[0]} 
                         alt={property.title}
                         className="w-full h-full object-cover"
                       />

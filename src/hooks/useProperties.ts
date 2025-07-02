@@ -5,23 +5,32 @@ import { toast } from 'sonner';
 
 export interface Property {
   id: string;
+  owner_id: string;
+  agent_id?: string;
   title: string;
   description?: string;
+  property_type: 'house' | 'apartment' | 'land' | 'commercial' | 'office';
+  listing_type: 'sale' | 'rent';
   price: number;
-  location_address: string;
   bedrooms?: number;
   bathrooms?: number;
   area_sqm?: number;
-  property_type: 'house' | 'apartment' | 'land' | 'commercial' | 'office';
-  image_url?: string;
-  is_featured?: boolean;
+  location_address: string;
+  location_coordinates?: any;
+  county?: string;
+  city?: string;
   amenities?: string[];
-  agent_id?: string;
-  listing_type: string;
-  city: string;
-  county: string;
-  created_at?: string;
-  updated_at?: string;
+  features?: string[];
+  images?: string[];
+  virtual_tour_url?: string;
+  contact_phone?: string;
+  contact_email?: string;
+  status: 'available' | 'sold' | 'rented' | 'draft' | 'pending';
+  is_featured: boolean;
+  views_count: number;
+  available_from?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export const useProperties = () => {
@@ -39,6 +48,23 @@ export const useProperties = () => {
   });
 };
 
+export const useProperty = (id: string) => {
+  return useQuery({
+    queryKey: ['property', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+};
+
 export const useCreateProperty = () => {
   const queryClient = useQueryClient();
 
@@ -52,12 +78,12 @@ export const useCreateProperty = () => {
       bathrooms?: number;
       area_sqm?: number;
       property_type: 'house' | 'apartment' | 'land' | 'commercial' | 'office';
-      image_url?: string;
-      is_featured?: boolean;
-      amenities?: string[];
-      listing_type: string;
+      listing_type: 'sale' | 'rent';
       city: string;
       county: string;
+      is_featured?: boolean;
+      amenities?: string[];
+      images?: string[];
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -65,7 +91,9 @@ export const useCreateProperty = () => {
         .from('properties')
         .insert({
           ...propertyData,
-          agent_id: user?.id || null
+          owner_id: user?.id || '',
+          status: 'available',
+          views_count: 0
         })
         .select()
         .single();
@@ -126,6 +154,36 @@ export const useDeleteProperty = () => {
     },
     onError: (error: any) => {
       toast.error('Failed to delete property: ' + error.message);
+    }
+  });
+};
+
+export const useCreatePropertyInquiry = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (inquiryData: {
+      property_id: string;
+      inquirer_name: string;
+      inquirer_email: string;
+      inquirer_phone?: string;
+      message: string;
+    }) => {
+      const { data, error } = await supabase
+        .from('property_inquiries')
+        .insert(inquiryData)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['property-inquiries'] });
+      toast.success('Inquiry sent successfully!');
+    },
+    onError: (error: any) => {
+      toast.error('Failed to send inquiry: ' + error.message);
     }
   });
 };

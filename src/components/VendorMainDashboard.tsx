@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +17,7 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 const VendorMainDashboard = () => {
   const { data: vendorProfile } = useMyVendorProfile();
   const analytics = useVendorAnalytics();
-  const { data: products = [] } = useProducts({ vendorId: vendorProfile?.id });
+  const { data: products = [] } = useProducts();
   const navigate = useNavigate();
 
   // Orders fetching (recent 5)

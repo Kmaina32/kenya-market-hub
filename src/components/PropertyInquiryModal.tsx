@@ -6,8 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Property } from '@/types/property';
-import { useCreatePropertyInquiry } from '@/hooks/useProperties';
+import { Property, useCreatePropertyInquiry } from '@/hooks/useProperties';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState } from 'react';
 
@@ -38,10 +37,8 @@ const PropertyInquiryModal: React.FC<PropertyInquiryModalProps> = ({
     e.preventDefault();
     if (!property) return;
 
-    // Validate that we have a proper UUID for property_id
     const propertyId = property.id;
     
-    // Check if the property ID is a valid UUID format
     const isValidUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(propertyId);
     
     if (!isValidUuid) {
