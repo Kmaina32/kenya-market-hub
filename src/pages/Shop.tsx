@@ -1,12 +1,27 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, ShoppingBag, Filter, Grid, List, Heart, Eye, ShoppingCart } from 'lucide-react';
+import {
+  Search,
+  ShoppingBag,
+  Filter,
+  Grid,
+  List,
+  Heart,
+  Eye,
+  ShoppingCart
+} from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
 import ProductQuickView from '@/components/shop/ProductQuickView';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useWishlist } from '@/hooks/useWishlist';
@@ -29,15 +44,12 @@ const Shop: React.FC = () => {
     queryKey: ['products', searchTerm, selectedCategory, sortBy],
     queryFn: async () => {
       let query = supabase.from('products').select(`*, vendors ( business_name, logo_url )`).eq('in_stock', true);
-
       if (searchTerm) {
         query = query.or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
       }
-
       if (selectedCategory !== 'all') {
         query = query.eq('category', selectedCategory);
       }
-
       switch (sortBy) {
         case 'price_low': query = query.order('price', { ascending: true }); break;
         case 'price_high': query = query.order('price', { ascending: false }); break;
@@ -45,7 +57,6 @@ const Shop: React.FC = () => {
         case 'name': query = query.order('name', { ascending: true }); break;
         default: query = query.order('created_at', { ascending: false });
       }
-
       const { data, error } = await query;
       if (error) throw error;
       return data || [];
@@ -65,7 +76,7 @@ const Shop: React.FC = () => {
   };
 
   const EnhancedProductCard = ({ product }: { product: any }) => (
-    <Card className="w-full max-w-[300px] mx-auto group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-2 hover:border-orange-300 bg-white rounded-2xl overflow-hidden">
+    <Card className="w-full group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-2 hover:border-orange-300 bg-white rounded-2xl overflow-hidden">
       <div className="aspect-square bg-gray-200 relative overflow-hidden">
         {product.image_url ? (
           <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -88,7 +99,7 @@ const Shop: React.FC = () => {
           </div>
         )}
       </div>
-      <CardContent className="p-4">
+      <CardContent className="p-3 sm:p-4">
         <div className="space-y-3">
           <Badge variant="outline" className="text-xs">{product.category}</Badge>
           <h3 className="font-semibold text-gray-900 line-clamp-2 group-hover:text-orange-600 transition-colors">{product.name}</h3>
@@ -158,8 +169,8 @@ const Shop: React.FC = () => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto mb-4"></div>
               <p className="text-gray-600">Loading products...</p>
             </div>
-          ) : (products?.length > 0 ? (
-            <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-[repeat(auto-fit,_minmax(250px,_1fr))]' : 'grid-cols-1'}`}>
+          ) : products?.length > 0 ? (
+            <div className={`grid gap-4 ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4' : 'grid-cols-1'}`}>
               {products.map(product => (<EnhancedProductCard key={product.id} product={product} />))}
             </div>
           ) : (
@@ -171,7 +182,7 @@ const Shop: React.FC = () => {
               </p>
               <Button onClick={() => { setSearchTerm(''); setSelectedCategory('all'); }} className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600">Clear Filters</Button>
             </div>
-          ))}
+          )}
         </div>
 
         <ProductQuickView product={selectedProduct} isOpen={isQuickViewOpen} onClose={() => setIsQuickViewOpen(false)} onAddToCart={handleAddToCart} onAddToWishlist={handleAddToWishlist} />
