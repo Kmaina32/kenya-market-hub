@@ -14,18 +14,20 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 interface Driver {
   id: string; // Changed to string for UUIDs
   user_id: string; // Assuming a link to a user table
-  vehicle_make: string;
-  vehicle_model: string;
-  vehicle_year: number;
+  vehicle_make?: string;
+  vehicle_model?: string;
+  vehicle_year?: number;
   license_plate: string;
   vehicle_type: 'taxi' | 'motorbike'; // Updated to match database
-  rating: number;
-  total_rides: number;
+  rating?: number;
+  total_rides?: number;
   status: 'available' | 'on_trip' | 'offline';
-  current_lat: number; // For real-time location
-  current_lon: number; // For real-time location
   phone_number: string; // Added phone number
-  eta_minutes?: number; // Estimated time of arrival
+  is_active: boolean;
+  is_verified: boolean;
+  created_at?: string;
+  updated_at?: string;
+  eta_minutes?: number; // This will be calculated separately
 }
 
 interface VehicleType {
@@ -81,7 +83,12 @@ const Rides: React.FC = () => {
         toast.error('Failed to fetch drivers. Please try again.');
         throw error;
       }
-      return data || [];
+      
+      // Transform the data to match our Driver interface and add ETA
+      return (data || []).map(driver => ({
+        ...driver,
+        eta_minutes: Math.floor(Math.random() * 15) + 5 // Mock ETA calculation
+      })) as Driver[];
     },
     refetchInterval: 30 * 1000, // Refetch every 30 seconds to keep driver list fresh
     staleTime: 20 * 1000, // Data considered fresh for 20 seconds
@@ -168,8 +175,8 @@ const Rides: React.FC = () => {
                     <h3 className="font-semibold text-lg text-gray-900">Driver #{driver.id.slice(0, 6)}</h3>
                     <div className="flex items-center gap-1 mt-1">
                       <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                      <span className="text-sm font-medium text-gray-700">{driver.rating.toFixed(1)}</span>
-                      <span className="text-sm text-gray-500">({driver.total_rides} rides)</span>
+                      <span className="text-sm font-medium text-gray-700">{(driver.rating || 0).toFixed(1)}</span>
+                      <span className="text-sm text-gray-500">({driver.total_rides || 0} rides)</span>
                     </div>
                   </div>
                   <Badge
@@ -411,7 +418,7 @@ const Rides: React.FC = () => {
               <Button
                 className="w-full h-12 text-lg bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-md transition-all duration-200"
                 disabled={!pickup || !destination || isLoading || estimatedFare === null}
-                onClick={() => { /* This button just triggers driver search/fare calculation now. Actual booking is per driver */ }}
+                onClick={() => { /* This button triggers driver search/fare calculation */ }}
               >
                 {isLoading ? 'Searching...' : 'Find Drivers & Estimate Fare'}
               </Button>
@@ -426,7 +433,6 @@ const Rides: React.FC = () => {
             <p className="text-gray-600 mb-6">These drivers are available near your pickup location for the selected vehicle type.</p>
 
             {MemoizedDriverList}
-
           </div>
         </div>
       </div>
