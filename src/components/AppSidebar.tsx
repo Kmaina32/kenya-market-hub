@@ -109,7 +109,7 @@ const AppSidebar = () => {
           <SidebarMenuItem>
             <SidebarMenuButton>
               <span className="text-sm text-gray-600">
-                © 2025 Sokko Sasa by Milleast.tech. All rights reserved.
+                © 2025 Sokko Sasa by Milleast.tech
               </span>
             </SidebarMenuButton>
           </SidebarMenuItem>

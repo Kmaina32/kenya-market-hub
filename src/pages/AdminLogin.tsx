@@ -1,25 +1,39 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext'; // Import the useAuth hook
 
 const AdminLogin = () => {
   const [credentials, setCredentials] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { signIn } = useAuth(); // Destructure signIn from useAuth
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => { // Make the function async
     e.preventDefault();
-    
-    // Demo credentials
+    setError(''); // Clear any previous errors
+
+    // For demo purposes, use a pre-defined admin email and password.
+    // In a production environment, these would typically be retrieved securely
+    // or the 'username' field would directly be the email for signIn.
+    const adminEmail = "admin@example.com"; // Replace with the actual email of your admin user in Supabase
+    const adminPassword = "admin123"; // Replace with the actual password of your admin user in Supabase
+
     if (credentials.username === 'admin' && credentials.password === 'admin123') {
-      localStorage.setItem('adminToken', 'authenticated');
-      navigate('/admin');
+      const { error: authError } = await signIn(adminEmail, adminPassword); // Use the signIn function
+
+      if (authError) {
+        setError(authError.message);
+      } else {
+        // If signIn is successful, AuthContext will update its state,
+        // and ProtectedAdminRoute will automatically allow access.
+        // No explicit navigate('/admin') is needed here as ProtectedAdminRoute handles it.
+      }
     } else {
-      setError('Invalid credentials');
+      setError('Invalid demo credentials. Please use "admin" and "admin123" for demo login, or provide valid admin credentials.');
     }
   };
 
