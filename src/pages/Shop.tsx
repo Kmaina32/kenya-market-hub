@@ -2,28 +2,31 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, ShoppingBag, Grid, List, Heart, Eye, ShoppingCart, Plus, Trash2 } from 'lucide-react';
+import { Search, ShoppingBag, Filter, Grid, List, Heart, Eye, ShoppingCart } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
+import OptimizedProductCard from '@/components/OptimizedProductCard';
+import ProductQuickView from '@/components/shop/ProductQuickView';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useCart } from '@/hooks/useCart';
+import { useWishlist } from '@/hooks/useWishlist';
 import { useCartOperations } from '@/hooks/useCartOperations';
 import { QuantitySelector } from '@/components/shop/QuantitySelector';
 import { toast } from 'sonner';
-import CreateProductModal from '@/components/modals/CreateProductModal';
-import { useDeleteProduct } from '@/hooks/useProducts';
 
 const Shop: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('newest');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
 
+  const { addToWishlist, isInWishlist } = useWishlist();
   const { quantities, getQuantity, setQuantity, handleAddToCart } = useCartOperations();
-  const deleteProduct = useDeleteProduct();
 
   // Fetch products from database
   const { data: products, isLoading } = useQuery({
@@ -73,16 +76,17 @@ const Shop: React.FC = () => {
   });
 
   const categories = ['Electronics', 'Fashion', 'Home & Garden', 'Sports', 'Books', 'Beauty'];
+
   const filteredProducts = products || [];
 
-  const handleAddToWishlist = (product: any) => {
-    toast.success(`${product.name} added to wishlist!`);
+  const handleQuickView = (product: any) => {
+    setSelectedProduct(product);
+    setIsQuickViewOpen(true);
   };
 
-  const handleDeleteProduct = (productId: string) => {
-    if (confirm('Are you sure you want to delete this product?')) {
-      deleteProduct.mutate(productId);
-    }
+  const handleAddToWishlist = (product: any) => {
+    addToWishlist(product);
+    toast.success(`${product.name} added to wishlist!`);
   };
 
   const EnhancedProductCard = ({ product }: { product: any }) => (
@@ -106,25 +110,17 @@ const Shop: React.FC = () => {
             size="sm"
             variant="secondary"
             className="p-2 rounded-full bg-white/90 hover:bg-white"
-            onClick={() => toast.info(`Viewing ${product.name}`)}
+            onClick={() => handleQuickView(product)}
           >
             <Eye className="h-4 w-4" />
           </Button>
           <Button
             size="sm"
             variant="secondary"
-            className="p-2 rounded-full bg-white/90 hover:bg-white"
+            className={`p-2 rounded-full bg-white/90 hover:bg-white ${isInWishlist(product.id) ? 'text-red-500' : ''}`}
             onClick={() => handleAddToWishlist(product)}
           >
-            <Heart className="h-4 w-4" />
-          </Button>
-          <Button
-            size="sm"
-            variant="destructive"
-            className="p-2 rounded-full bg-red-500/90 hover:bg-red-600 text-white"
-            onClick={() => handleDeleteProduct(product.id)}
-          >
-            <Trash2 className="h-4 w-4" />
+            <Heart className={`h-4 w-4 ${isInWishlist(product.id) ? 'fill-current' : ''}`} />
           </Button>
         </div>
 
@@ -172,7 +168,7 @@ const Shop: React.FC = () => {
   return (
     <MainLayout>
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        {/* Hero Section */}
+        {/* Hero Section - Updated with consistent styling */}
         <div 
           className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-600 to-red-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4"
           style={{
@@ -199,7 +195,7 @@ const Shop: React.FC = () => {
           {/* Search and Filters */}
           <Card className="mb-8">
             <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div className="relative md:col-span-2">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
@@ -253,14 +249,6 @@ const Shop: React.FC = () => {
                     <List className="h-4 w-4" />
                   </Button>
                 </div>
-
-                <Button
-                  onClick={() => setShowCreateModal(true)}
-                  className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Product
-                </Button>
               </div>
             </CardContent>
           </Card>
@@ -304,9 +292,13 @@ const Shop: React.FC = () => {
           )}
         </div>
 
-        <CreateProductModal 
-          open={showCreateModal} 
-          onOpenChange={setShowCreateModal} 
+        {/* Quick View Modal */}
+        <ProductQuickView
+          product={selectedProduct}
+          isOpen={isQuickViewOpen}
+          onClose={() => setIsQuickViewOpen(false)}
+          onAddToCart={handleAddToCart}
+          onAddToWishlist={handleAddToWishlist}
         />
       </div>
     </MainLayout>

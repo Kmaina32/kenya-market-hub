@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,6 @@ import { Car, MapPin, Navigation, Clock, Star, Phone } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
 const Rides = () => {
   const [pickup, setPickup] = useState('');
@@ -38,30 +37,10 @@ const Rides = () => {
     { id: 'motorcycle', name: 'Boda Boda', icon: '🏍️', price: 'KSh 8/km', description: 'Quick & affordable' }
   ];
 
-  const handleBookRide = (driver: any) => {
-    if (!pickup || !destination) {
-      toast.error('Please enter pickup and destination locations');
-      return;
-    }
-    toast.success(`Ride booked with Driver ${driver.id.slice(0, 6)}!`);
-  };
-
-  const handleCallDriver = (driver: any) => {
-    toast.info(`Calling ${driver.phone_number}...`);
-  };
-
-  const handleFindDrivers = () => {
-    if (!pickup || !destination) {
-      toast.error('Please enter pickup and destination locations');
-      return;
-    }
-    toast.info('Searching for available drivers...');
-  };
-
   return (
     <MainLayout>
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        {/* Hero Section with Background Image */}
+        {/* Hero Section with Background Image - Added proper padding and rounded borders */}
         <div 
           className="relative h-64 overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4"
           style={{
@@ -146,7 +125,7 @@ const Rides = () => {
 
               <Button 
                 className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-                onClick={handleFindDrivers}
+                disabled={!pickup || !destination}
               >
                 Find Available Drivers
               </Button>
@@ -204,18 +183,10 @@ const Rides = () => {
                       </div>
 
                       <div className="flex gap-2">
-                        <Button 
-                          className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-                          onClick={() => handleBookRide(driver)}
-                        >
+                        <Button className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600">
                           Book Ride
                         </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="border-orange-200 text-orange-600 hover:bg-orange-50"
-                          onClick={() => handleCallDriver(driver)}
-                        >
+                        <Button variant="outline" size="sm" className="border-orange-200 text-orange-600 hover:bg-orange-50">
                           <Phone className="h-4 w-4" />
                         </Button>
                       </div>
@@ -230,7 +201,7 @@ const Rides = () => {
                 <p className="text-gray-600 mb-6">
                   No drivers are currently available in your area. Please try again later.
                 </p>
-                <Button variant="outline" onClick={handleFindDrivers}>
+                <Button variant="outline">
                   Refresh
                 </Button>
               </div>

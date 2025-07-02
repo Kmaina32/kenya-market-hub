@@ -8,10 +8,10 @@ import { Search, Briefcase, MapPin, Clock, DollarSign, Building } from 'lucide-r
 import MainLayout from '@/components/MainLayout';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
 const Jobs = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
   const { data: jobs, isLoading } = useQuery({
     queryKey: ['jobs'],
@@ -33,15 +33,10 @@ const Jobs = () => {
     job.category?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
-  const handleApplyNow = (job: any) => {
-    toast.success(`Application submitted for ${job.title}!`);
-    // In a real app, this would open an application modal or redirect to application page
-  };
-
   return (
     <MainLayout>
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        {/* Hero Section with Background Image */}
+        {/* Hero Section with Background Image - Added proper padding and rounded borders */}
         <div 
           className="relative h-64 overflow-hidden bg-gradient-to-r from-blue-600 to-purple-700 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4"
           style={{
@@ -138,10 +133,7 @@ const Jobs = () => {
                       <span>Posted {new Date(job.created_at).toLocaleDateString()}</span>
                     </div>
 
-                    <Button 
-                      className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-                      onClick={() => handleApplyNow(job)}
-                    >
+                    <Button className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600">
                       Apply Now
                     </Button>
                   </CardContent>

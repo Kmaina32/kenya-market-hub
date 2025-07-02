@@ -32,15 +32,11 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ open, onOpenChange, o
     
     try {
       await createProduct.mutateAsync({
-        name: formData.name,
-        description: formData.description,
+        ...formData,
         price: parseFloat(formData.price),
-        category: formData.category,
         stock_quantity: parseInt(formData.stock_quantity) || 0,
         in_stock: parseInt(formData.stock_quantity) > 0,
-        image_url: formData.image_url,
-        rating: 0,
-        reviews_count: 0
+        updated_at: new Date().toISOString()
       });
       
       setFormData({

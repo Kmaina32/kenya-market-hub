@@ -7,9 +7,9 @@ import { Calendar, MapPin, Users, Clock, DollarSign } from 'lucide-react';
 import { useEvents } from '@/hooks/useEvents';
 
 const EventSystem = () => {
-  const { data: events, isLoading, error } = useEvents();
+  const { events, loading, error, getEventsByType, getUpcomingEvents } = useEvents();
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="space-y-6">
         <div className="text-center">
@@ -39,13 +39,13 @@ const EventSystem = () => {
     return (
       <div className="text-center py-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Events & Activities</h2>
-        <p className="text-red-600 mb-4">Error loading events</p>
+        <p className="text-red-600 mb-4">{error}</p>
         <Button onClick={() => window.location.reload()}>Try Again</Button>
       </div>
     );
   }
 
-  const upcomingEvents = events?.slice(0, 6) || [];
+  const upcomingEvents = getUpcomingEvents(6);
 
   if (upcomingEvents.length === 0) {
     return (
@@ -122,7 +122,7 @@ const EventSystem = () => {
                 <div className="flex items-center gap-1">
                   <DollarSign className="h-4 w-4 text-green-600" />
                   <span className="font-semibold text-green-600">
-                    {event.price === 0 ? 'Free' : `KSh ${event.price?.toLocaleString()}`}
+                    {event.price === 0 ? 'Free' : `KSh ${event.price.toLocaleString()}`}
                   </span>
                 </div>
                 
@@ -135,7 +135,7 @@ const EventSystem = () => {
         ))}
       </div>
       
-      {events && events.length > 6 && (
+      {events.length > 6 && (
         <div className="text-center">
           <Button variant="outline">View All Events</Button>
         </div>
