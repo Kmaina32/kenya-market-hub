@@ -17,50 +17,22 @@ import {
   Eye
 } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
+import { useProperties } from '@/hooks/useProperties';
+import { Link } from 'react-router-dom';
 
 const RealEstate = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [propertyType, setPropertyType] = useState('all');
-
-  // Mock data - will be replaced with real data from database
-  const properties = [
-    {
-      id: 1,
-      title: "Modern 3BR Apartment in Westlands",
-      price: 45000000,
-      location: "Westlands, Nairobi",
-      bedrooms: 3,
-      bathrooms: 2,
-      parking: 1,
-      area: 120,
-      type: "apartment",
-      image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=300&fit=crop",
-      description: "Luxurious apartment with modern amenities and city views"
-    },
-    {
-      id: 2,
-      title: "Spacious 4BR Villa in Karen",
-      price: 85000000,
-      location: "Karen, Nairobi",
-      bedrooms: 4,
-      bathrooms: 3,
-      parking: 2,
-      area: 250,
-      type: "house",
-      image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop",
-      description: "Beautiful villa with garden and swimming pool"
-    }
-  ];
+  const { data: properties = [], isLoading, error } = useProperties();
 
   const filteredProperties = properties.filter(property =>
-    property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    property.location.toLowerCase().includes(searchTerm.toLowerCase())
+    property.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    property.location_address?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
     <MainLayout>
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        {/* Hero Section with Background Image - Added proper padding and rounded borders */}
+        {/* Hero Section with Background Image */}
         <div 
           className="relative h-64 overflow-hidden bg-gradient-to-r from-green-600 to-blue-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4"
           style={{
@@ -95,7 +67,12 @@ const RealEstate = () => {
             </div>
           </div>
 
-          {filteredProperties.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading properties...</p>
+            </div>
+          ) : filteredProperties.length === 0 ? (
             <div className="text-center py-12">
               <Home className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 mb-2">No Properties Available</h3>
@@ -114,7 +91,7 @@ const RealEstate = () => {
                 <Card key={property.id} className="hover:shadow-xl transition-all duration-300 border-2 hover:border-orange-300 overflow-hidden">
                   <div className="aspect-video bg-gray-200 relative overflow-hidden">
                     <img 
-                      src={property.image} 
+                      src={property.image_url || property.images?.[0] || 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400'} 
                       alt={property.title}
                       className="w-full h-full object-cover"
                     />
@@ -127,17 +104,17 @@ const RealEstate = () => {
                       </Button>
                     </div>
                     <Badge className="absolute top-3 left-3 bg-green-500 text-white">
-                      For Sale
+                      {property.listing_type === 'sale' ? 'For Sale' : 'For Rent'}
                     </Badge>
                   </div>
                   
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between mb-2">
                       <Badge variant="outline" className="text-orange-600 border-orange-200 capitalize">
-                        {property.type}
+                        {property.property_type}
                       </Badge>
                       <span className="text-2xl font-bold text-orange-600">
-                        KSh {(property.price / 1000000).toFixed(1)}M
+                        KSh {property.price >= 1000000 ? `${(property.price / 1000000).toFixed(1)}M` : property.price.toLocaleString()}
                       </span>
                     </div>
                     <CardTitle className="text-lg text-gray-900 line-clamp-2">
@@ -145,7 +122,7 @@ const RealEstate = () => {
                     </CardTitle>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <MapPin className="h-4 w-4 text-orange-500" />
-                      <span>{property.location}</span>
+                      <span>{property.location_address}</span>
                     </div>
                   </CardHeader>
 
@@ -157,25 +134,27 @@ const RealEstate = () => {
                     <div className="grid grid-cols-4 gap-2 text-sm">
                       <div className="flex items-center gap-1">
                         <BedDouble className="h-4 w-4 text-orange-500" />
-                        <span>{property.bedrooms}</span>
+                        <span>{property.bedrooms || 0}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Bath className="h-4 w-4 text-orange-500" />
-                        <span>{property.bathrooms}</span>
+                        <span>{property.bathrooms || 0}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Car className="h-4 w-4 text-orange-500" />
-                        <span>{property.parking}</span>
+                        <span>1</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Square className="h-4 w-4 text-orange-500" />
-                        <span>{property.area}m²</span>
+                        <span>{property.area_sqm || 0}m²</span>
                       </div>
                     </div>
 
                     <div className="flex gap-2">
-                      <Button className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600">
-                        View Details
+                      <Button asChild className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600">
+                        <Link to={`/property/${property.id}`}>
+                          View Details
+                        </Link>
                       </Button>
                       <Button variant="outline" size="sm" className="border-orange-200 text-orange-600 hover:bg-orange-50">
                         <Phone className="h-4 w-4" />

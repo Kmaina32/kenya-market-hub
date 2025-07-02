@@ -12,8 +12,39 @@ export interface PropertyFilters {
   location?: string;
 }
 
+export interface Property {
+  id: string;
+  owner_id: string;
+  agent_id?: string;
+  title: string;
+  description?: string;
+  price: number;
+  property_type: 'apartment' | 'house' | 'land' | 'commercial' | 'office';
+  listing_type: 'sale' | 'rent';
+  bedrooms?: number;
+  bathrooms?: number;
+  area_sqm?: number;
+  location_address: string;
+  location_coordinates?: { lat: number; lng: number };
+  county: string;
+  city: string;
+  amenities?: string[];
+  features?: string[];
+  status: 'available' | 'sold' | 'rented' | 'pending';
+  is_featured: boolean;
+  images?: string[];
+  image_url?: string;
+  virtual_tour_url?: string;
+  contact_phone?: string;
+  contact_email?: string;
+  views_count: number;
+  available_from?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // Mock seed data for properties
-const seedProperties = [
+const seedProperties: Property[] = [
   {
     id: '1',
     owner_id: 'seed-owner-1',
@@ -21,8 +52,8 @@ const seedProperties = [
     title: 'Modern 3BR Apartment in Westlands',
     description: 'Spacious apartment with modern amenities, parking, and 24/7 security.',
     price: 4500000,
-    property_type: 'apartment' as const,
-    listing_type: 'sale' as const,
+    property_type: 'apartment',
+    listing_type: 'sale',
     bedrooms: 3,
     bathrooms: 2,
     area_sqm: 120,
@@ -32,9 +63,10 @@ const seedProperties = [
     city: 'Nairobi',
     amenities: ['Parking', '24/7 Security', 'Swimming Pool', 'Gym', 'Balcony'],
     features: ['Modern Kitchen', 'Master En-suite', 'Spacious Living Room'],
-    status: 'available' as const,
+    status: 'available',
     is_featured: true,
     images: ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400'],
+    image_url: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400',
     virtual_tour_url: 'https://example.com/virtual-tour-1',
     contact_phone: '+254 712 345 678',
     contact_email: 'agent@realestate.com',
@@ -50,8 +82,8 @@ const seedProperties = [
     title: 'Executive Villa in Karen',
     description: 'Luxury 4-bedroom villa with garden, swimming pool, and servant quarters.',
     price: 85000,
-    property_type: 'house' as const,
-    listing_type: 'rent' as const,
+    property_type: 'house',
+    listing_type: 'rent',
     bedrooms: 4,
     bathrooms: 3,
     area_sqm: 250,
@@ -61,9 +93,10 @@ const seedProperties = [
     city: 'Karen',
     amenities: ['Swimming Pool', 'Garden', 'Servant Quarters', 'Garage', 'Security'],
     features: ['Spacious Rooms', 'Modern Kitchen', 'Study Room', 'Family Room'],
-    status: 'available' as const,
+    status: 'available',
     is_featured: true,
     images: ['https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400'],
+    image_url: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400',
     virtual_tour_url: 'https://example.com/virtual-tour-2',
     contact_phone: '+254 722 456 789',
     contact_email: 'karen@properties.com',
@@ -71,35 +104,6 @@ const seedProperties = [
     available_from: '2024-01-20',
     created_at: '2024-01-10T14:20:00Z',
     updated_at: '2024-01-10T14:20:00Z'
-  },
-  {
-    id: '3',
-    owner_id: 'seed-owner-3',
-    agent_id: null,
-    title: 'Commercial Office Space CBD',
-    description: 'Prime office space in the heart of Nairobi CBD with excellent connectivity.',
-    price: 2800000,
-    property_type: 'commercial' as const,
-    listing_type: 'sale' as const,
-    bedrooms: 0,
-    bathrooms: 2,
-    area_sqm: 85,
-    location_address: 'CBD, Nairobi',
-    location_coordinates: { lat: -1.2864, lng: 36.8172 },
-    county: 'Nairobi',
-    city: 'Nairobi',
-    amenities: ['Elevator', 'Parking', 'Security', 'Air Conditioning', 'High Speed Internet'],
-    features: ['Prime Location', 'Modern Facilities', 'Conference Room', 'Reception Area'],
-    status: 'available' as const,
-    is_featured: false,
-    images: ['https://images.unsplash.com/photo-1497366216548-37526070297c?w=400'],
-    virtual_tour_url: null,
-    contact_phone: '+254 733 567 890',
-    contact_email: 'cbd@offices.com',
-    views_count: 156,
-    available_from: '2024-01-15',
-    created_at: '2024-01-08T09:15:00Z',
-    updated_at: '2024-01-08T09:15:00Z'
   }
 ];
 
@@ -119,14 +123,13 @@ export const useProperties = () => {
           return seedProperties;
         }
 
-        // If no data from database, return seed data
         if (!data || data.length === 0) {
           console.log('No data in database, using seed data');
           return seedProperties;
         }
 
         console.log('Successfully fetched properties from database:', data.length);
-        return data;
+        return data as Property[];
       } catch (error) {
         console.log('Error fetching properties, using seed data:', error);
         return seedProperties;
@@ -158,7 +161,7 @@ export const useProperty = (id: string) => {
         }
 
         console.log('Successfully fetched property from database:', data);
-        return data;
+        return data as Property;
       } catch (error) {
         console.log('Error fetching property, checking seed data:', error);
         const seedProperty = seedProperties.find(p => p.id === id);
@@ -170,6 +173,45 @@ export const useProperty = (id: string) => {
       }
     },
     enabled: !!id
+  });
+};
+
+export const useCreateProperty = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (propertyData: Omit<Property, 'id' | 'created_at' | 'updated_at'>) => {
+      console.log('Creating property:', propertyData);
+      const { data, error } = await supabase
+        .from('properties')
+        .insert([propertyData])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating property:', error);
+        throw error;
+      }
+      
+      console.log('Property created successfully:', data);
+      return data as Property;
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Property Created',
+        description: 'Your property has been listed successfully.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['properties'] });
+    },
+    onError: (error) => {
+      console.error('Error creating property:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create property. Please try again.',
+        variant: 'destructive',
+      });
+    },
   });
 };
 

@@ -1,15 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Property } from '@/types/property';
-import { useCreatePropertyInquiry } from '@/hooks/useProperties';
+import { Property, useCreatePropertyInquiry } from '@/hooks/useProperties';
 import { useAuth } from '@/contexts/AuthContext';
-import { useState } from 'react';
 
 interface PropertyInquiryModalProps {
   isOpen: boolean;
@@ -38,20 +36,8 @@ const PropertyInquiryModal: React.FC<PropertyInquiryModalProps> = ({
     e.preventDefault();
     if (!property) return;
 
-    // Validate that we have a proper UUID for property_id
-    const propertyId = property.id;
-    
-    // Check if the property ID is a valid UUID format
-    const isValidUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(propertyId);
-    
-    if (!isValidUuid) {
-      console.error('Invalid property ID format:', propertyId);
-      alert('There seems to be an issue with this property. Please try again later.');
-      return;
-    }
-
     console.log('Creating property inquiry:', {
-      property_id: propertyId,
+      property_id: property.id,
       inquirer_name: formData.inquirer_name,
       inquirer_email: formData.inquirer_email,
       inquirer_phone: formData.inquirer_phone,
@@ -59,7 +45,7 @@ const PropertyInquiryModal: React.FC<PropertyInquiryModalProps> = ({
     });
 
     createInquiry.mutate({
-      property_id: propertyId,
+      property_id: property.id,
       inquirer_name: formData.inquirer_name,
       inquirer_email: formData.inquirer_email,
       inquirer_phone: formData.inquirer_phone,
@@ -87,7 +73,7 @@ const PropertyInquiryModal: React.FC<PropertyInquiryModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Inquire About Property</DialogTitle>
         </DialogHeader>

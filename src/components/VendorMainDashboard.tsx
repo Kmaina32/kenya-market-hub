@@ -1,250 +1,225 @@
+
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { 
-  Plus, Store, Users, TrendingUp
+  Package, 
+  ShoppingCart, 
+  DollarSign, 
+  TrendingUp,
+  Users,
+  Eye,
+  Plus,
+  AlertCircle,
+  CheckCircle
 } from 'lucide-react';
-import { useMyVendorProfile } from '@/hooks/useVendors';
-import { useVendorAnalytics } from '@/hooks/useVendorAnalytics';
 import { useProducts } from '@/hooks/useProducts';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import LoadingSpinner from '@/components/LoadingSpinner';
+import { useAuth } from '@/contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
 const VendorMainDashboard = () => {
-  const { data: vendorProfile } = useMyVendorProfile();
-  const analytics = useVendorAnalytics();
-  const { data: products = [] } = useProducts({ vendorId: vendorProfile?.id });
-  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { data: products = [], isLoading } = useProducts();
 
-  // Orders fetching (recent 5)
-  const { data: recentOrders = [], isLoading: isOrdersLoading } = useQuery({
-    queryKey: ['vendor-recent-orders', vendorProfile?.id],
-    enabled: !!vendorProfile?.id,
-    queryFn: async () => {
-      if (!vendorProfile?.id) return [];
-      // Fetch recent orders for this vendor via their products
-      const { data: orderItems, error } = await supabase
-        .from('order_items').select(`
-          order_id, orders(created_at, user_id, total_amount, status), 
-          product_id, quantity, total_price, products(name)
-        `)
-        .eq('products.vendor_id', vendorProfile.id)
-        .order('orders.created_at', { ascending: false })
-        .limit(5);
-      if (error) throw error;
-      const summarized = {};
-      // Group by order
-      (orderItems || []).forEach((item) => {
-        const oid = item.order_id;
-        if (!summarized[oid]) {
-          summarized[oid] = {
-            orderId: oid,
-            createdAt: item.orders?.created_at,
-            userId: item.orders?.user_id,
-            status: item.orders?.status || 'n/a',
-            total: item.orders?.total_amount || 0,
-            products: []
-          };
-        }
-        summarized[oid].products.push(item.products?.name);
-      });
-      // Return summary
-      return Object.values(summarized).slice(0, 5);
-    }
-  });
+  // Filter products for current vendor
+  const vendorProducts = products.filter(product => product.vendor_id === user?.id);
+  
+  // Calculate stats
+  const totalProducts = vendorProducts.length;
+  const inStockProducts = vendorProducts.filter(p => p.in_stock).length;
+  const outOfStockProducts = totalProducts - inStockProducts;
+  const totalViews = vendorProducts.reduce((sum, p) => sum + (p.views_count || 0), 0);
 
-  // Top products (by sales)
-  const { data: topProducts = [], isLoading: isTopLoading } = useQuery({
-    queryKey: ['vendor-top-products', vendorProfile?.id],
-    enabled: !!vendorProfile?.id,
-    queryFn: async () => {
-      if (!vendorProfile?.id) return [];
-      // Aggregate sales per product
-      const { data: orderItems, error } = await supabase
-        .from('order_items').select(`
-          product_id, quantity, products(name)
-        `)
-        .eq('products.vendor_id', vendorProfile.id);
-
-      if (error) throw error;
-      // Aggregate sales by product
-      const byProduct: Record<string, { name: string; sales: number }> = {};
-      (orderItems || []).forEach((item) => {
-        const pid = item.product_id;
-        if (!byProduct[pid]) {
-          byProduct[pid] = { 
-            name: item.products?.name,
-            sales: 0
-          };
-        }
-        byProduct[pid].sales += item.quantity || 0;
-      });
-      // Return sorted
-      return Object.values(byProduct)
-        .sort((a, b) => b.sales - a.sales)
-        .slice(0, 3);
-    }
-  });
-
-
-  const quickActions = [
+  const stats = [
     {
-      title: 'Add New Product',
-      description: 'List a new product in your store',
-      icon: Plus,
-      color: 'bg-orange-500',
-      action: () => navigate('/vendor/products/add')
-    },
-    {
-      title: 'View Store',
-      description: 'See how customers view your store',
-      icon: Store,
+      title: 'Total Products',
+      value: totalProducts,
+      icon: Package,
       color: 'bg-blue-500',
-      action: () => navigate('/vendor/store')
+      change: '+12%'
     },
     {
-      title: 'Customers',
-      description: 'Manage customer relationships',
-      icon: Users,
+      title: 'In Stock',
+      value: inStockProducts,
+      icon: CheckCircle,
+      color: 'bg-green-500',
+      change: '+8%'
+    },
+    {
+      title: 'Out of Stock',
+      value: outOfStockProducts,
+      icon: AlertCircle,
+      color: 'bg-red-500',
+      change: '-2%'
+    },
+    {
+      title: 'Total Views',
+      value: totalViews,
+      icon: Eye,
       color: 'bg-purple-500',
-      action: () => navigate('/vendor/customers')
+      change: '+15%'
     }
   ];
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-6">
+                <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                <div className="h-8 bg-gray-200 rounded"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white p-6 rounded-lg shadow-lg">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Store className="h-8 w-8" />
-          Vendor Dashboard
-        </h1>
-        <p className="text-orange-100 mt-2">
-          Welcome back! Manage your store and grow your business
-        </p>
-        {vendorProfile && (
-          <div className="mt-4">
-            <Badge variant="secondary" className="bg-white/20 text-white">
-              {vendorProfile.business_name}
-            </Badge>
-          </div>
-        )}
+      {/* Welcome Header */}
+      <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-lg p-6 text-white">
+        <h1 className="text-2xl font-bold mb-2">Welcome back, {user?.user_metadata?.full_name || 'Vendor'}!</h1>
+        <p className="text-orange-100">Manage your products and track your performance</p>
       </div>
-      {/* --- Vendor Analytics Section --- */}
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {quickActions.map((action, index) => (
-              <Button
-                key={index}
-                variant="outline"
-                className="h-auto p-4 flex flex-col items-start text-left space-y-2 hover:shadow-md transition-shadow"
-                onClick={action.action}
-              >
-                <div className={`p-2 rounded-lg ${action.color} text-white`}>
-                  <action.icon className="h-5 w-5" />
+
+      {/* Stats Grid */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {stats.map((stat, index) => {
+          const StatIcon = stat.icon;
+          return (
+            <Card key={index} className="hover:shadow-lg transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+                    <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                  </div>
+                  <div className={`p-3 rounded-full ${stat.color}`}>
+                    <StatIcon className="h-6 w-6 text-white" />
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-sm">{action.title}</h3>
-                  <p className="text-xs text-gray-500">{action.description}</p>
+                <div className="mt-4 flex items-center">
+                  <span className="text-sm font-medium text-green-600">{stat.change}</span>
+                  <span className="text-sm text-gray-500 ml-2">from last month</span>
                 </div>
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-      {/* Real Analytics */}
-      {analytics.isLoading ? (
-        <div className="flex items-center space-x-2">
-          <LoadingSpinner /> <span>Loading analytics...</span>
-        </div>
-      ) : analytics.error ? (
-        <Card><CardContent className="text-red-500">Error loading analytics data.</CardContent></Card>
-      ) : analytics.data ? (
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><TrendingUp /> Analytics</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5" />
+              Quick Actions
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              <div>
-                <div className="text-xs text-gray-500">Revenue</div>
-                <div className="font-bold text-lg text-green-600">KSh {analytics.data.totalRevenue.toLocaleString()}</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500">Orders</div>
-                <div className="font-bold text-lg">{analytics.data.totalOrders}</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500">Products</div>
-                <div className="font-bold text-lg">{analytics.data.totalProducts}</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500">Avg. Rating</div>
-                <div className="font-bold text-lg">{analytics.data.averageRating || '-'}</div>
-              </div>
-            </div>
+          <CardContent className="space-y-3">
+            <Button asChild className="w-full justify-start bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600">
+              <Link to="/vendor/products/new">
+                <Plus className="h-4 w-4 mr-2" />
+                Add New Product
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full justify-start">
+              <Link to="/vendor/products">
+                <Package className="h-4 w-4 mr-2" />
+                Manage Products
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full justify-start">
+              <Link to="/vendor/orders">
+                <ShoppingCart className="h-4 w-4 mr-2" />
+                View Orders
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full justify-start">
+              <Link to="/vendor/analytics">
+                <TrendingUp className="h-4 w-4 mr-2" />
+                View Analytics
+              </Link>
+            </Button>
           </CardContent>
         </Card>
-      ) : null}
 
-      {/* Recent Orders */}
-      <Card className="shadow-lg">
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Products</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {vendorProducts.length > 0 ? (
+              <div className="space-y-3">
+                {vendorProducts.slice(0, 5).map((product) => (
+                  <div key={product.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <img 
+                        src={product.image_url || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=64'} 
+                        alt={product.name}
+                        className="w-10 h-10 rounded-lg object-cover"
+                      />
+                      <div>
+                        <p className="font-medium text-sm">{product.name}</p>
+                        <p className="text-sm text-gray-600">KSh {product.price.toLocaleString()}</p>
+                      </div>
+                    </div>
+                    <Badge variant={product.in_stock ? 'default' : 'destructive'}>
+                      {product.in_stock ? 'In Stock' : 'Out of Stock'}
+                    </Badge>
+                  </div>
+                ))}
+                <Button asChild variant="outline" className="w-full">
+                  <Link to="/vendor/products">View All Products</Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 mb-4">No products yet</p>
+                <Button asChild className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600">
+                  <Link to="/vendor/products/new">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Your First Product
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Performance Overview */}
+      <Card>
         <CardHeader>
-          <CardTitle>Recent Orders</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
+            Performance Overview
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          {isOrdersLoading ? (
-            <div><LoadingSpinner /> Loading...</div>
-          ) : (
-            <div className="space-y-4">
-              {recentOrders.length === 0 && (
-                <div className="text-center text-gray-400">No orders yet.</div>
-              )}
-              {recentOrders.map((order: any, i: number) => (
-                <div key={order.orderId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium">Order #{String(order.orderId).slice(0, 7)}</p>
-                    <p className="text-sm text-gray-600">{order.products.join(', ')}</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-semibold text-orange-800">KSh {order.total ? Number(order.total).toLocaleString() : '-'}</div>
-                    <Badge variant="outline" className="text-xs">{order.status || 'n/a'}</Badge>
-                  </div>
-                </div>
-              ))}
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="text-center p-4 bg-blue-50 rounded-lg">
+              <div className="text-2xl font-bold text-blue-600">{totalProducts}</div>
+              <div className="text-sm text-blue-600">Total Products</div>
             </div>
-          )}
-        </CardContent>
-      </Card>
-      {/* Top Products */}
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle>Top Products</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isTopLoading ? <LoadingSpinner /> : (
-            <div className="space-y-4">
-              {topProducts && topProducts.length > 0 ? topProducts.map((product: any, idx: number) => (
-                <div key={product.name} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium">{product.name}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold">{product.sales} sold</p>
-                  </div>
-                </div>
-              )) : (
-                <div className="text-center text-gray-400">No sales yet.</div>
-              )}
+            <div className="text-center p-4 bg-green-50 rounded-lg">
+              <div className="text-2xl font-bold text-green-600">{totalViews}</div>
+              <div className="text-sm text-green-600">Total Views</div>
             </div>
-          )}
+            <div className="text-center p-4 bg-purple-50 rounded-lg">
+              <div className="text-2xl font-bold text-purple-600">
+                {totalProducts > 0 ? Math.round(totalViews / totalProducts) : 0}
+              </div>
+              <div className="text-sm text-purple-600">Avg Views per Product</div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
