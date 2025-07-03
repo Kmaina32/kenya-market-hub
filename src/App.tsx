@@ -1,9 +1,8 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom"; // BrowserRouter import
 import { AuthProvider } from "./contexts/AuthContext";
 import { CartProvider } from "./contexts/CartContext";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -72,7 +71,13 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <ErrorBoundary>
-      <BrowserRouter>
+      <BrowserRouter
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+          // You can add other future flags here as needed, based on React Router documentation
+        }}
+      > {/* Added future prop here */}
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <CartProvider>
