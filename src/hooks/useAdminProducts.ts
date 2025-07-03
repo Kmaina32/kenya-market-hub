@@ -64,3 +64,25 @@ export const useDeleteProduct = () => {
     }
   });
 };
+
+export const useCreateProduct = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (productData: any) => {
+      const { error } = await supabase
+        .from('products')
+        .insert(productData);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success('Product created successfully');
+    },
+    onError: (error) => {
+      toast.error(`Failed to create product: ${error.message}`);
+    }
+  });
+};
