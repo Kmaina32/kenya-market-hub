@@ -1,4 +1,3 @@
-
 import { useMutation } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { useCreateTransaction, useUpdateTransactionStatus } from './useTransactions';
@@ -11,6 +10,13 @@ export interface PaymentData {
     name: string;
     email: string;
     phone?: string;
+  };
+  // FIX: Added shippingInfo to PaymentData interface
+  shippingInfo?: { 
+    address: string;
+    city: string;
+    phone: string;
+    email: string;
   };
 }
 
