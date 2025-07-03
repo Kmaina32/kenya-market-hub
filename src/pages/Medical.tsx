@@ -204,7 +204,7 @@ const Medical: React.FC = () => {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {providers.map((provider) => (
-          <Card key={provider.id} className="hover:shadow-lg transition-shadow border border-gray-100">
+          <Card key={provider.id} className="hover:shadow-lg transition-shadow border border-orange-100">
             <CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
@@ -227,11 +227,11 @@ const Medical: React.FC = () => {
 
               <div className="space-y-3 mb-4">
                 <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <User className="h-4 w-4 text-blue-500" />
+                  <User className="h-4 w-4 text-orange-600" />
                   <span className="capitalize">{getProviderDisplayType(provider.provider_type)}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Clock className="h-4 w-4 text-green-500" />
+                  <Clock className="h-4 w-4 text-gray-600" />
                   <span>Available for appointments</span>
                 </div>
               </div>
@@ -239,12 +239,12 @@ const Medical: React.FC = () => {
               <div className="flex gap-2">
                 <Button
                   onClick={() => handleBookAppointment(provider)}
-                  className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
+                  className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
                 >
                   <Calendar className="h-4 w-4 mr-2" />
                   Book Appointment
                 </Button>
-                <Button variant="outline" size="sm" className="border-blue-200 text-blue-600 hover:bg-blue-50">
+                <Button variant="outline" size="sm" className="border-orange-200 text-orange-600 hover:bg-orange-50">
                   <Phone className="h-4 w-4" />
                 </Button>
               </div>
@@ -285,7 +285,7 @@ const Medical: React.FC = () => {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {facilities.map((facility) => (
-          <Card key={facility.id} className="hover:shadow-lg transition-shadow border border-gray-100">
+          <Card key={facility.id} className="hover:shadow-lg transition-shadow border border-orange-100">
             <CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
@@ -309,18 +309,18 @@ const Medical: React.FC = () => {
                 </div>
                 {facility.phone && (
                   <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Phone className="h-4 w-4 text-blue-500" />
+                    <Phone className="h-4 w-4 text-orange-600" />
                     <span>{facility.phone}</span>
                   </div>
                 )}
               </div>
 
               <div className="flex gap-2">
-                <Button className="flex-1 bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600">
+                <Button className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600">
                   <MapPin className="h-4 w-4 mr-2" />
                   View Location
                 </Button>
-                <Button variant="outline" size="sm" className="border-green-200 text-green-600 hover:bg-green-50">
+                <Button variant="outline" size="sm" className="border-orange-200 text-orange-600 hover:bg-orange-50">
                   <Phone className="h-4 w-4" />
                 </Button>
               </div>
@@ -361,7 +361,7 @@ const Medical: React.FC = () => {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {medications.map((medication) => (
-          <Card key={medication.id} className="hover:shadow-lg transition-shadow border border-gray-100">
+          <Card key={medication.id} className="hover:shadow-lg transition-shadow border border-orange-100">
             <CardContent className="p-4">
               <div className="mb-4">
                 {medication.image_url ? (
@@ -394,12 +394,12 @@ const Medical: React.FC = () => {
               )}
 
               <div className="flex items-center justify-between mb-4">
-                <span className="text-lg font-bold text-green-600">KSh {medication.price}</span>
+                <span className="text-lg font-bold text-orange-600">KSh {medication.price}</span>
                 <span className="text-sm text-gray-500">Stock: {medication.stock_quantity}</span>
               </div>
 
               <Button 
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
                 disabled={medication.stock_quantity === 0}
               >
                 {medication.stock_quantity === 0 ? 'Out of Stock' : 'Add to Cart'}
@@ -413,10 +413,10 @@ const Medical: React.FC = () => {
 
   return (
     <MainLayout>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
         {/* Hero Section */}
         <div
-          className="relative h-64 overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4 shadow-xl"
+          className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-600 to-red-700 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4 shadow-xl"
           style={{
             backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')`,
             backgroundSize: 'cover',
@@ -425,9 +425,9 @@ const Medical: React.FC = () => {
         >
           <div className="relative z-10 flex items-center justify-center h-full px-6 sm:px-8 lg:px-12">
             <div className="text-center text-white max-w-3xl mx-auto">
-              <Stethoscope className="h-16 w-16 mx-auto mb-4 text-blue-100" />
+              <Stethoscope className="h-16 w-16 mx-auto mb-4 text-orange-100" />
               <h1 className="text-3xl md:text-4xl font-bold mb-3 drop-shadow-lg">Medical Services</h1>
-              <p className="text-lg text-blue-100 font-light leading-relaxed">
+              <p className="text-lg text-orange-100 font-light leading-relaxed">
                 Connect with verified healthcare providers, find medical facilities, and order medications.
               </p>
             </div>
@@ -447,8 +447,8 @@ const Medical: React.FC = () => {
                 onClick={() => setActiveTab(key as any)}
                 className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
                   activeTab === key
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : 'bg-white text-gray-600 hover:bg-blue-50 border border-gray-200'
+                    ? 'bg-orange-600 text-white shadow-lg'
+                    : 'bg-white text-gray-600 hover:bg-orange-50 border border-gray-200'
                 }`}
               >
                 <Icon className="h-5 w-5" />
@@ -466,7 +466,7 @@ const Medical: React.FC = () => {
                   placeholder={`Search ${activeTab}...`}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  className="pl-10 pr-4 py-2 border rounded-md focus:ring-orange-500 focus:border-orange-500"
                 />
               </div>
               
@@ -475,7 +475,7 @@ const Medical: React.FC = () => {
                   <select
                     value={selectedSpecialization}
                     onChange={(e) => setSelectedSpecialization(e.target.value)}
-                    className="w-full px-4 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 border rounded-md focus:ring-orange-500 focus:border-orange-500"
                   >
                     <option value="all">All Specializations</option>
                     {specializations?.map((spec) => (
