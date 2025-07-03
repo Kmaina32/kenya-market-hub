@@ -1,16 +1,15 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
-export interface ChatConversation {
+export interface Conversation {
   id: string;
   participant1_id: string;
   participant2_id: string;
-  created_at: string;
   last_message?: string;
   last_message_at?: string;
+  created_at: string;
   participant1?: {
     id: string;
     full_name: string;
@@ -25,78 +24,54 @@ export interface ChatConversation {
   };
 }
 
-// Get user's conversations
 export const useConversations = () => {
   const { user } = useAuth();
-
+  
   return useQuery({
     queryKey: ['conversations', user?.id],
     queryFn: async () => {
       if (!user) return [];
 
-      console.log('Fetching conversations...');
-      
-      // Get conversations where user is a participant
-      const { data: conversations, error } = await supabase
+      const { data, error } = await supabase
         .from('chat_conversations')
-        .select('*')
+        .select(`
+          *,
+          participant1:profiles!chat_conversations_participant1_id_fkey(id, full_name, avatar_url, email),
+          participant2:profiles!chat_conversations_participant2_id_fkey(id, full_name, avatar_url, email)
+        `)
         .or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`)
         .order('last_message_at', { ascending: false, nullsFirst: false });
 
-      if (error) {
-        console.error('Error fetching conversations:', error);
-        throw error;
-      }
-
-      if (!conversations || conversations.length === 0) return [];
-
-      // Get unique participant IDs (excluding current user)
-      const participantIds = new Set<string>();
-      conversations.forEach(conv => {
-        if (conv.participant1_id !== user.id) participantIds.add(conv.participant1_id);
-        if (conv.participant2_id !== user.id) participantIds.add(conv.participant2_id);
-      });
-
-      // Fetch participant profiles
-      let participantProfiles: any[] = [];
-      if (participantIds.size > 0) {
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, full_name, avatar_url, email')
-          .in('id', Array.from(participantIds));
-        participantProfiles = profiles || [];
-      }
-
-      // Combine the data
-      return conversations.map(conv => ({
+      if (error) throw error;
+      
+      return data?.map(conv => ({
         ...conv,
-        participant1: participantProfiles.find(p => p.id === conv.participant1_id),
-        participant2: participantProfiles.find(p => p.id === conv.participant2_id)
-      })) as ChatConversation[];
+        participant1: Array.isArray(conv.participant1) ? conv.participant1[0] : conv.participant1,
+        participant2: Array.isArray(conv.participant2) ? conv.participant2[0] : conv.participant2
+      })) as Conversation[];
     },
-    enabled: !!user,
+    enabled: !!user
   });
 };
 
-// Create a new conversation
 export const useCreateConversation = () => {
-  const queryClient = useQueryClient();
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (otherUserId: string) => {
+    mutationFn: async (participant2Id: string) => {
       if (!user) throw new Error('User not authenticated');
 
       // Check if conversation already exists
-      const { data: existing } = await supabase
+      const { data: existingConv } = await supabase
         .from('chat_conversations')
-        .select('id')
-        .or(`and(participant1_id.eq.${user.id},participant2_id.eq.${otherUserId}),and(participant1_id.eq.${otherUserId},participant2_id.eq.${user.id})`)
+        .select('*')
+        .or(`and(participant1_id.eq.${user.id},participant2_id.eq.${participant2Id}),and(participant1_id.eq.${participant2Id},participant2_id.eq.${user.id})`)
         .single();
 
-      if (existing) {
-        return existing;
+      if (existingConv) {
+        return existingConv;
       }
 
       // Create new conversation
@@ -104,7 +79,7 @@ export const useCreateConversation = () => {
         .from('chat_conversations')
         .insert({
           participant1_id: user.id,
-          participant2_id: otherUserId
+          participant2_id: participant2Id
         })
         .select()
         .single();
@@ -116,12 +91,12 @@ export const useCreateConversation = () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     },
     onError: (error: any) => {
-      console.error('Conversation creation error:', error);
+      console.error('Error creating conversation:', error);
       toast({
         title: 'Error',
-        description: 'Failed to create conversation. Please try again.',
-        variant: 'destructive',
+        description: 'Failed to start conversation. Please try again.',
+        variant: 'destructive'
       });
-    },
+    }
   });
 };

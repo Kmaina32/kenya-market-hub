@@ -28,6 +28,7 @@ import AdminAnalytics from '@/pages/admin/AdminAnalytics';
 import AdminReports from '@/pages/admin/AdminReports';
 import AdminNotifications from '@/pages/admin/AdminNotifications';
 import AdminSettings from '@/pages/admin/AdminSettings';
+import AdminApprovals from '@/pages/admin/AdminApprovals';
 
 const AdminApp = () => {
   const { user, loading } = useAuth();
@@ -58,6 +59,7 @@ const AdminApp = () => {
           <Route path="orders" element={<AdminOrders />} />
           <Route path="vendors" element={<AdminVendors />} />
           <Route path="drivers" element={<AdminDrivers />} />
+          <Route path="approvals" element={<AdminApprovals />} />
           <Route path="service-providers" element={<AdminServiceProviders />} />
           <Route path="employers" element={<AdminEmployers />} />
           <Route path="agents" element={<AdminAgents />} />

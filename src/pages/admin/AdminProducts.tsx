@@ -7,9 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Package, Search, Edit, Trash2, Eye, Star, TrendingUp } from 'lucide-react';
 import { useAdminProducts, useUpdateProduct, useDeleteProduct } from '@/hooks/useAdminProducts';
+import AddProductModal from '@/components/admin/AddProductModal';
 
 const AdminProducts = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const { data: products, isLoading } = useAdminProducts();
   const updateProduct = useUpdateProduct();
   const deleteProduct = useDeleteProduct();
@@ -41,7 +43,10 @@ const AdminProducts = () => {
           <h1 className="text-3xl font-bold text-gray-900">Product Management</h1>
           <p className="text-gray-600">Manage all products and inventory</p>
         </div>
-        <Button className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
+        <Button 
+          className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
+          onClick={() => setIsAddModalOpen(true)}
+        >
           <Package className="h-4 w-4 mr-2" />
           Add Product
         </Button>
@@ -158,6 +163,11 @@ const AdminProducts = () => {
           )}
         </CardContent>
       </Card>
+
+      <AddProductModal 
+        open={isAddModalOpen} 
+        onOpenChange={setIsAddModalOpen} 
+      />
     </div>
   );
 };

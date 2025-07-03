@@ -59,6 +59,7 @@ const ModernAdminSidebar = () => {
   const businessItems = [
     { icon: Store, label: 'Vendors', path: '/vendors', badge: '3' },
     { icon: Car, label: 'Drivers', path: '/drivers', badge: null },
+    { icon: UserCheck, label: 'Approvals', path: '/approvals', badge: '8' },
     { icon: Wrench, label: 'Service Providers', path: '/service-providers', badge: null },
     { icon: Building2, label: 'Employers', path: '/employers', badge: null },
     { icon: UserCheck, label: 'Agents', path: '/agents', badge: null }

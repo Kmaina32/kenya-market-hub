@@ -8,10 +8,7 @@ export const useVendorApplications = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('vendor_applications')
-        .select(`
-          *,
-          profiles(full_name, email)
-        `)
+        .select('*')
         .order('submitted_at', { ascending: false });
       
       if (error) throw error;
@@ -72,10 +69,7 @@ export const useDriverApplications = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('driver_applications')
-        .select(`
-          *,
-          profiles(full_name, email)
-        `)
+        .select('*')
         .order('submitted_at', { ascending: false });
       
       if (error) throw error;
@@ -90,7 +84,7 @@ export const useApproveDriver = () => {
   return useMutation({
     mutationFn: async (applicationId: string) => {
       const { data, error } = await supabase.rpc('approve_driver_application', {
-        application_id: applicationId
+        p_application_id: applicationId
       });
       
       if (error) throw error;
@@ -113,8 +107,8 @@ export const useRejectDriver = () => {
   return useMutation({
     mutationFn: async ({ applicationId, notes }: { applicationId: string; notes?: string }) => {
       const { data, error } = await supabase.rpc('reject_driver_application', {
-        application_id: applicationId,
-        rejection_notes: notes
+        p_application_id: applicationId,
+        p_admin_notes: notes
       });
       
       if (error) throw error;

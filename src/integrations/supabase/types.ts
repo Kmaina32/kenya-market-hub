@@ -333,6 +333,69 @@ export type Database = {
           },
         ]
       }
+      driver_applications: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          documents: Json | null
+          full_name: string
+          id: string
+          license_number: string
+          license_plate: string
+          phone: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_at: string
+          updated_at: string
+          user_id: string
+          vehicle_make: string | null
+          vehicle_model: string | null
+          vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+          vehicle_year: number | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          documents?: Json | null
+          full_name: string
+          id?: string
+          license_number: string
+          license_plate: string
+          phone: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string
+          updated_at?: string
+          user_id: string
+          vehicle_make?: string | null
+          vehicle_model?: string | null
+          vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+          vehicle_year?: number | null
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          documents?: Json | null
+          full_name?: string
+          id?: string
+          license_number?: string
+          license_plate?: string
+          phone?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string
+          updated_at?: string
+          user_id?: string
+          vehicle_make?: string | null
+          vehicle_model?: string | null
+          vehicle_type?: Database["public"]["Enums"]["vehicle_type"]
+          vehicle_year?: number | null
+        }
+        Relationships: []
+      }
       driver_locations: {
         Row: {
           accuracy: number | null
@@ -2843,6 +2906,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_driver_application: {
+        Args: { p_application_id: string }
+        Returns: string
+      }
       approve_medical_provider_application: {
         Args: { p_application_id: string }
         Returns: string
@@ -2904,6 +2971,10 @@ export type Database = {
       }
       increment_post_views: {
         Args: { post_id: string }
+        Returns: undefined
+      }
+      reject_driver_application: {
+        Args: { p_application_id: string; p_admin_notes?: string }
         Returns: undefined
       }
       reject_medical_provider_application: {
