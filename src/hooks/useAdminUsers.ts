@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+type UserRole = 'customer' | 'vendor' | 'driver' | 'admin' | 'property_owner' | 'rider' | 'service_provider';
+
 export const useAdminUsers = () => {
   return useQuery({
     queryKey: ['admin-users'],
@@ -54,10 +56,10 @@ export const useUpdateUserRole = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+    mutationFn: async ({ userId, role }: { userId: string; role: UserRole }) => {
       const { error } = await supabase
         .from('user_roles')
-        .upsert({ user_id: userId, role }, { onConflict: 'user_id' });
+        .upsert({ user_id: userId, role: role as UserRole }, { onConflict: 'user_id' });
 
       if (error) throw error;
     },

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,7 @@ import AppointmentBookingModal from '@/components/AppointmentBookingModal';
 interface MedicalProvider {
   id: string;
   full_name: string;
-  provider_type: 'doctor' | 'nurse' | 'pharmacist' | 'lab_technician' | 'ambulance_driver' | 'dentist' | 'physiotherapist';
+  provider_type: 'doctor' | 'nurse' | 'pharmacist' | 'therapist';
   specialization_id?: string;
   rating: number;
   is_verified: boolean;
@@ -134,8 +135,26 @@ const Medical: React.FC = () => {
   });
 
   const handleBookAppointment = (provider: MedicalProvider) => {
-    setSelectedProvider(provider);
+    // Map database provider type to frontend provider type
+    const mappedProvider: MedicalProvider = {
+      ...provider,
+      provider_type: mapProviderType(provider.provider_type as any)
+    };
+    setSelectedProvider(mappedProvider);
     setIsBookingModalOpen(true);
+  };
+
+  // Helper function to map database provider types to frontend types
+  const mapProviderType = (dbType: string): 'doctor' | 'nurse' | 'pharmacist' | 'therapist' => {
+    switch (dbType) {
+      case 'lab_technician':
+      case 'ambulance_driver':
+      case 'dentist':
+      case 'physiotherapist':
+        return 'therapist';
+      default:
+        return dbType as 'doctor' | 'nurse' | 'pharmacist' | 'therapist';
+    }
   };
 
   const renderProviders = () => {
@@ -469,7 +488,6 @@ const Medical: React.FC = () => {
               setIsBookingModalOpen(open);
               if (!open) setSelectedProvider(null);
             }}
-            provider={selectedProvider}
           />
         )}
       </div>

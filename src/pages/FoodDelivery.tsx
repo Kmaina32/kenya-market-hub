@@ -5,11 +5,11 @@ import FrontendLayout from '@/components/layouts/FrontendLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input'; // Assuming Shadcn Input
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; // Assuming Shadcn Select
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'; // Assuming Shadcn Sheet
-import { Slider } from '@/components/ui/slider'; // Assuming Shadcn Slider
-import { useRestaurants } from '@/hooks/useRestaurants'; // Ensure this hook can accept filters
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Slider } from '@/components/ui/slider';
+import { useRestaurants } from '@/hooks/useRestaurants';
 import RestaurantMenuModal from '@/components/RestaurantMenuModal';
 import { toast } from 'sonner';
 import { Restaurant } from '@/types/restaurant';
@@ -30,7 +30,7 @@ const FoodDelivery: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('relevance');
-  const [deliveryFeeRange, setDeliveryFeeRange] = useState<[number, number]>([0, 1000]); // Example: KSh 0 - 1000
+  const [deliveryFeeRange, setDeliveryFeeRange] = useState<[number, number]>([0, 1000]);
   const [minDeliveryTime, setMinDeliveryTime] = useState<number>(0);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
@@ -42,12 +42,10 @@ const FoodDelivery: React.FC = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
-    }, 500); // Debounce for 500ms
+    }, 500);
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Assuming useRestaurants hook can accept filter/sort parameters
-  // You would modify useRestaurants to take these parameters and build the Supabase query
   const { data: restaurants = [], isLoading, isFetching, refetch } = useRestaurants({
     searchTerm: debouncedSearchTerm,
     category: selectedCategory,
@@ -59,13 +57,13 @@ const FoodDelivery: React.FC = () => {
   const handleRestaurantClick = useCallback((restaurant: Restaurant) => {
     setSelectedRestaurant(restaurant);
     setIsMenuModalOpen(true);
-    toast.success(`Opening menu for ${restaurant.business_name}`);
+    toast.success(`Opening menu for ${restaurant.name}`);
     console.log('Opening menu for restaurant:', restaurant);
   }, []);
 
   const handleCallRestaurant = useCallback((restaurant: Restaurant) => {
-    if (restaurant.business_phone) {
-      window.location.href = `tel:${restaurant.business_phone}`;
+    if (restaurant.phone) {
+      window.location.href = `tel:${restaurant.phone}`;
       toast.success('Opening phone dialer...');
     } else {
       toast.error('Phone number not available');
@@ -73,7 +71,7 @@ const FoodDelivery: React.FC = () => {
   }, []);
 
   const handleOrderNow = useCallback((restaurant: Restaurant) => {
-    toast.success(`Starting order from ${restaurant.business_name}`);
+    toast.success(`Starting order from ${restaurant.name}`);
     // This would typically redirect to cart/order page or open a different modal
   }, []);
 
@@ -83,22 +81,18 @@ const FoodDelivery: React.FC = () => {
     setSortBy('relevance');
     setDeliveryFeeRange([0, 1000]);
     setMinDeliveryTime(0);
-    refetch(); // Manually refetch after clearing filters
+    refetch();
     toast.info("Filters cleared!");
   }, [refetch]);
 
   // --- Restaurant Card Component (Memoized for performance) ---
   const RestaurantCard = React.memo(({ restaurant }: { restaurant: Restaurant }) => {
     const defaultBanner = 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop';
-    const defaultLogo = 'https://via.placeholder.com/60x60?text=Logo'; // Placeholder if no logo_url
-
-    const displayRating = restaurant.average_rating ? restaurant.average_rating.toFixed(1) : 'N/A';
-    const displayReviews = restaurant.total_reviews ? `(${restaurant.total_reviews})` : '';
-    const displayDeliveryTime = restaurant.delivery_time_min && restaurant.delivery_time_max
-      ? `${restaurant.delivery_time_min}-${restaurant.delivery_time_max} min`
-      : '30-45 min'; // Default if data is missing
+    
+    const displayRating = restaurant.rating ? restaurant.rating.toFixed(1) : 'N/A';
+    const displayDeliveryTime = restaurant.delivery_time_minutes ? `${restaurant.delivery_time_minutes} min` : '30-45 min';
     const displayDeliveryFee = restaurant.delivery_fee === 0 ? 'Free' : `KSh ${restaurant.delivery_fee?.toFixed(0) || 'XX'}`;
-    const isOpen = restaurant.is_active ?? true; // Assume open if status is not explicitly set
+    const isOpen = restaurant.is_active ?? true;
 
     return (
       <Card
@@ -109,20 +103,17 @@ const FoodDelivery: React.FC = () => {
         aria-disabled={!isOpen}
       >
         <div className="aspect-video bg-gray-200 relative overflow-hidden">
-          {/* Banner Image */}
           <img
             src={restaurant.image_url || defaultBanner}
-            alt={restaurant.business_name}
+            alt={restaurant.name}
             className={`w-full h-full object-cover transition-transform duration-300 ${isOpen ? 'group-hover:scale-105' : ''}`}
             loading="lazy"
           />
-          {/* Overlay for closed restaurants */}
           {!isOpen && (
             <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
               <Badge variant="destructive" className="text-sm px-3 py-1 animate-pulse">Closed</Badge>
             </div>
           )}
-          {/* Status Badge */}
           {isOpen && (
             <Badge className="absolute top-3 right-3 bg-gradient-to-r from-green-500 to-green-600 text-white text-xs px-2 py-1 shadow-md">
               Open Now
@@ -132,31 +123,28 @@ const FoodDelivery: React.FC = () => {
 
         <CardHeader className="pb-3 pt-4 px-4">
           <CardTitle className="text-xl text-gray-900 line-clamp-1 font-bold group-hover:text-orange-600 transition-colors">
-            {restaurant.business_name}
+            {restaurant.name}
           </CardTitle>
-          {restaurant.category && (
-            <Badge variant="secondary" className="text-xs text-gray-700 w-fit">{restaurant.category}</Badge>
+          {restaurant.cuisine_type && (
+            <Badge variant="secondary" className="text-xs text-gray-700 w-fit">{restaurant.cuisine_type}</Badge>
           )}
           <div className="flex items-center gap-1 text-sm text-gray-600 mt-1">
             <MapPin className="h-4 w-4 text-orange-500" />
-            <span className="truncate font-medium">{restaurant.business_address || 'Kenya'}</span>
+            <span className="truncate font-medium">{restaurant.address || 'Kenya'}</span>
           </div>
         </CardHeader>
 
         <CardContent className="space-y-3 pt-0 px-4 pb-4">
           <p className="text-sm text-gray-700 line-clamp-2">
-            {restaurant.business_description || 'Delicious food delivered to your doorstep.'}
+            {restaurant.description || 'Delicious food delivered to your doorstep.'}
           </p>
 
           <div className="flex items-center justify-between text-sm text-gray-700">
             <div className="flex items-center gap-2">
-              {restaurant.average_rating !== undefined && (
-                <div className="flex items-center gap-1">
-                  <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                  <span className="font-semibold">{displayRating}</span>
-                  <span className="text-xs text-gray-500">{displayReviews}</span>
-                </div>
-              )}
+              <div className="flex items-center gap-1">
+                <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                <span className="font-semibold">{displayRating}</span>
+              </div>
               <div className="flex items-center gap-1">
                 <Clock className="h-4 w-4 text-gray-500" />
                 <span className="font-medium">{displayDeliveryTime}</span>
@@ -172,11 +160,11 @@ const FoodDelivery: React.FC = () => {
               size="sm"
               variant="outline"
               onClick={(e) => {
-                e.stopPropagation(); // Prevent card click from firing
+                e.stopPropagation();
                 handleCallRestaurant(restaurant);
               }}
               className="flex-1 text-sm bg-white border-orange-200 text-orange-600 hover:bg-orange-50 shadow-sm"
-              disabled={!restaurant.business_phone}
+              disabled={!restaurant.phone}
             >
               <Phone className="h-4 w-4 mr-1" />
               Call
@@ -324,9 +312,9 @@ const FoodDelivery: React.FC = () => {
                           </label>
                           <Slider
                             min={0}
-                            max={500} // Adjust max based on typical delivery fees
+                            max={500}
                             step={10}
-                            value={[deliveryFeeRange[1]]} // Control only max fee
+                            value={[deliveryFeeRange[1]]}
                             onValueChange={(val: number[]) => setDeliveryFeeRange([0, val[0]])}
                             className="w-full"
                           />
@@ -339,7 +327,7 @@ const FoodDelivery: React.FC = () => {
                           </label>
                           <Slider
                             min={0}
-                            max={60} // Max 60 minutes
+                            max={60}
                             step={5}
                             value={[minDeliveryTime]}
                             onValueChange={(val: number[]) => setMinDeliveryTime(val[0])}

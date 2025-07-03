@@ -1,21 +1,19 @@
 
 export interface Restaurant {
   id: string;
-  business_name: string;
-  business_description?: string;
-  business_address: string;
-  business_phone?: string;
-  business_email?: string;
-  category: string;
-  cuisine_type?: string;
-  delivery_fee: number;
-  delivery_time_min: number;
-  delivery_time_max: number;
-  min_order_value: number;
-  average_rating?: number;
-  total_reviews?: number;
-  is_active?: boolean;
+  name: string;
+  description?: string;
+  address: string;
+  cuisine_type: string;
   image_url?: string;
+  rating: number;
+  delivery_time_minutes: number;
+  delivery_fee: number;
+  minimum_order: number;
+  is_active: boolean;
+  phone?: string;
+  latitude?: number;
+  longitude?: number;
   created_at?: string;
   updated_at?: string;
 }
