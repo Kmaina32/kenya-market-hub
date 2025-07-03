@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,46 @@ import { User, LogOut, Settings, Menu, UserPlus, LogIn, Home, Shield } from 'luc
 import { Link, useNavigate } from 'react-router-dom';
 
 const UserNav = () => {
-  const { user, signOut } = useAuth();
+  let user, signOut;
+  
+  try {
+    const auth = useAuth();
+    user = auth.user;
+    signOut = auth.signOut;
+  } catch (error) {
+    // If auth context is not available, show guest menu
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm" className="hover:bg-gradient-to-r hover:from-orange-50 hover:to-red-50">
+            <Menu className="h-5 w-5" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56 bg-white backdrop-blur-sm border shadow-xl" align="end">
+          <DropdownMenuItem asChild className="hover:bg-gradient-to-r hover:from-orange-50 hover:to-red-50">
+            <Link to="/" className="flex items-center">
+              <Home className="mr-2 h-4 w-4" />
+              Home
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50">
+            <Link to="/auth" className="flex items-center">
+              <LogIn className="mr-2 h-4 w-4" />
+              Sign In
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild className="hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50">
+            <Link to="/auth" className="flex items-center">
+              <UserPlus className="mr-2 h-4 w-4" />
+              Sign Up
+            </Link>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+
   const navigate = useNavigate();
 
   if (!user) {
