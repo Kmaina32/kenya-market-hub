@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,7 +12,7 @@ import AppointmentBookingModal from '@/components/AppointmentBookingModal';
 interface MedicalProvider {
   id: string;
   full_name: string;
-  provider_type: 'doctor' | 'nurse' | 'pharmacist' | 'therapist';
+  provider_type: 'doctor' | 'nurse' | 'pharmacist' | 'therapist' | 'lab_technician' | 'ambulance_driver' | 'dentist' | 'physiotherapist';
   specialization_id?: string;
   rating: number;
   is_verified: boolean;
@@ -135,25 +134,43 @@ const Medical: React.FC = () => {
   });
 
   const handleBookAppointment = (provider: MedicalProvider) => {
-    // Map database provider type to frontend provider type
-    const mappedProvider: MedicalProvider = {
-      ...provider,
-      provider_type: mapProviderType(provider.provider_type as any)
-    };
-    setSelectedProvider(mappedProvider);
+    setSelectedProvider(provider);
     setIsBookingModalOpen(true);
   };
 
-  // Helper function to map database provider types to frontend types
-  const mapProviderType = (dbType: string): 'doctor' | 'nurse' | 'pharmacist' | 'therapist' => {
+  const getProviderDisplayType = (dbType: string): string => {
     switch (dbType) {
       case 'lab_technician':
+        return 'Lab Technician';
       case 'ambulance_driver':
+        return 'Ambulance Driver';
       case 'dentist':
+        return 'Dentist';
       case 'physiotherapist':
-        return 'therapist';
+        return 'Physiotherapist';
       default:
-        return dbType as 'doctor' | 'nurse' | 'pharmacist' | 'therapist';
+        return dbType.charAt(0).toUpperCase() + dbType.slice(1);
+    }
+  };
+
+  const getServiceType = (providerType: string): string => {
+    switch (providerType) {
+      case 'doctor':
+        return 'Medical Consultation';
+      case 'nurse':
+        return 'Nursing Care';
+      case 'pharmacist':
+        return 'Pharmacy Services';
+      case 'dentist':
+        return 'Dental Care';
+      case 'physiotherapist':
+        return 'Physiotherapy';
+      case 'lab_technician':
+        return 'Laboratory Services';
+      case 'ambulance_driver':
+        return 'Emergency Transport';
+      default:
+        return 'Medical Services';
     }
   };
 
@@ -193,7 +210,7 @@ const Medical: React.FC = () => {
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg text-gray-900 mb-1">{provider.full_name}</h3>
                   <Badge variant="outline" className="text-xs capitalize mb-2">
-                    {provider.provider_type}
+                    {getProviderDisplayType(provider.provider_type)}
                   </Badge>
                   {provider.is_verified && (
                     <Badge className="bg-green-100 text-green-800 text-xs">
@@ -211,7 +228,7 @@ const Medical: React.FC = () => {
               <div className="space-y-3 mb-4">
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <User className="h-4 w-4 text-blue-500" />
-                  <span className="capitalize">{provider.provider_type}</span>
+                  <span className="capitalize">{getProviderDisplayType(provider.provider_type)}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Clock className="h-4 w-4 text-green-500" />
@@ -488,6 +505,8 @@ const Medical: React.FC = () => {
               setIsBookingModalOpen(open);
               if (!open) setSelectedProvider(null);
             }}
+            providerName={selectedProvider.full_name}
+            serviceType={getServiceType(selectedProvider.provider_type)}
           />
         )}
       </div>
