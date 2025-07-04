@@ -2,8 +2,8 @@
 
 import { Loader } from '@googlemaps/js-api-loader';
 
-// FIX: Use the environment variable here for the API key
-const API_KEY = process.env.REACT_APP_Maps_API_KEY || ''; 
+// FIX: Use import.meta.env and ensure your environment variable is prefixed with VITE_
+const API_KEY = import.meta.env.VITE_Maps_API_KEY || ''; 
 
 let loader: Loader | null = null;
 let googleMapsInstance: typeof google.maps | null = null;
@@ -14,19 +14,19 @@ export const loadGoogleMapsScript = async (): Promise<typeof google.maps | null>
     return googleMapsInstance; // Already loaded
   }
 
-  // FIX: Update the console error message to reflect environment variable
+  // FIX: Update the console error message to reflect the correct environment variable name
   if (!API_KEY) {
-    console.error('Google Maps API Key (REACT_APP_Maps_API_KEY) is not set in environment variables.');
+    console.error('Google Maps API Key (VITE_Maps_API_KEY) is not set in environment variables.');
     return null;
   }
 
   if (!loader) {
     loader = new Loader({
       apiKey: API_KEY,
-      version: 'weekly', // Or 'beta' for latest features, '3.x' for specific version
-      libraries: ['places', 'geometry'], // 'places' for geocoding/autocomplete, 'geometry' for distance calculations etc.
-      language: 'en', // Or 'sw' for Swahili, 'fr' for French, etc.
-      region: 'KE', // Set region to Kenya for localized results
+      version: 'weekly',
+      libraries: ['places', 'geometry'], 
+      language: 'en',
+      region: 'KE', 
     });
   }
 
@@ -41,7 +41,6 @@ export const loadGoogleMapsScript = async (): Promise<typeof google.maps | null>
   }
 };
 
-// Functions to get Google Maps services (will be initialized after script loads)
 export const getGeocodingService = (): google.maps.Geocoder | null => {
   if (googleMapsInstance) {
     return new google.maps.Geocoder();
@@ -63,7 +62,6 @@ export const getPlacesService = (map: google.maps.Map): google.maps.places.Place
   return null;
 };
 
-// Utility function to convert place name to coordinates (simple geocoding)
 export const geocodeAddress = async (address: string): Promise<{ lat: number; lng: number; formattedAddress: string } | null> => {
   const geocoder = getGeocodingService();
   if (!geocoder) {
@@ -88,7 +86,6 @@ export const geocodeAddress = async (address: string): Promise<{ lat: number; ln
   });
 };
 
-// Utility function to get directions (distance and duration)
 export const getRouteDetails = async (
   origin: google.maps.LatLngLiteral,
   destination: google.maps.LatLngLiteral
@@ -109,9 +106,9 @@ export const getRouteDetails = async (
       (response, status) => {
         if (status === 'OK' && response && response.routes && response.routes[0]) {
           const route = response.routes[0].legs[0];
-          const distance = route.distance ? route.distance.value / 1000 : 0; // meters to km
-          const duration = route.duration ? route.duration.value / 60 : 0; // seconds to minutes
-          const path = response.routes[0].overview_path; // Array of LatLng objects for the route line
+          const distance = route.distance ? route.distance.value / 1000 : 0;
+          const duration = route.duration ? route.duration.value / 60 : 0;
+          const path = response.routes[0].overview_path;
           resolve({ distanceKm: distance, etaMinutes: duration, path: path });
         } else {
           console.error('Directions request failed due to ' + status);

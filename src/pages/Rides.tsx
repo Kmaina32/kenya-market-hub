@@ -5,22 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-// Fix: Import all Lucide icons used
 import { Car, MapPin, Navigation, Clock, Star, Phone, User, Wallet } from 'lucide-react'; 
-// Fix: Import MainLayout
 import MainLayout from '@/components/MainLayout'; 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-// Fix: Import toast correctly as a named export
 import { toast } from 'sonner'; 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'; 
 
-// Import Google Maps utilities and the refactored MapBox component
 import { geocodeAddress, getRouteDetails, loadGoogleMapsScript } from '@/integrations/googlemaps/googleMapsLoader'; 
 import MapBox from '@/components/MapBox'; 
 
-// --- Interfaces for better type safety and clarity ---
-// FIX: Ensure Driver interface is correctly defined or imported
 interface Driver {
   id: string; 
   user_id: string; 
@@ -40,7 +34,6 @@ interface Driver {
   eta_minutes?: number; 
 }
 
-// FIX: Ensure VehicleType interface is correctly defined
 interface VehicleType {
   id: 'taxi' | 'motorbike'; 
   name: string;
@@ -49,7 +42,6 @@ interface VehicleType {
   description: string;
 }
 
-// FIX: Define VEHICLE_TYPES here or import it
 const VEHICLE_TYPES: VehicleType[] = [
   { id: 'taxi', name: 'Taxi', icon: '🚗', pricePerKm: 80, description: '4 seats, Standard comfort' },
   { id: 'motorbike', name: 'Boda Boda', icon: '🏍️', pricePerKm: 50, description: 'Quick & affordable' }
@@ -59,6 +51,7 @@ const Rides: React.FC = () => {
   const [pickup, setPickup] = useState(''); 
   const [destination, setDestination] = useState(''); 
   
+  // State for geocoded coordinates and route path
   const [pickupLocation, setPickupLocation] = useState<{ name: string; lat: number; lng: number } | null>(null);
   const [destinationLocation, setDestinationLocation] = useState<{ name: string; lat: number; lng: number } | null>(null);
   const [routePath, setRoutePath] = useState<google.maps.LatLng[] | null>(null);
@@ -113,7 +106,6 @@ const Rides: React.FC = () => {
           const destinationCoords = await geocodeAddress(destination);
 
           if (pickupCoords && destinationCoords) {
-            // FIX: Assign formattedAddress to 'name' property
             setPickupLocation({ name: pickupCoords.formattedAddress, lat: pickupCoords.lat, lng: pickupCoords.lng });
             setDestinationLocation({ name: destinationCoords.formattedAddress, lat: destinationCoords.lat, lng: destinationCoords.lng });
 
@@ -151,6 +143,7 @@ const Rides: React.FC = () => {
           toast.error("An error occurred during location lookup or fare calculation.");
         }
       } else {
+        // When inputs are empty, clear previous route and locations
         setEstimatedFare(null);
         setTripDetails(null);
         setRoutePath(null);
@@ -335,8 +328,33 @@ const Rides: React.FC = () => {
     );
   }, [isLoading, drivers, selectedVehicleType, pickup, destination, estimatedFare, tripDetails, handleBookRide, isBookingDialogOpen, isRefetching, refetch, pickupLocation, destinationLocation]);
 
+  const defaultMapCenter = useMemo(() => {
+    // You can set a default center for the map, e.g., center of Nairobi
+    return { lat: -1.286389, lng: 36.817223 }; 
+  }, []);
+
+  // Determine markers based on geocoded locations
+  const mapMarkers = useMemo(() => {
+    const markers = [];
+    if (pickupLocation) {
+      markers.push({ id: 'pickup', position: pickupLocation, title: pickupLocation.name, color: '#3b82f6' });
+    }
+    if (destinationLocation) {
+      markers.push({ id: 'destination', position: destinationLocation, title: destinationLocation.name, color: '#ef4444' });
+    }
+    return markers;
+  }, [pickupLocation, destinationLocation]);
+
+  // Determine route to display
+  const mapRoute = useMemo(() => {
+    if (routePath && pickupLocation && destinationLocation) {
+      return { start: pickupLocation, end: destinationLocation, path: routePath };
+    }
+    return undefined; // No route if not all data is available
+  }, [routePath, pickupLocation, destinationLocation]);
+
+
   return (
-    // FIX: MainLayout should wrap the entire content returned by the component
     <MainLayout> 
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
         {/* Hero Section */}
@@ -460,26 +478,20 @@ const Rides: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Map Display Section - Added the MapBox component here */}
-          {(pickupLocation && destinationLocation) && (
-            <div className="mt-8">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <MapPin className="h-6 w-6 text-orange-500" /> Your Route
-              </h2>
-              <MapBox
-                center={pickupLocation} 
-                zoom={12}
-                markers={[
-                  { id: 'pickup', position: pickupLocation, title: pickupLocation.name, color: '#3b82f6' },
-                  { id: 'destination', position: destinationLocation, title: destinationLocation.name, color: '#ef4444' },
-                ]}
-                showRoute={routePath ? { start: pickupLocation, end: destinationLocation, path: routePath } : undefined}
-                className="rounded-lg shadow-md border-2 border-gray-100"
-                // FIX: Pass the inline style directly to MapBox if you want it there
-                style={{ width: '100%', height: '400px', border: '2px solid red' }} 
-              />
-            </div>
-          )}
+          {/* Map Display Section - Now always visible */}
+          <div className="mt-8">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <MapPin className="h-6 w-6 text-orange-500" /> {mapRoute ? 'Your Route' : 'Explore Area'}
+            </h2>
+            <MapBox
+              center={mapMarkers.length > 0 ? mapMarkers[0].position : defaultMapCenter} // Center on first marker or default
+              zoom={mapRoute ? 12 : 12} // Adjust zoom level dynamically if needed
+              markers={mapMarkers} // Pass dynamically updated markers
+              showRoute={mapRoute} // Pass dynamically updated route
+              className="rounded-lg shadow-md border-2 border-gray-100"
+              style={{ width: '100%', height: '400px', border: '2px solid red' }} // Keep for testing initial visibility
+            />
+          </div>
 
           {/* Available Drivers Section */}
           <div className="space-y-6 pt-4">
