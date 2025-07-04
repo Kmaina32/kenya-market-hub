@@ -21,7 +21,6 @@ const Wishlist = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  // Use wishlistItems directly since that's what the hook returns
   const items = wishlistItems || [];
   const loading = wishlistLoading || false;
 
@@ -97,7 +96,7 @@ const Wishlist = () => {
                       <h4 className="font-semibold text-gray-900 mb-1 text-sm line-clamp-2">
                         {productInfo.name || 'Unknown Product'}
                       </h4>
-                      <p className="text-xs text-gray-600 mb-2">Unknown Vendor</p>
+                      <p className="text-xs text-gray-600 mb-2">Kenya Market</p>
                       
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-sm font-bold text-orange-600">

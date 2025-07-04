@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -90,9 +91,9 @@ const VendorStore = () => {
         <div className="bg-white shadow-md py-6">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{vendor?.name}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{vendor?.business_name || vendor?.name}</h1>
               <p className="text-gray-600">
-                {vendor?.description || 'Providing quality products since 2024'}
+                {vendor?.business_description || 'Providing quality products since 2024'}
               </p>
               <div className="flex items-center mt-2">
                 <Star className="h-4 w-4 text-yellow-500 mr-1" />
@@ -102,15 +103,15 @@ const VendorStore = () => {
             <div className="flex items-center space-x-4">
               <div className="flex items-center text-gray-600">
                 <MapPin className="h-4 w-4 mr-1" />
-                <span>{vendor?.location || 'Nairobi, Kenya'}</span>
+                <span>{vendor?.business_address || 'Nairobi, Kenya'}</span>
               </div>
               <div className="flex items-center text-gray-600">
                 <Phone className="h-4 w-4 mr-1" />
-                <span>{vendor?.phone || '+254 700 000000'}</span>
+                <span>{vendor?.business_phone || '+254 700 000000'}</span>
               </div>
               <div className="flex items-center text-gray-600">
                 <Mail className="h-4 w-4 mr-1" />
-                <span>{vendor?.email || 'info@vendor.com'}</span>
+                <span>{vendor?.business_email || 'info@vendor.com'}</span>
               </div>
             </div>
           </div>
