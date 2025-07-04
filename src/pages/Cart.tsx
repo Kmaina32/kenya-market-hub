@@ -1,14 +1,13 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Plus, Minus, ShoppingCart } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingCart, ShoppingBag } from 'lucide-react'; // Added ShoppingBag icon
 import MainLayout from '@/components/MainLayout';
 import { useCartContext } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, useNavigate } from 'react-router-dom';
-import HeroSection from '@/components/shared/HeroSection';
+// import HeroSection from '@/components/shared/HeroSection'; // Removed HeroSection import as it's no longer used directly
 
 const Cart = () => {
   const { user } = useAuth();
@@ -23,17 +22,37 @@ const Cart = () => {
     navigate('/checkout');
   };
 
+  // Define the image URL and the hero content directly
+  const heroImageUrl = 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=2070&q=80';
+  const heroTitle = 'Shopping Cart';
+  const heroSubtitle = 'Review Your Items';
+  const heroDescription = 'Review your selected items and proceed to checkout.';
+
+
   return (
     <MainLayout>
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        {/* Hero Section with Image Backdrop */}
-        <HeroSection
-          title="Shopping Cart"
-          subtitle="Review Your Items"
-          description="Review your selected items and proceed to checkout."
-          imageUrl="photo-1556742049-0cfed4f6a45d"
-          className="mb-0 rounded-b-3xl"
-        />
+        {/* Custom Hero Section with Image Backdrop and Gradient */}
+        <div
+          className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-600 to-red-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4 px-4 sm:px-6 lg:px-8 shadow-xl"
+          style={{
+            backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('${heroImageUrl}')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
+        >
+          <div className="relative z-10 flex items-center justify-center h-full px-6 sm:px-8 lg:px-12">
+            <div className="text-center text-white max-w-3xl mx-auto">
+              {/* Using ShoppingBag icon for consistency with shop/events page visual theme */}
+              <ShoppingBag className="h-16 w-16 mx-auto mb-4 text-orange-100 drop-shadow-lg" />
+              <h1 className="text-3xl md:text-4xl font-bold mb-3 drop-shadow-lg">{heroTitle}</h1>
+              <p className="text-lg text-orange-100 font-light leading-relaxed">
+                {heroSubtitle}
+                {heroDescription && <span className="block">{heroDescription}</span>}
+              </p>
+            </div>
+          </div>
+        </div>
 
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           {items.length === 0 ? (
@@ -41,7 +60,7 @@ const Cart = () => {
               <ShoppingCart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
               <h2 className="text-xl font-bold text-gray-900 mb-3">Your cart is empty</h2>
               <p className="text-sm text-gray-600 mb-6">Start shopping to add items to your cart!</p>
-              <Button 
+              <Button
                 onClick={() => navigate('/shop')}
                 className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-6 py-2 text-sm rounded-xl"
               >
@@ -64,13 +83,13 @@ const Cart = () => {
                     <CardContent className="p-4">
                       <div className="flex items-center space-x-3">
                         <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                          <img 
-                            src={item.image || '/placeholder.svg'} 
+                          <img
+                            src={item.image || '/placeholder.svg'}
                             alt={item.name}
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        
+
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-gray-900 truncate text-sm">{item.name}</h3>
                           <p className="text-xs text-gray-600 mb-1">{item.vendor}</p>
@@ -99,7 +118,7 @@ const Cart = () => {
                             </div>
                           </div>
                         </div>
-                        
+
                         <div className="text-right">
                           <div className="text-sm font-bold text-gray-900 mb-1">
                             KSH {(item.price * item.quantity).toLocaleString()}
@@ -140,14 +159,14 @@ const Cart = () => {
                         <span className="text-orange-600">KSH {getTotalPrice().toLocaleString()}</span>
                       </div>
                     </div>
-                    <Button 
+                    <Button
                       onClick={handleCheckout}
                       className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white py-2 text-sm rounded-xl"
                       size="sm"
                     >
                       Proceed to Checkout
                     </Button>
-                    <Button 
+                    <Button
                       variant="outline"
                       onClick={() => navigate('/shop')}
                       className="w-full border-orange-200 text-orange-600 hover:bg-orange-50 text-sm rounded-xl"
