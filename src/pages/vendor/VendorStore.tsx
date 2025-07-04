@@ -91,7 +91,7 @@ const VendorStore = () => {
         <div className="bg-white shadow-md py-6">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{vendor?.business_name || vendor?.name}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{vendor?.business_name}</h1>
               <p className="text-gray-600">
                 {vendor?.business_description || 'Providing quality products since 2024'}
               </p>

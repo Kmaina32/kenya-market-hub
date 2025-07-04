@@ -87,20 +87,20 @@ const Wishlist = () => {
                     <CardContent className="p-3">
                       <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 mb-3">
                         <img 
-                          src={productInfo.image_url || '/placeholder.svg'} 
-                          alt={productInfo.name || 'Product'}
+                          src={(productInfo as any)?.image_url || '/placeholder.svg'} 
+                          alt={(productInfo as any)?.name || 'Product'}
                           className="w-full h-full object-cover"
                         />
                       </div>
                       
                       <h4 className="font-semibold text-gray-900 mb-1 text-sm line-clamp-2">
-                        {productInfo.name || 'Unknown Product'}
+                        {(productInfo as any)?.name || 'Unknown Product'}
                       </h4>
                       <p className="text-xs text-gray-600 mb-2">Kenya Market</p>
                       
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-sm font-bold text-orange-600">
-                          KSH {Number(productInfo.price || 0).toLocaleString()}
+                          KSH {Number((productInfo as any)?.price || 0).toLocaleString()}
                         </span>
                       </div>
                       
