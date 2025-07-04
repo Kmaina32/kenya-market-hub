@@ -1,14 +1,14 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Trash2, Heart } from 'lucide-react';
+import { ShoppingCart, Trash2, Heart, ShoppingBag } from 'lucide-react'; // Import ShoppingBag icon
 import MainLayout from '@/components/MainLayout';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useCartContext } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
-import HeroSection from '@/components/shared/HeroSection';
+// import HeroSection from '@/components/shared/HeroSection'; // Removed HeroSection import as it's no longer used directly
 
 const Wishlist = () => {
   const { user } = useAuth();
@@ -33,16 +33,36 @@ const Wishlist = () => {
     removeFromWishlist(itemId);
   };
 
+  // Define the hero image URL and content based on the desired Shop.tsx style
+  const heroImageUrl = "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=2070&q=80"; // Converted to full Unsplash URL
+  const heroTitle = "My Wishlist";
+  const heroSubtitle = "Saved Items"; // This will function as the main descriptive text
+  const heroDescription = "Products you've saved for later."; // This will also be part of the descriptive text
+
+
   return (
     <MainLayout>
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        <HeroSection
-          title="My Wishlist"
-          subtitle="Saved Items"
-          description="Products you've saved for later."
-          imageUrl="photo-1556742049-0cfed4f6a45d"
-          className="mb-0 rounded-b-2xl h-64"
-        />
+        {/* Hero Section - Implemented with Shop.tsx styling */}
+        <div
+          className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-600 to-red-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4 px-4 sm:px-6 lg:px-8 shadow-xl"
+          style={{
+            backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('${heroImageUrl}')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
+        >
+          <div className="relative z-10 flex items-center justify-center h-full px-6 sm:px-8 lg:px-12">
+            <div className="text-center text-white max-w-3xl mx-auto">
+              <ShoppingBag className="h-16 w-16 mx-auto mb-4 text-orange-100 drop-shadow-lg" /> {/* Using ShoppingBag icon */}
+              <h1 className="text-3xl md:text-4xl font-bold mb-3 drop-shadow-lg">{heroTitle}</h1>
+              <p className="text-lg text-orange-100 font-light leading-relaxed">
+                {heroSubtitle} {/* Using subtitle as main descriptive line */}
+                {heroDescription && <span className="block">{heroDescription}</span>} {/* Adding description as a block */}
+              </p>
+            </div>
+          </div>
+        </div>
 
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           {loading ? (
@@ -62,7 +82,7 @@ const Wishlist = () => {
               <Heart className="h-12 w-12 text-gray-300 mx-auto mb-4" />
               <h2 className="text-xl font-bold text-gray-900 mb-2">Your wishlist is empty</h2>
               <p className="text-sm text-gray-600 mb-4">Start adding products you love to save them for later!</p>
-              <Button 
+              <Button
                 onClick={() => window.location.href = '/shop'}
                 className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-sm px-4 py-2 rounded-lg"
               >
@@ -76,35 +96,35 @@ const Wishlist = () => {
                   <Card key={item.id} className="hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 border-2 hover:border-orange-200 rounded-xl">
                     <CardContent className="p-3">
                       <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 mb-3">
-                        <img 
-                          src={item.image_url || '/placeholder.svg'} 
+                        <img
+                          src={item.image_url || '/placeholder.svg'}
                           alt={item.name || 'Product'}
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      
+
                       <h4 className="font-semibold text-gray-900 mb-1 text-sm line-clamp-2">
                         {item.name || 'Unknown Product'}
                       </h4>
                       <p className="text-xs text-gray-600 mb-2">{item.vendor || 'Unknown Vendor'}</p>
-                      
+
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-sm font-bold text-orange-600">
                           KSH {Number(item.price || 0).toLocaleString()}
                         </span>
                       </div>
-                      
+
                       <div className="flex space-x-1">
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           onClick={() => handleAddToCart(item)}
                           className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-xs px-2 py-1"
                         >
                           <ShoppingCart className="h-3 w-3 mr-1" />
                           Add to Cart
                         </Button>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
                           onClick={() => handleRemove(item.id)}
                           className="border-orange-200 text-orange-600 hover:bg-orange-50 px-2 py-1"

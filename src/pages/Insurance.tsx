@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import FrontendLayout from '@/components/layouts/FrontendLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,13 +10,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import GetQuoteModal from '@/components/modals/GetQuoteModal';
 import ComparePlansModal from '@/components/modals/ComparePlansModal';
-import HeroSection from '@/components/shared/HeroSection';
-import { 
-  Shield, 
-  Car, 
-  Home, 
-  Heart, 
-  Briefcase, 
+// import HeroSection from '@/components/shared/HeroSection'; // Removed as we're using custom div
+import {
+  Shield,
+  Car,
+  Home,
+  Heart,
+  Briefcase,
   Search,
   Star,
   CheckCircle,
@@ -36,7 +35,7 @@ const Insurance: React.FC = () => {
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [showComparisonModal, setShowComparisonModal] = useState(false);
   const [quotePlanType, setQuotePlanType] = useState('');
-  
+
   const { toast } = useToast();
 
   // Fetch insurance plans from database
@@ -48,7 +47,7 @@ const Insurance: React.FC = () => {
         .select('*')
         .eq('is_active', true)
         .order('created_at', { ascending: false });
-      
+
       if (error) throw error;
       return data || [];
     }
@@ -118,12 +117,12 @@ const Insurance: React.FC = () => {
   };
 
   const handleComparePlans = (planId: string) => {
-    setSelectedPlans(prev => 
-      prev.includes(planId) 
+    setSelectedPlans(prev =>
+      prev.includes(planId)
         ? prev.filter(id => id !== planId)
         : [...prev, planId]
     );
-    
+
     if (!selectedPlans.includes(planId) && selectedPlans.length >= 1) {
       setShowComparisonModal(true);
     }
@@ -132,7 +131,7 @@ const Insurance: React.FC = () => {
   const handleBrowsePlans = (category: string) => {
     setSelectedCategory(category);
     toast({
-      title: "Browsing Plans",
+      title: "Browse Plans",
       description: `Showing ${category} insurance plans`,
     });
   };
@@ -149,22 +148,52 @@ const Insurance: React.FC = () => {
     });
   };
 
+  // Original image URL for the hero section
+  const heroImageUrl = 'https://images.unsplash.com/photo-1551601651-2a8555f1a136?auto=format&fit=crop&w=2070&q=80';
+
   return (
     <FrontendLayout>
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        {/* Hero Section - Updated to match other pages */}
-        <HeroSection
-          title="Insurance Coverage"
-          subtitle="Protect What Matters Most"
-          description="Find and compare comprehensive insurance plans from Kenya's most trusted providers. Get the coverage you need with competitive rates and excellent service."
-          imageUrl="photo-1551601651-2a8555f1a136"
-          className="mb-8"
-        />
+        {/* Hero Section - Rebuilt with Shop.tsx exact styling, using original image */}
+        <div
+          className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-600 to-red-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4 px-4 sm:px-6 lg:px-8 shadow-xl"
+          style={{
+            backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('${heroImageUrl}')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
+        >
+          <div className="relative z-10 flex items-center justify-center h-full px-6 sm:px-8 lg:px-12">
+            <div className="text-center text-white max-w-3xl mx-auto">
+              <Shield className="h-16 w-16 mx-auto mb-4 text-orange-100 drop-shadow-lg" />
+              <h1 className="text-3xl md:text-4xl font-bold mb-3 drop-shadow-lg">
+                Insurance Coverage
+              </h1>
+              <p className="text-lg text-orange-100 font-light leading-relaxed">
+                Protect What Matters Most
+                <span className="block">Find and compare comprehensive insurance plans from Kenya's most trusted providers. Get the coverage you need with competitive rates and excellent service.</span>
+              </p>
+              <div className="max-w-md mx-auto mt-6">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search insurance plans..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 bg-white/90 border-0 text-gray-900 placeholder-gray-500"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
-          {/* Search Bar */}
-          <div className="max-w-3xl mx-auto">
-            <div className="relative">
+        {/* Main Content Area - max-w-7xl changed to max-w-5xl for smaller containers */}
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
+          {/* Search Bar (Duplicated from hero, will keep for clarity but could be removed if hero search is enough) */}
+          <div className="max-w-3xl mx-auto"> {/* This div is likely redundant if the hero has a search bar */}
+            {/* The search bar inside the hero is quite prominent; consider removing this duplicate */}
+            {/* <div className="relative">
               <Search className="absolute left-6 top-1/2 transform -translate-y-1/2 h-6 w-6 text-gray-400" />
               <Input
                 placeholder="Search insurance plans..."
@@ -172,19 +201,19 @@ const Insurance: React.FC = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-16 pr-6 py-6 text-lg bg-white/95 border-0 text-gray-900 placeholder-gray-500 rounded-2xl shadow-2xl backdrop-blur-sm"
               />
-            </div>
+            </div> */}
           </div>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button 
+            <Button
               size="lg"
               onClick={() => handleGetQuote()}
               className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-2xl transform hover:scale-105 transition-all duration-300"
             >
               Get Quote Now
             </Button>
-            <Button 
+            <Button
               variant="outline"
               size="lg"
               onClick={() => setShowComparisonModal(true)}
@@ -200,7 +229,7 @@ const Insurance: React.FC = () => {
               <h2 className="text-4xl font-bold text-gray-900 mb-4">Insurance Coverage</h2>
               <p className="text-xl text-gray-600">Choose the right protection for your needs</p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {insuranceTypes.map((type) => {
                 const TypeIcon = type.icon;
@@ -213,7 +242,7 @@ const Insurance: React.FC = () => {
                       </div>
                       <CardTitle className="text-2xl text-gray-900 mb-2">{type.title}</CardTitle>
                       <p className="text-base text-gray-600 mb-4">{type.description}</p>
-                      
+
                       <ul className="space-y-3 text-left mb-6">
                         {type.features.map((feature, index) => (
                           <li key={index} className="flex items-center gap-3 text-sm">
@@ -223,9 +252,9 @@ const Insurance: React.FC = () => {
                         ))}
                       </ul>
                     </CardHeader>
-                    
+
                     <CardContent className="pt-0 pb-6">
-                      <Button 
+                      <Button
                         className={`w-full bg-gradient-to-r ${type.gradient} hover:shadow-lg text-white py-3 rounded-xl font-semibold transition-all duration-300`}
                         onClick={() => handleBrowsePlans(type.id)}
                       >
@@ -267,7 +296,7 @@ const Insurance: React.FC = () => {
                       <CardTitle className="text-xl text-gray-900 mb-2 line-clamp-2">{plan.name}</CardTitle>
                       <p className="text-sm text-gray-600 line-clamp-3">{plan.description}</p>
                     </CardHeader>
-                    
+
                     <CardContent className="flex-grow flex flex-col">
                       <div className="mb-6">
                         <div className="text-3xl font-bold text-orange-600 mb-2">
@@ -293,24 +322,24 @@ const Insurance: React.FC = () => {
                       )}
 
                       <div className="space-y-3 mt-auto">
-                        <Button 
+                        <Button
                           className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white py-3 rounded-xl font-semibold"
                           onClick={() => handleSelectPlan(plan.id)}
                         >
                           Select Plan
                         </Button>
-                        
+
                         <div className="grid grid-cols-2 gap-3">
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             className="border-orange-200 text-orange-600 hover:bg-orange-50 py-2 rounded-xl"
                             onClick={() => handleComparePlans(plan.id)}
                           >
                             <ArrowLeftRight className="h-4 w-4 mr-1" />
                             Compare
                           </Button>
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             className="border-orange-200 text-orange-600 hover:bg-orange-50 py-2 rounded-xl"
                             onClick={() => handleViewDetails(plan.id)}
                           >
@@ -328,12 +357,12 @@ const Insurance: React.FC = () => {
                 <Shield className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">No Plans Available</h3>
                 <p className="text-gray-600 mb-6">
-                  {searchTerm || selectedCategory !== 'all' 
-                    ? 'No plans match your current search criteria.' 
+                  {searchTerm || selectedCategory !== 'all'
+                    ? 'No plans match your current search criteria.'
                     : 'Insurance plans will be available soon.'
                   }
                 </p>
-                <Button 
+                <Button
                   onClick={() => {
                     setSearchTerm('');
                     setSelectedCategory('all');
@@ -357,7 +386,7 @@ const Insurance: React.FC = () => {
                 </p>
               </Card>
               <Card className="text-center p-6 hover:shadow-lg transition-shadow">
-                <Clock className="h-12 w-12 text-green-600 mx-auto mb-4" />
+                <Clock className="h-12 w-12 text-orange-600 mx-auto mb-4" /> {/* Changed to orange-600 */}
                 <h3 className="font-semibold text-lg mb-2">Quick Claims</h3>
                 <p className="text-gray-600 text-sm">
                   Fast and efficient claims processing
@@ -371,7 +400,7 @@ const Insurance: React.FC = () => {
                 </p>
               </Card>
               <Card className="text-center p-6 hover:shadow-lg transition-shadow">
-                <Award className="h-12 w-12 text-purple-600 mx-auto mb-4" />
+                <Award className="h-12 w-12 text-orange-600 mx-auto mb-4" /> {/* Changed to orange-600 */}
                 <h3 className="font-semibold text-lg mb-2">Expert Advice</h3>
                 <p className="text-gray-600 text-sm">
                   Professional guidance for all your insurance needs
@@ -388,7 +417,7 @@ const Insurance: React.FC = () => {
         onClose={() => setShowQuoteModal(false)}
         planType={quotePlanType}
       />
-      
+
       <ComparePlansModal
         isOpen={showComparisonModal}
         onClose={() => setShowComparisonModal(false)}
