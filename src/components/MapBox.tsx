@@ -20,6 +20,8 @@ interface MapBoxProps {
     path?: google.maps.LatLng[];
   };
   className?: string;
+  // FIX: Add style prop to interface
+  style?: React.CSSProperties; 
 }
 
 const MapBox: React.FC<MapBoxProps> = ({
@@ -28,7 +30,8 @@ const MapBox: React.FC<MapBoxProps> = ({
   markers = [],
   onMapClick,
   showRoute,
-  className = "w-full h-96" // This className will be overridden by inline style for testing
+  className = "w-full h-96",
+  style // Receive the style prop
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -76,11 +79,12 @@ const MapBox: React.FC<MapBoxProps> = ({
     };
   }, []);
 
-  // Update markers (unchanged)
   useEffect(() => {
     if (!mapRef.current || !mapLoaded) return;
+
     markersRef.current.forEach(marker => marker.setMap(null));
     markersRef.current = [];
+
     markers.forEach(markerData => {
       const marker = new google.maps.Marker({
         position: markerData.position,
@@ -94,13 +98,14 @@ const MapBox: React.FC<MapBoxProps> = ({
     });
   }, [markers, mapLoaded]);
 
-  // Show route (unchanged)
   useEffect(() => {
     if (!mapRef.current || !mapLoaded) return;
+
     if (polylineRef.current) {
       polylineRef.current.setMap(null);
       polylineRef.current = null;
     }
+
     if (showRoute) {
       if (showRoute.path && showRoute.path.length > 0) {
         polylineRef.current = new google.maps.Polyline({
@@ -111,9 +116,12 @@ const MapBox: React.FC<MapBoxProps> = ({
           strokeWeight: 5,
         });
         polylineRef.current.setMap(mapRef.current);
+
         const bounds = new google.maps.LatLngBounds();
         showRoute.path.forEach(point => bounds.extend(point));
-        mapRef.current.fitBounds(bounds, { padding: 50 });
+        // FIX: Change padding object literal to use directional properties
+        mapRef.current.fitBounds(bounds, { top: 50, bottom: 50, left: 50, right: 50 }); 
+
       } else {
         const directionsService = new google.maps.DirectionsService();
         directionsService.route(
@@ -138,7 +146,8 @@ const MapBox: React.FC<MapBoxProps> = ({
               polylineRef.current.setMap(mapRef.current);
               const bounds = new google.maps.LatLngBounds();
               path.forEach(point => bounds.extend(point));
-              mapRef.current.fitBounds(bounds, { padding: 50 });
+              // FIX: Change padding object literal to use directional properties
+              mapRef.current.fitBounds(bounds, { top: 50, bottom: 50, left: 50, right: 50 });
             } else {
               console.error('Directions request failed due to ' + status);
             }
@@ -148,7 +157,8 @@ const MapBox: React.FC<MapBoxProps> = ({
     }
   }, [showRoute, mapLoaded]);
 
-  return <div ref={mapContainerRef} className={className} style={{ width: '100%', height: '400px', border: '2px solid red' }} />;
+  // Pass the style prop directly to the div
+  return <div ref={mapContainerRef} className={className} style={style} />;
 };
 
 export default MapBox;

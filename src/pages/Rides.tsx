@@ -1,20 +1,26 @@
+// src/pages/Rides.tsx
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+// Fix: Import all Lucide icons used
 import { Car, MapPin, Navigation, Clock, Star, Phone, User, Wallet } from 'lucide-react'; 
-import MainLayout from '@/components/MainLayout';
+// Fix: Import MainLayout
+import MainLayout from '@/components/MainLayout'; 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+// Fix: Import toast correctly as a named export
 import { toast } from 'sonner'; 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'; 
 
 // Import Google Maps utilities and the refactored MapBox component
-import { geocodeAddress, getRouteDetails } from '@/integrations/googlemaps/googleMapsLoader';
+import { geocodeAddress, getRouteDetails, loadGoogleMapsScript } from '@/integrations/googlemaps/googleMapsLoader'; 
 import MapBox from '@/components/MapBox'; 
 
 // --- Interfaces for better type safety and clarity ---
+// FIX: Ensure Driver interface is correctly defined or imported
 interface Driver {
   id: string; 
   user_id: string; 
@@ -34,6 +40,7 @@ interface Driver {
   eta_minutes?: number; 
 }
 
+// FIX: Ensure VehicleType interface is correctly defined
 interface VehicleType {
   id: 'taxi' | 'motorbike'; 
   name: string;
@@ -42,16 +49,16 @@ interface VehicleType {
   description: string;
 }
 
+// FIX: Define VEHICLE_TYPES here or import it
 const VEHICLE_TYPES: VehicleType[] = [
   { id: 'taxi', name: 'Taxi', icon: '🚗', pricePerKm: 80, description: '4 seats, Standard comfort' },
   { id: 'motorbike', name: 'Boda Boda', icon: '🏍️', pricePerKm: 50, description: 'Quick & affordable' }
 ];
 
 const Rides: React.FC = () => {
-  const [pickup, setPickup] = useState(''); // User input string for pickup
-  const [destination, setDestination] = useState(''); // User input string for destination
+  const [pickup, setPickup] = useState(''); 
+  const [destination, setDestination] = useState(''); 
   
-  // New state to store geocoded coordinates and route path
   const [pickupLocation, setPickupLocation] = useState<{ name: string; lat: number; lng: number } | null>(null);
   const [destinationLocation, setDestinationLocation] = useState<{ name: string; lat: number; lng: number } | null>(null);
   const [routePath, setRoutePath] = useState<google.maps.LatLng[] | null>(null);
@@ -81,30 +88,35 @@ const Rides: React.FC = () => {
       
       return (data || []).map(driver => ({
         ...driver,
-        eta_minutes: Math.floor(Math.random() * 15) + 5 // Keep mock ETA for driver distance from user for now
+        eta_minutes: Math.floor(Math.random() * 15) + 5 
       })) as Driver[];
     },
     refetchInterval: 30 * 1000, 
     staleTime: 20 * 1000, 
   });
 
-  // Effect to calculate fare and route when pickup, destination, or vehicle type changes
   useEffect(() => {
     const calculateFareAndRoute = async () => {
+      const googleMaps = await loadGoogleMapsScript();
+      if (!googleMaps) {
+        console.error('Google Maps API not available for geocoding.');
+        toast.error('Mapping services could not load. Please check your internet connection and API key.');
+        return; 
+      }
+
       if (pickup && destination) {
         try {
           const selectedVehicle = VEHICLE_TYPES.find(v => v.id === selectedVehicleType);
           if (!selectedVehicle) return;
 
-          // Geocode pickup and destination addresses
           const pickupCoords = await geocodeAddress(pickup);
           const destinationCoords = await geocodeAddress(destination);
 
           if (pickupCoords && destinationCoords) {
-            setPickupLocation(pickupCoords);
-            setDestinationLocation(destinationCoords);
+            // FIX: Assign formattedAddress to 'name' property
+            setPickupLocation({ name: pickupCoords.formattedAddress, lat: pickupCoords.lat, lng: pickupCoords.lng });
+            setDestinationLocation({ name: destinationCoords.formattedAddress, lat: destinationCoords.lat, lng: destinationCoords.lng });
 
-            // Get route details (distance, ETA, and path) using Google Maps Directions Service
             const routeDetails = await getRouteDetails(
               { lat: pickupCoords.lat, lng: pickupCoords.lng },
               { lat: destinationCoords.lat, lng: destinationCoords.lng }
@@ -114,7 +126,7 @@ const Rides: React.FC = () => {
               const fare = routeDetails.distanceKm * selectedVehicle.pricePerKm;
               setEstimatedFare(fare);
               setTripDetails({ distance: routeDetails.distanceKm, eta: routeDetails.etaMinutes });
-              setRoutePath(routeDetails.path); // Set the path for the map component
+              setRoutePath(routeDetails.path); 
             } else {
               setEstimatedFare(null);
               setTripDetails(null);
@@ -125,6 +137,8 @@ const Rides: React.FC = () => {
             setEstimatedFare(null);
             setTripDetails(null);
             setRoutePath(null);
+            setPickupLocation(null);
+            setDestinationLocation(null);
             toast.error("Could not find coordinates for one or both locations. Please be more specific.");
           }
         } catch (error) {
@@ -132,6 +146,8 @@ const Rides: React.FC = () => {
           setEstimatedFare(null);
           setTripDetails(null);
           setRoutePath(null);
+          setPickupLocation(null);
+          setDestinationLocation(null);
           toast.error("An error occurred during location lookup or fare calculation.");
         }
       } else {
@@ -145,14 +161,13 @@ const Rides: React.FC = () => {
 
     const debounceCalculate = setTimeout(() => {
       calculateFareAndRoute();
-    }, 800); // Debounce to prevent excessive API calls on input change
+    }, 800); 
 
     return () => clearTimeout(debounceCalculate);
   }, [pickup, destination, selectedVehicleType]);
 
-  // Handle booking a ride
   const handleBookRide = useCallback(async (driverId: string) => {
-    if (!pickupLocation || !destinationLocation) { // Check for geocoded locations
+    if (!pickupLocation || !destinationLocation) { 
       toast.error("Please ensure both pickup and destination locations are valid.");
       return;
     }
@@ -163,30 +178,16 @@ const Rides: React.FC = () => {
 
     try {
       toast.info(`Booking ride with driver ${driverId}...`);
-      // In a real app, you would send pickupLocation, destinationLocation,
-      // selectedVehicleType, and estimatedFare to your backend to create a ride.
-      // e.g., await supabase.from('rides').insert({
-      //   pickup_lat: pickupLocation.lat,
-      //   pickup_lng: pickupLocation.lng,
-      //   destination_lat: destinationLocation.lat,
-      //   destination_lng: destinationLocation.lng,
-      //   vehicle_type: selectedVehicleType,
-      //   estimated_fare: estimatedFare,
-      //   driver_id: driverId,
-      //   status: 'pending',
-      // });
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 2000)); 
 
       toast.success('Ride booked successfully! Driver is on their way.');
       setIsBookingDialogOpen(false); 
-      // Further steps: navigate to a live tracking page, update UI with ride status etc.
     } catch (error) {
       console.error("Booking failed:", error);
       toast.error("Failed to book ride. Please try again.");
     }
   }, [pickupLocation, destinationLocation, estimatedFare]);
 
-  // Memoize the available drivers section
   const MemoizedDriverList = useMemo(() => {
     if (isLoading) {
       return (
@@ -244,7 +245,7 @@ const Rides: React.FC = () => {
                     <DialogTrigger asChild>
                       <Button
                         className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-                        disabled={!pickupLocation || !destinationLocation || estimatedFare === null} // Use geocoded locations
+                        disabled={!pickupLocation || !destinationLocation || estimatedFare === null} 
                       >
                         Book Ride
                       </Button>
@@ -335,7 +336,8 @@ const Rides: React.FC = () => {
   }, [isLoading, drivers, selectedVehicleType, pickup, destination, estimatedFare, tripDetails, handleBookRide, isBookingDialogOpen, isRefetching, refetch, pickupLocation, destinationLocation]);
 
   return (
-    <MainLayout>
+    // FIX: MainLayout should wrap the entire content returned by the component
+    <MainLayout> 
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
         {/* Hero Section */}
         <div
@@ -448,7 +450,6 @@ const Rides: React.FC = () => {
                 </div>
               )}
 
-              {/* This button will trigger the updated fare calculation logic via useEffect debounce */}
               <Button
                 className="w-full h-12 text-lg bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-md transition-all duration-200"
                 disabled={!pickup || !destination || isLoading || estimatedFare === null}
@@ -466,7 +467,7 @@ const Rides: React.FC = () => {
                 <MapPin className="h-6 w-6 text-orange-500" /> Your Route
               </h2>
               <MapBox
-                center={pickupLocation} // Center map on pickup location initially
+                center={pickupLocation} 
                 zoom={12}
                 markers={[
                   { id: 'pickup', position: pickupLocation, title: pickupLocation.name, color: '#3b82f6' },
@@ -474,6 +475,8 @@ const Rides: React.FC = () => {
                 ]}
                 showRoute={routePath ? { start: pickupLocation, end: destinationLocation, path: routePath } : undefined}
                 className="rounded-lg shadow-md border-2 border-gray-100"
+                // FIX: Pass the inline style directly to MapBox if you want it there
+                style={{ width: '100%', height: '400px', border: '2px solid red' }} 
               />
             </div>
           )}
@@ -489,7 +492,7 @@ const Rides: React.FC = () => {
           </div>
         </div>
       </div>
-    </MainLayout>
+    </MainLayout> 
   );
 };
 
