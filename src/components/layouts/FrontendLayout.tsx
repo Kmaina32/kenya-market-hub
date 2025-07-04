@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -9,6 +8,7 @@ import UserNav from '@/components/UserNav';
 import GlobalSearch from '@/components/GlobalSearch';
 import Footer from '@/components/Footer';
 import CartQuantityBadge from '@/components/CartQuantityBadge';
+import NotificationDropdown from '@/components/NotificationDropdown'; // <--- ADD THIS IMPORT
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useNavigate } from 'react-router-dom';
 
@@ -34,10 +34,10 @@ const FrontendLayout = ({ children }: FrontendLayoutProps) => {
               <SidebarTrigger className="hover:bg-orange-50 hover:text-orange-600 rounded-lg" />
               <div className="flex items-center space-x-2 sm:space-x-3 md:hidden">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg overflow-hidden flex-shrink-0">
-                  <img 
-                    alt="Sokko Smart Logo" 
-                    src="/lovable-uploads/563ee6fb-f94f-43f3-a4f3-a61873a1b491.png" 
-                    className="w-full h-full object-contain" 
+                  <img
+                    alt="Sokko Smart Logo"
+                    src="/lovable-uploads/563ee6fb-f94f-43f3-a4f3-a61873a1b491.png"
+                    className="w-full h-full object-contain"
                   />
                 </div>
                 <div>
@@ -45,13 +45,13 @@ const FrontendLayout = ({ children }: FrontendLayoutProps) => {
                   <p className="text-xs text-gray-600 hidden sm:block">Kenya's Smart Marketplace</p>
                 </div>
               </div>
-              
+
               {/* Global Search - Hidden on small screens */}
               <div className="hidden md:flex flex-1 max-w-2xl">
                 <GlobalSearch />
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2">
               {/* Cart Icon */}
               <Button
@@ -63,11 +63,14 @@ const FrontendLayout = ({ children }: FrontendLayoutProps) => {
                 <ShoppingCart className="h-5 w-5" />
                 <CartQuantityBadge />
               </Button>
-              
+
+              {/* ADD NOTIFICATION DROPDOWN HERE */}
+              <NotificationDropdown /> {/* <--- ADD THIS LINE */}
+
               <UserNav />
             </div>
           </div>
-          
+
           {!isOnline && (
             <Alert className="m-4 border-yellow-200 bg-yellow-50 rounded-xl">
               <WifiOff className="h-4 w-4" />
@@ -76,11 +79,11 @@ const FrontendLayout = ({ children }: FrontendLayoutProps) => {
               </AlertDescription>
             </Alert>
           )}
-          
+
           <div className="flex-1">
             {children}
           </div>
-          
+
           {/* Footer only in Layout */}
           <Footer />
         </main>
