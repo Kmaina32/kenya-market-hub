@@ -313,7 +313,7 @@ const AdminOrders = () => {
                       {filteredOrders.map((order, index) => {
                         const isUpdatingStatus = updateOrderStatusMutation.isPending && updateOrderStatusMutation.variables?.id === order.id;
                         const isDeletingOrder = deleteOrderMutation.isPending && deleteOrderMutation.variables === order.id;
-                        const orderItems = order.order_items || [];
+                        const orderItems: OrderItem[] = Array.isArray(order.order_items) ? order.order_items : [];
 
                         return (
                           <TableRow
