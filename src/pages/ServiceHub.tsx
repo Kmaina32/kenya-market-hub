@@ -35,7 +35,6 @@ interface ServiceProvider {
   id: string;
   user_id: string;
   business_name: string;        
-  phone?: string | null;        
   email?: string | null;        
   is_active?: boolean | null;
   is_verified?: boolean | null;
@@ -88,7 +87,7 @@ const ServiceHub = () => {
       const { data, error } = await supabase
         .from('service_provider_profiles')
         .select(`
-          id, user_id, business_name, phone, email,
+          id, user_id, business_name, email,
           is_active, is_verified, created_at, updated_at,
           business_description, documents, location_address, location_coordinates, verification_status
         `) 
@@ -154,9 +153,7 @@ const ServiceHub = () => {
   }, [navigate, user, authLoading]);
 
   const handleContactProvider = useCallback((provider: ServiceProvider) => {
-    if (provider.phone) {
-      alert(`Contacting ${provider.business_name} at ${provider.phone}.`);
-    } else if (provider.email) {
+    if (provider.email) {
       alert(`Emailing ${provider.business_name} at ${provider.email}.`);
     } else {
       toast.info(`No direct contact info available for ${provider.business_name}.`);
