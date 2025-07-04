@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -51,7 +52,7 @@ interface ViewOrderModalProps {
 const ViewOrderModal: React.FC<ViewOrderModalProps> = ({ open, onOpenChange, order }) => {
   if (!order) return null;
 
-  const orderItems = order.order_items || [];
+  const orderItems: OrderItem[] = Array.isArray(order.order_items) ? order.order_items : [];
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
