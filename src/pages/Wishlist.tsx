@@ -26,14 +26,17 @@ const Wishlist = () => {
   const loading = wishlistLoading || false;
 
   const handleAddToCart = (item: any) => {
+    // Extract product info from the nested products object if available
+    const productInfo = item.products || {};
+    
     addItem({
-      id: item.id,
-      name: item.product_name || 'Product',
-      price: item.product_price || 0,
-      image: item.product_image_url,
+      id: item.product_id,
+      name: productInfo.name || 'Product',
+      price: productInfo.price || 0,
+      image: productInfo.image_url,
       in_stock: true
     });
-    toast({ title: "Added to cart", description: `${item.product_name || 'Product'} has been added to your cart.` });
+    toast({ title: "Added to cart", description: `${productInfo.name || 'Product'} has been added to your cart.` });
   };
 
   const handleRemove = (itemId: string) => {
@@ -79,25 +82,26 @@ const Wishlist = () => {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {items.map((item) => {
+                const productInfo = item.products || {};
                 return (
                   <Card key={item.id} className="hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 border-2 hover:border-orange-200 rounded-xl">
                     <CardContent className="p-3">
                       <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 mb-3">
                         <img 
-                          src={item.product_image_url || '/placeholder.svg'} 
-                          alt={item.product_name || 'Product'}
+                          src={productInfo.image_url || '/placeholder.svg'} 
+                          alt={productInfo.name || 'Product'}
                           className="w-full h-full object-cover"
                         />
                       </div>
                       
                       <h4 className="font-semibold text-gray-900 mb-1 text-sm line-clamp-2">
-                        {item.product_name || 'Unknown Product'}
+                        {productInfo.name || 'Unknown Product'}
                       </h4>
                       <p className="text-xs text-gray-600 mb-2">Unknown Vendor</p>
                       
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-sm font-bold text-orange-600">
-                          KSH {Number(item.product_price || 0).toLocaleString()}
+                          KSH {Number(productInfo.price || 0).toLocaleString()}
                         </span>
                       </div>
                       
@@ -113,7 +117,7 @@ const Wishlist = () => {
                         <Button 
                           size="sm" 
                           variant="outline"
-                          onClick={() => handleRemove(item.id)}
+                          onClick={() => handleRemove(item.product_id)}
                           className="border-orange-200 text-orange-600 hover:bg-orange-50 px-2 py-1"
                         >
                           <Trash2 className="h-3 w-3" />

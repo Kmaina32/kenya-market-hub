@@ -27,26 +27,20 @@ import {
 interface OrderItem {
   product_id: string;
   quantity: number;
-  price_at_purchase: number;
+  unit_price: number;
   products?: {
     name: string;
   };
-}
-
-interface OrderProfile {
-  full_name?: string;
-  email?: string;
 }
 
 interface OrderData {
   id: string;
   user_id: string;
   total_amount: number;
-  payment_status: 'pending' | 'paid' | 'failed';
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  payment_status: string;
+  status: string;
   created_at: string;
   order_items?: OrderItem[];
-  profiles?: OrderProfile;
 }
 
 interface ViewOrderModalProps {
@@ -70,16 +64,19 @@ const ViewOrderModal: React.FC<ViewOrderModalProps> = ({ open, onOpenChange, ord
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-700">
           <div>
             <h3 className="font-semibold text-lg mb-2">Customer Information</h3>
-            <p><strong>Name:</strong> {order.profiles?.full_name || 'N/A'}</p>
-            <p><strong>Email:</strong> {order.profiles?.email || 'N/A'}</p>
-            <p><strong>Customer ID:</strong> {order.user_id}</p>
+            <div className="mt-2 space-y-2">
+              <p><strong>Customer ID:</strong> {order.user_id}</p>
+            </div>
           </div>
+          
           <div>
             <h3 className="font-semibold text-lg mb-2">Order Summary</h3>
-            <p><strong>Total Amount:</strong> KSh {Number(order.total_amount).toLocaleString()}</p>
-            <p><strong>Payment Status:</strong> <Badge variant={order.payment_status === 'paid' ? 'default' : 'secondary'} className="capitalize">{order.payment_status}</Badge></p>
-            <p><strong>Order Status:</strong> <Badge variant={getOrderStatusColor(order.status)} className="capitalize">{order.status}</Badge></p>
-            <p><strong>Order Date:</strong> {new Date(order.created_at).toLocaleDateString()}</p>
+            <div className="mt-2 space-y-2">
+              <p><strong>Total Amount:</strong> KSh {Number(order.total_amount).toLocaleString()}</p>
+              <p><strong>Payment Status:</strong> <Badge variant={order.payment_status === 'paid' ? 'default' : 'secondary'} className="capitalize">{order.payment_status}</Badge></p>
+              <p><strong>Order Status:</strong> <Badge variant={getOrderStatusColor(order.status)} className="capitalize">{order.status}</Badge></p>
+              <p><strong>Order Date:</strong> {new Date(order.created_at).toLocaleDateString()}</p>
+            </div>
           </div>
         </div>
         <div className="mt-4">
@@ -98,7 +95,7 @@ const ViewOrderModal: React.FC<ViewOrderModalProps> = ({ open, onOpenChange, ord
                   <TableRow key={index}>
                     <TableCell>{item.products?.name || 'N/A'}</TableCell>
                     <TableCell>{item.quantity}</TableCell>
-                    <TableCell>KSh {Number(item.price_at_purchase).toLocaleString()}</TableCell>
+                    <TableCell>KSh {Number(item.unit_price).toLocaleString()}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -152,7 +149,6 @@ const AdminOrders = () => {
           payment_status,
           status,
           created_at,
-          profiles (full_name, email),
           order_items (product_id, quantity, unit_price, products (name))
         `)
         .order('created_at', { ascending: false });
@@ -166,7 +162,7 @@ const AdminOrders = () => {
   });
 
   const updateOrderStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: OrderData['status'] }) => {
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { error } = await supabase
         .from('orders')
         .update({ status })
@@ -213,7 +209,7 @@ const AdminOrders = () => {
     }
   });
 
-  const handleStatusChange = (id: string, status: OrderData['status']) => {
+  const handleStatusChange = (id: string, status: string) => {
     updateOrderStatusMutation.mutate({ id, status });
   };
 
@@ -230,11 +226,10 @@ const AdminOrders = () => {
     }
   };
 
-  const filteredOrders = orders?.filter(order =>
+  const filteredOrders = (orders || []).filter(order =>
     order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.profiles?.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+    order.user_id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleViewClick = (order: OrderData) => {
     setSelectedOrder(order);
@@ -261,7 +256,7 @@ const AdminOrders = () => {
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Search by Order ID, Customer Name, or Email..."
+                placeholder="Search by Order ID or Customer ID..."
                 className="pl-10 pr-4 py-2 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -304,7 +299,7 @@ const AdminOrders = () => {
                     <TableHeader className="bg-gray-50">
                       <TableRow>
                         <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</TableHead>
-                        <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</TableHead>
+                        <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer ID</TableHead>
                         <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</TableHead>
                         <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</TableHead>
                         <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment</TableHead>
@@ -329,8 +324,8 @@ const AdminOrders = () => {
                             </TableCell>
                             <TableCell className="px-6 py-4 whitespace-nowrap">
                               <div>
-                                <div className="font-medium text-gray-900">{order.profiles?.full_name || 'Unknown'}</div>
-                                <div className="text-sm text-gray-500">{order.profiles?.email || 'N/A'}</div>
+                                <div className="font-medium text-gray-900">Customer</div>
+                                <div className="text-sm text-gray-500">{order.user_id.slice(-8)}</div>
                               </div>
                             </TableCell>
                             <TableCell className="px-6 py-4 whitespace-nowrap">
@@ -353,7 +348,7 @@ const AdminOrders = () => {
                             <TableCell className="px-6 py-4 whitespace-nowrap">
                               <Select
                                 value={order.status}
-                                onValueChange={(value: OrderData['status']) => handleStatusChange(order.id, value)}
+                                onValueChange={(value: string) => handleStatusChange(order.id, value)}
                                 disabled={isUpdatingStatus || isDeletingOrder}
                               >
                                 <SelectTrigger className="w-36 h-9 text-gray-700 border-gray-300 hover:border-blue-400">

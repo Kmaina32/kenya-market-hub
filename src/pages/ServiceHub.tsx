@@ -37,7 +37,6 @@ interface ServiceProvider {
   business_name: string;        
   email?: string | null;        
   is_active?: boolean | null;
-  is_verified?: boolean | null;
   created_at?: string | null;
   updated_at?: string | null;
   
@@ -88,11 +87,11 @@ const ServiceHub = () => {
         .from('service_provider_profiles')
         .select(`
           id, user_id, business_name, email,
-          is_active, is_verified, created_at, updated_at,
+          is_active, created_at, updated_at,
           business_description, documents, location_address, location_coordinates, verification_status
         `) 
         .eq('is_active', true)
-        .eq('is_verified', true)
+        .eq('verification_status', 'approved')
         .limit(2); 
 
       if (error) {
