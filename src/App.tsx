@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom"; // BrowserRouter import
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { CartProvider } from "./contexts/CartContext";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -16,6 +16,7 @@ import Products from "./pages/Products";
 import Shop from "./pages/Shop";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
+import Orders from "./pages/Orders";
 import RealEstate from "./pages/RealEstate";
 import PropertyDetail from "./pages/PropertyDetail";
 import Services from "./pages/Services";
@@ -92,6 +93,7 @@ function App() {
                     <Route path="/shop" element={<Shop />} />
                     <Route path="/cart" element={<Cart />} />
                     <Route path="/checkout" element={<Checkout />} />
+                    <Route path="/orders" element={<Orders />} />
                     <Route path="/real-estate" element={<RealEstate />} />
                     <Route path="/property/:id" element={<PropertyDetail />} />
                     <Route path="/services" element={<Services />} />

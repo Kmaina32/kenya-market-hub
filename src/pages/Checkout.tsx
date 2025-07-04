@@ -64,7 +64,6 @@ const Checkout = () => {
   // Mutation to place the order
   const placeOrderMutation = useMutation({
     mutationFn: async (payload: PlaceOrderPayload) => {
-      // FIX: Add 'as any' to bypass TypeScript type checking for RPC function name
       const { data, error } = await supabase.rpc('place_order_with_stock_update' as any, payload);
 
       if (error) {
