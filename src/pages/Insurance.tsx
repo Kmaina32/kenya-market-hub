@@ -10,7 +10,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import GetQuoteModal from '@/components/modals/GetQuoteModal';
 import ComparePlansModal from '@/components/modals/ComparePlansModal';
-// import HeroSection from '@/components/shared/HeroSection'; // Removed as we're using custom div
 import {
   Shield,
   Car,
@@ -154,9 +153,9 @@ const Insurance: React.FC = () => {
   return (
     <FrontendLayout>
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        {/* Hero Section - Rebuilt with Shop.tsx exact styling, using original image */}
+        {/* Hero Section - Increased height to prevent search bar overlap */}
         <div
-          className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-600 to-red-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4 px-4 sm:px-6 lg:px-8 shadow-xl"
+          className="relative h-80 overflow-hidden bg-gradient-to-r from-orange-600 to-red-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4 px-4 sm:px-6 lg:px-8 shadow-xl"
           style={{
             backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('${heroImageUrl}')`,
             backgroundSize: 'cover',
@@ -190,19 +189,7 @@ const Insurance: React.FC = () => {
 
         {/* Main Content Area - max-w-7xl changed to max-w-5xl for smaller containers */}
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
-          {/* Search Bar (Duplicated from hero, will keep for clarity but could be removed if hero search is enough) */}
-          <div className="max-w-3xl mx-auto"> {/* This div is likely redundant if the hero has a search bar */}
-            {/* The search bar inside the hero is quite prominent; consider removing this duplicate */}
-            {/* <div className="relative">
-              <Search className="absolute left-6 top-1/2 transform -translate-y-1/2 h-6 w-6 text-gray-400" />
-              <Input
-                placeholder="Search insurance plans..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-16 pr-6 py-6 text-lg bg-white/95 border-0 text-gray-900 placeholder-gray-500 rounded-2xl shadow-2xl backdrop-blur-sm"
-              />
-            </div> */}
-          </div>
+          {/* Removed the duplicate search bar as it's now properly in the hero */}
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -386,7 +373,7 @@ const Insurance: React.FC = () => {
                 </p>
               </Card>
               <Card className="text-center p-6 hover:shadow-lg transition-shadow">
-                <Clock className="h-12 w-12 text-orange-600 mx-auto mb-4" /> {/* Changed to orange-600 */}
+                <Clock className="h-12 w-12 text-orange-600 mx-auto mb-4" />
                 <h3 className="font-semibold text-lg mb-2">Quick Claims</h3>
                 <p className="text-gray-600 text-sm">
                   Fast and efficient claims processing
@@ -400,7 +387,7 @@ const Insurance: React.FC = () => {
                 </p>
               </Card>
               <Card className="text-center p-6 hover:shadow-lg transition-shadow">
-                <Award className="h-12 w-12 text-orange-600 mx-auto mb-4" /> {/* Changed to orange-600 */}
+                <Award className="h-12 w-12 text-orange-600 mx-auto mb-4" />
                 <h3 className="font-semibold text-lg mb-2">Expert Advice</h3>
                 <p className="text-gray-600 text-sm">
                   Professional guidance for all your insurance needs
