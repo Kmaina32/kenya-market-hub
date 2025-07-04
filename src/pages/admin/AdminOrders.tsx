@@ -51,6 +51,8 @@ interface ViewOrderModalProps {
 const ViewOrderModal: React.FC<ViewOrderModalProps> = ({ open, onOpenChange, order }) => {
   if (!order) return null;
 
+  const orderItems = order.order_items || [];
+
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="max-w-2xl">
@@ -79,8 +81,8 @@ const ViewOrderModal: React.FC<ViewOrderModalProps> = ({ open, onOpenChange, ord
           </div>
         </div>
         <div className="mt-4">
-          <h3 className="font-semibold text-lg mb-2">Order Items ({(order.order_items || []).length})</h3>
-          {order.order_items && order.order_items.length > 0 ? (
+          <h3 className="font-semibold text-lg mb-2">Order Items ({orderItems.length})</h3>
+          {orderItems.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -90,7 +92,7 @@ const ViewOrderModal: React.FC<ViewOrderModalProps> = ({ open, onOpenChange, ord
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {order.order_items.map((item, index) => (
+                {orderItems.map((item, index) => (
                   <TableRow key={index}>
                     <TableCell>{item.products?.name || 'N/A'}</TableCell>
                     <TableCell>{item.quantity}</TableCell>
@@ -311,6 +313,7 @@ const AdminOrders = () => {
                       {filteredOrders.map((order, index) => {
                         const isUpdatingStatus = updateOrderStatusMutation.isPending && updateOrderStatusMutation.variables?.id === order.id;
                         const isDeletingOrder = deleteOrderMutation.isPending && deleteOrderMutation.variables === order.id;
+                        const orderItems = order.order_items || [];
 
                         return (
                           <TableRow
@@ -330,7 +333,7 @@ const AdminOrders = () => {
                             <TableCell className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center text-gray-700">
                                 <Package className="h-4 w-4 mr-1 text-gray-400" />
-                                <span>{(order.order_items || []).length} items</span>
+                                <span>{orderItems.length} items</span>
                               </div>
                             </TableCell>
                             <TableCell className="px-6 py-4 whitespace-nowrap font-semibold text-green-600">
