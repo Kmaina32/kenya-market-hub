@@ -38,7 +38,7 @@ interface ServiceProvider {
   user_id: string;
   business_name: string;
   total_reviews?: number | null;
-  avatar_url?: string | null;
+  avatar_url?: string | null; // Keep optional in interface
   phone?: string | null;
   email?: string | null;
   is_active?: boolean | null;
@@ -101,7 +101,7 @@ const ServiceHub = () => {
       const { data, error } = await supabase
         .from('service_provider_profiles')
         .select(`
-          id, user_id, business_name, avatar_url, phone, email,
+          id, user_id, business_name, phone, email,
           is_active, is_verified, created_at, updated_at,
           business_description, documents, location_address, location_coordinates, verification_status
         `)
@@ -321,7 +321,7 @@ const ServiceHub = () => {
                     <CardContent className="p-4">
                       <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4">
                         <img
-                          src={provider.avatar_url || '/placeholder-avatar.png'}
+                          src={provider.avatar_url || '/placeholder-avatar.png'} // Use optional chaining for safety
                           alt={provider.business_name}
                           className="w-16 h-16 rounded-full object-cover flex-shrink-0"
                         />

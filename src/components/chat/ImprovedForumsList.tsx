@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -32,7 +31,7 @@ const ImprovedForumsList: React.FC = () => {
   const toggleLikeMutation = useTogglePostLike();
   const incrementViewsMutation = useIncrementPostViews();
 
-  const filteredPosts = posts.filter(post => 
+  const filteredPosts = posts.filter(post =>
     post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     post.content.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -47,7 +46,7 @@ const ImprovedForumsList: React.FC = () => {
         content: newPost.content,
         categoryId: newPost.categoryId
       });
-      
+
       setNewPost({ title: '', content: '', categoryId: '' });
       setIsCreateModalOpen(false);
     } catch (error) {
@@ -99,12 +98,12 @@ const ImprovedForumsList: React.FC = () => {
                   placeholder="Search posts..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-full mobile-form-input"
+                  className="pl-10 w-full mobile-form-input focus:ring-orange-500 focus:border-orange-500" // Added focus styles
                 />
               </div>
-              
+
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-full sm:w-48">
+                <SelectTrigger className="w-full sm:w-48 focus:ring-orange-500 focus:border-orange-500"> {/* Added focus styles */}
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -128,16 +127,16 @@ const ImprovedForumsList: React.FC = () => {
                 </DialogTrigger>
                 <DialogContent className="mobile-modal max-w-md mx-auto">
                   <DialogHeader>
-                    <DialogTitle>Create New Post</DialogTitle>
-                    <DialogDescription>
+                    <DialogTitle className="text-gray-900">Create New Post</DialogTitle>
+                    <DialogDescription className="text-gray-600">
                       Share your thoughts and start a discussion with the community.
                     </DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleCreatePost} className="space-y-4 mobile-form">
                     <div>
-                      <Label htmlFor="category">Category</Label>
+                      <Label htmlFor="category" className="text-gray-700">Category</Label>
                       <Select value={newPost.categoryId} onValueChange={(value) => setNewPost(prev => ({ ...prev, categoryId: value }))}>
-                        <SelectTrigger>
+                        <SelectTrigger className="focus:ring-orange-500 focus:border-orange-500"> {/* Added focus styles */}
                           <SelectValue placeholder="Select a category" />
                         </SelectTrigger>
                         <SelectContent>
@@ -149,32 +148,32 @@ const ImprovedForumsList: React.FC = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
                     <div>
-                      <Label htmlFor="title">Title</Label>
+                      <Label htmlFor="title" className="text-gray-700">Title</Label>
                       <Input
                         id="title"
                         value={newPost.title}
                         onChange={(e) => setNewPost(prev => ({ ...prev, title: e.target.value }))}
                         placeholder="Enter post title..."
-                        className="mobile-form-input"
+                        className="mobile-form-input focus:ring-orange-500 focus:border-orange-500" // Added focus styles
                         required
                       />
                     </div>
-                    
+
                     <div>
-                      <Label htmlFor="content">Content</Label>
+                      <Label htmlFor="content" className="text-gray-700">Content</Label>
                       <Textarea
                         id="content"
                         value={newPost.content}
                         onChange={(e) => setNewPost(prev => ({ ...prev, content: e.target.value }))}
                         placeholder="Write your post content..."
                         rows={4}
-                        className="mobile-form-input"
+                        className="mobile-form-input focus:ring-orange-500 focus:border-orange-500" // Added focus styles
                         required
                       />
                     </div>
-                    
+
                     <ResponsiveButtonGroup>
                       <SecondaryButton
                         type="button"
@@ -205,7 +204,7 @@ const ImprovedForumsList: React.FC = () => {
           <ContentCard>
             <div className="text-center py-12">
               <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No posts found</h3>
+              <h3 className="text-lg font-semibold mb-2 text-gray-900">No posts found</h3>
               <p className="text-gray-600 mb-4">
                 {searchTerm ? 'Try adjusting your search terms.' : 'Be the first to start a discussion!'}
               </p>
@@ -217,22 +216,22 @@ const ImprovedForumsList: React.FC = () => {
         ) : (
           <ResponsiveGrid cols={1}>
             {filteredPosts.map((post) => (
-              <Card 
-                key={post.id} 
-                className="card-hover cursor-pointer border-2 hover:border-orange-200 smooth-transition"
+              <Card
+                key={post.id}
+                className="card-hover cursor-pointer border-2 hover:border-orange-300 transition-all duration-300" // Adjusted hover border
                 onClick={() => handlePostClick(post.id)}
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center space-x-3 flex-1 min-w-0">
-                      <Avatar className="w-10 h-10 flex-shrink-0">
+                      <Avatar className="w-10 h-10 flex-shrink-0 border border-gray-200"> {/* Added border to avatar */}
                         <AvatarImage src={post.author_profile?.avatar_url} />
-                        <AvatarFallback>
+                        <AvatarFallback className="bg-gray-200 text-gray-700"> {/* Consistent fallback style */}
                           {post.author_profile?.full_name?.charAt(0) || 'U'}
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0 flex-1">
-                        <CardTitle className="text-lg text-orange-900 hover:text-orange-700 truncate">
+                        <CardTitle className="text-lg text-gray-900 hover:text-orange-700 truncate"> {/* Changed title color to gray-900 default */}
                           {post.title}
                         </CardTitle>
                         <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -243,38 +242,38 @@ const ImprovedForumsList: React.FC = () => {
                       </div>
                     </div>
                     {post.category && (
-                      <Badge 
+                      <Badge
                         style={{ backgroundColor: post.category.color }}
-                        className="text-white flex-shrink-0"
+                        className="text-white flex-shrink-0 px-3 py-1 text-xs font-semibold rounded-full" // Consistent badge styling
                       >
                         {post.category.name}
                       </Badge>
                     )}
                   </div>
                 </CardHeader>
-                
-                <CardContent>
+
+                <CardContent className="px-6 pb-6"> {/* Added padding consistent with CardHeader */}
                   <CardDescription className="text-gray-700 mb-4 line-clamp-3">
                     {post.content}
                   </CardDescription>
-                  
+
                   <div className="flex items-center gap-6 text-sm text-gray-600">
                     <button
                       onClick={(e) => handleLike(post.id, e)}
-                      className="flex items-center gap-1 hover:text-red-500 smooth-transition mobile-touch-button"
+                      className="flex items-center gap-1 hover:text-red-500 transition-colors mobile-touch-button" // Ensured transition
                       disabled={toggleLikeMutation.isPending}
                     >
                       <Heart className={`w-4 h-4 ${post.has_liked ? 'fill-red-500 text-red-500' : ''}`} />
                       <span>{post.like_count}</span>
                     </button>
-                    
+
                     <div className="flex items-center gap-1">
-                      <MessageCircle className="w-4 h-4" />
+                      <MessageCircle className="w-4 h-4 text-orange-500" /> {/* Icon colored */}
                       <span>{post.reply_count}</span>
                     </div>
-                    
+
                     <div className="flex items-center gap-1">
-                      <Eye className="w-4 h-4" />
+                      <Eye className="w-4 h-4 text-orange-500" /> {/* Icon colored */}
                       <span>{post.view_count}</span>
                     </div>
                   </div>

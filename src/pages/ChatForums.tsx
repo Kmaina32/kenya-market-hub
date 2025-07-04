@@ -70,7 +70,7 @@ const BusinessCard: React.FC<BusinessCardProps> = React.memo(({ business, onStar
       <Button
         variant="default"
         size="sm"
-        className="w-full sm:w-auto"
+        className="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white" // Added gradient
         onClick={() => onStartChat(business.id)}
         aria-label={`Start chat with ${business.name}`}
       >
@@ -79,7 +79,8 @@ const BusinessCard: React.FC<BusinessCardProps> = React.memo(({ business, onStar
       <Button
         variant="outline"
         size="sm"
-        className="w-full sm:w-auto"
+        className="w-full sm:w-auto border-orange-200 text-orange-600 hover:bg-orange-50" // Consistent outline style
+        onClick={() => onViewDetails(business.id)} // Ensure View button has action
       >
         View
       </Button>
@@ -118,13 +119,13 @@ const ChatForums: React.FC = () => {
 
   return (
     <MainLayout>
-      <div className="flex flex-col md:flex-row min-h-screen bg-gray-50"> {/* Added a light background */}
-        {/* Sidebar (desktop only) */}
+      <div className="flex flex-col md:flex-row min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50"> {/* Added consistent background */}
+        {/* Desktop Sidebar (md and up) */}
         <aside className="hidden md:flex flex-col w-64 bg-white border-r p-4 space-y-2 shadow-sm">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Navigation</h2>
           <Button
             variant={selectedTab === 'forums' ? 'secondary' : 'ghost'}
-            className="justify-start w-full text-left flex items-center gap-2"
+            className={`justify-start w-full text-left flex items-center gap-2 ${selectedTab === 'forums' ? 'bg-orange-50 text-orange-600' : 'hover:bg-gray-100 hover:text-orange-600'}`}
             onClick={() => setSelectedTab('forums')}
             aria-current={selectedTab === 'forums' ? 'page' : undefined}
           >
@@ -132,7 +133,7 @@ const ChatForums: React.FC = () => {
           </Button>
           <Button
             variant={selectedTab === 'chat' ? 'secondary' : 'ghost'}
-            className="justify-start w-full text-left flex items-center gap-2"
+            className={`justify-start w-full text-left flex items-center gap-2 ${selectedTab === 'chat' ? 'bg-orange-50 text-orange-600' : 'hover:bg-gray-100 hover:text-orange-600'}`}
             onClick={() => setSelectedTab('chat')}
             aria-current={selectedTab === 'chat' ? 'page' : undefined}
           >
@@ -140,7 +141,7 @@ const ChatForums: React.FC = () => {
           </Button>
           <Button
             variant={selectedTab === 'directory' ? 'secondary' : 'ghost'}
-            className="justify-start w-full text-left flex items-center gap-2"
+            className={`justify-start w-full text-left flex items-center gap-2 ${selectedTab === 'directory' ? 'bg-orange-50 text-orange-600' : 'hover:bg-gray-100 hover:text-orange-600'}`}
             onClick={() => setSelectedTab('directory')}
             aria-current={selectedTab === 'directory' ? 'page' : undefined}
           >
@@ -148,12 +149,13 @@ const ChatForums: React.FC = () => {
           </Button>
         </aside>
 
-        {/* Main Content */}
+        {/* Main Content Area */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
+          {/* Main Title / Online Status */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b border-gray-200">
             <div>
-              <h1 className="text-3xl font-extrabold text-gray-900 mb-1">Community Hub</h1>
-              <p className="text-md text-gray-600">Connect, chat, and discover in real-time.</p>
+              <h1 className="text-3xl font-extrabold text-gray-900 mb-1">Messages & Community</h1> {/* Changed title */}
+              {/* Removed: <p className="text-md text-gray-600">Connect, chat, and discover in real-time.</p> */}
             </div>
             <div className="flex items-center gap-2 mt-4 sm:mt-0 bg-white p-2 rounded-lg shadow-sm">
               <div className={`w-3 h-3 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'} animate-pulse`} />
@@ -172,7 +174,7 @@ const ChatForums: React.FC = () => {
                 <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
                   <MessageCircle size={24} /> Community Forums
                 </h2>
-                <p className="text-gray-600">Engage in discussions, ask questions, and share insights with the community.</p>
+                {/* Removed: <p className="text-gray-600">Engage in discussions, ask questions, and share insights with the community.</p> */}
                 <ImprovedForumsList />
               </section>
             )}
@@ -182,8 +184,7 @@ const ChatForums: React.FC = () => {
                 <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
                   <Users size={24} /> Direct Chat
                 </h2>
-                <p className="text-gray-600">Connect directly with other users or businesses.</p>
-                {/* Fixed: Pass selectedConversationId to ChatInterface */}
+                {/* Removed: <p className="text-gray-600">Connect directly with other users or businesses.</p> */}
                 <ChatInterface selectedConversationId={selectedConversationId} />
               </section>
             )}
@@ -193,10 +194,11 @@ const ChatForums: React.FC = () => {
                 <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
                   <Globe size={24} /> Business Directory
                 </h2>
+                {/* Removed: <p className="text-gray-600">Description for Business Directory.</p> (Assuming there was one for consistency) */}
                 <input
                   type="text"
                   placeholder="Search businesses by name or category..."
-                  className="w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full p-2 border rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500" // <--- UPDATED
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   aria-label="Search business directory"
@@ -220,11 +222,11 @@ const ChatForums: React.FC = () => {
           </Suspense>
         </main>
 
-        {/* Mobile Nav */}
+        {/* Mobile Navigation (md:hidden remains for responsive control) */}
         <div className="fixed bottom-0 left-0 right-0 z-20 flex justify-around bg-white border-t shadow-lg p-2 md:hidden">
           <Button
             variant="ghost"
-            className={`flex flex-col items-center justify-center p-2 rounded-md ${selectedTab === 'forums' ? 'text-blue-600 font-bold bg-blue-50' : 'text-gray-600'}`}
+            className={`flex flex-col items-center justify-center p-2 rounded-md ${selectedTab === 'forums' ? 'text-orange-600 font-bold bg-orange-50' : 'text-gray-600 hover:text-orange-600 hover:bg-orange-50'}`}
             onClick={() => setSelectedTab('forums')}
             aria-label="Forums tab"
           >
@@ -233,7 +235,7 @@ const ChatForums: React.FC = () => {
           </Button>
           <Button
             variant="ghost"
-            className={`flex flex-col items-center justify-center p-2 rounded-md ${selectedTab === 'chat' ? 'text-green-600 font-bold bg-green-50' : 'text-gray-600'}`}
+            className={`flex flex-col items-center justify-center p-2 rounded-md ${selectedTab === 'chat' ? 'text-orange-600 font-bold bg-orange-50' : 'text-gray-600 hover:text-orange-600 hover:bg-orange-50'}`}
             onClick={() => setSelectedTab('chat')}
             aria-label="Direct Chat tab"
           >
@@ -242,7 +244,7 @@ const ChatForums: React.FC = () => {
           </Button>
           <Button
             variant="ghost"
-            className={`flex flex-col items-center justify-center p-2 rounded-md ${selectedTab === 'directory' ? 'text-purple-600 font-bold bg-purple-50' : 'text-gray-600'}`}
+            className={`flex flex-col items-center justify-center p-2 rounded-md ${selectedTab === 'directory' ? 'text-orange-600 font-bold bg-orange-50' : 'text-gray-600 hover:text-orange-600 hover:bg-orange-50'}`}
             onClick={() => setSelectedTab('directory')}
             aria-label="Business Directory tab"
           >
