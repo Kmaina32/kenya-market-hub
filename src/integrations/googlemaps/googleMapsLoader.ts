@@ -1,8 +1,9 @@
+// src/integrations/googlemaps/googleMapsLoader.ts
+
 import { Loader } from '@googlemaps/js-api-loader';
 
-// IMPORTANT: Replace 'YOUR_API_KEY' with your actual Google Maps Platform API key.
-// It's best practice to store this in an environment variable (e.g., process.env.REACT_APP_Maps_API_KEY)
-const API_KEY = 'AIzaSyAFIC4z-WvYA6DYbJPMwrXxQTdIG4K-F_8'; 
+// FIX: Use the environment variable here for the API key
+const API_KEY = process.env.REACT_APP_Maps_API_KEY || ''; 
 
 let loader: Loader | null = null;
 let googleMapsInstance: typeof google.maps | null = null;
@@ -13,8 +14,9 @@ export const loadGoogleMapsScript = async (): Promise<typeof google.maps | null>
     return googleMapsInstance; // Already loaded
   }
 
+  // FIX: Update the console error message to reflect environment variable
   if (!API_KEY) {
-    console.error('Google Maps API Key is not set. Please set REACT_APP_Maps_API_KEY in your environment variables.');
+    console.error('Google Maps API Key (REACT_APP_Maps_API_KEY) is not set in environment variables.');
     return null;
   }
 
