@@ -3,26 +3,28 @@ import FrontendLayout from '@/components/layouts/FrontendLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Wrench, 
-  User, 
-  Star, 
-  MapPin, 
+import {
+  Wrench, // Icon for ServiceHub
+  User,
+  Star,
+  MapPin,
   Phone,
   Calendar,
   CheckCircle,
   Clock,
   DollarSign,
-  Loader2 
+  Loader2,
+  Search // Added Search for consistency if needed in hero
 } from 'lucide-react';
-import HeroSection from '@/components/shared/HeroSection';
+// import HeroSection from '@/components/shared/HeroSection'; // Removed as we're using custom div
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client'; 
+import { supabase } from '@/integrations/supabase/client';
 type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import AppointmentBookingModal from '@/components/AppointmentBookingModal';
+import { Input } from '@/components/ui/input'; // Imported Input for consistency if needed in hero
 
 interface ServiceCategory {
   id: string;
@@ -34,31 +36,31 @@ interface ServiceCategory {
 interface ServiceProvider {
   id: string;
   user_id: string;
-  business_name: string;        
-  total_reviews?: number | null; 
-  avatar_url?: string | null;   
-  phone?: string | null;        
-  email?: string | null;        
+  business_name: string;
+  total_reviews?: number | null;
+  avatar_url?: string | null;
+  phone?: string | null;
+  email?: string | null;
   is_active?: boolean | null;
   is_verified?: boolean | null;
   created_at?: string | null;
   updated_at?: string | null;
-  
+
   business_description?: string | null;
   documents?: Json | null;
-  location_address?: string | null; 
+  location_address?: string | null;
   location_coordinates?: any | null;
   verification_status?: string | null;
 
-  rating?: number | null; 
-  completed_jobs?: number | null; 
-  location?: string | null; 
-  hourly_rate?: number | null; 
+  rating?: number | null;
+  completed_jobs?: number | null;
+  location?: string | null;
+  hourly_rate?: number | null;
 }
 
 interface ServiceBookingData {
   providerId: string;
-  serviceName: string; 
+  serviceName: string;
   bookingDate: Date;
   timeSlot: string;
 }
@@ -71,6 +73,10 @@ const ServiceHub = () => {
   const [isBookingModalOpen, setIsBookingModal] = useState(false);
   const [selectedProviderForBooking, setSelectedProviderForBooking] = useState<ServiceProvider | null>(null);
 
+  // Added searchTerm for consistency with other pages, though not currently used in query
+  const [searchTerm, setSearchTerm] = useState('');
+
+
   const { data: serviceCategories, isLoading: categoriesLoading, error: categoriesError } = useQuery<ServiceCategory[]>({
     queryKey: ['serviceCategories'],
     queryFn: async () => {
@@ -78,7 +84,7 @@ const ServiceHub = () => {
         .from('service_categories')
         .select('*')
         .order('name');
-      
+
       if (error) {
         console.error("Error fetching service categories:", error.message);
         toast.error("Failed to load service categories.");
@@ -98,10 +104,10 @@ const ServiceHub = () => {
           id, user_id, business_name, avatar_url, phone, email,
           is_active, is_verified, created_at, updated_at,
           business_description, documents, location_address, location_coordinates, verification_status
-        `) 
+        `)
         .eq('is_active', true)
         .eq('is_verified', true)
-        .limit(2); 
+        .limit(2);
 
       if (error) {
         console.error("Error fetching featured providers:", error.message);
@@ -128,7 +134,7 @@ const ServiceHub = () => {
         })
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     },
@@ -184,29 +190,61 @@ const ServiceHub = () => {
     setIsBookingModal(true);
   }, [user, authLoading, navigate]);
 
+  // Define the hero image URL and content
+  const heroImageUrl = "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?auto=format&fit=crop&w=2070&q=80";
+  const heroTitle = "Service Hub";
+  const heroSubtitle = "Join Our Community";
+  const heroDescription = "Apply to become a service provider and grow your business with Kenya's largest marketplace.";
+
+
   return (
     <FrontendLayout>
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        <HeroSection
-          title="Service Hub"
-          subtitle="Join Our Community"
-          description="Apply to become a service provider and grow your business with Kenya's largest marketplace"
-          imageUrl="photo-1560472354-b33ff0c44a43"
-          className="mb-8 h-64 rounded-3xl mx-4 sm:mx-6 lg:mx-12 xl:mx-24"
-        />
+        {/* Hero Section - Rebuilt with consistent styling, using original image */}
+        <div
+          className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-600 to-red-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4 px-4 sm:px-6 lg:px-8 shadow-xl"
+          style={{
+            backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('${heroImageUrl}')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
+        >
+          <div className="relative z-10 flex items-center justify-center h-full px-6 sm:px-8 lg:px-12">
+            <div className="text-center text-white max-w-3xl mx-auto">
+              <Wrench className="h-16 w-16 mx-auto mb-4 text-orange-100 drop-shadow-lg" /> {/* Using Wrench icon */}
+              <h1 className="text-3xl md:text-4xl font-bold mb-3 drop-shadow-lg">{heroTitle}</h1>
+              <p className="text-lg text-orange-100 font-light leading-relaxed">
+                {heroSubtitle}
+                {heroDescription && <span className="block">{heroDescription}</span>}
+              </p>
+              {/* Optional: Search input in hero, like on Insurance page */}
+              {/* <div className="max-w-md mx-auto mt-6">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search services..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 bg-white/90 border-0 text-gray-900 placeholder-gray-500"
+                  />
+                </div>
+              </div> */}
+            </div>
+          </div>
+        </div>
 
-        {/* FIX: Main content wrapper adjusted for consistency */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 xl:px-24 py-10"> 
+        {/* Main Content Wrapper - Adjusted max-width for smaller containers and consistent padding */}
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
-            <Button 
+            <Button
               onClick={handleApplyProvider}
               className="flex-1 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white h-14 text-lg font-semibold"
             >
               <User className="h-5 w-5 mr-2" />
               Apply to Become a Provider
             </Button>
-            <Button 
+            <Button
               onClick={handleManageServices}
               variant="outline"
               className="flex-1 border-orange-300 text-orange-700 hover:bg-orange-50 h-14 text-lg font-semibold bg-white"
@@ -236,7 +274,7 @@ const ServiceHub = () => {
                       <div className="text-4xl mb-2">{category.icon_emoji || '⚙️'}</div>
                       <CardTitle className="text-lg">{category.name}</CardTitle>
                     </CardHeader>
-                    {/* FIX: Consistent card content padding */}
+                    {/* Consistent card content padding */}
                     <CardContent className="p-4 space-y-3">
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Avg. Rating:</span>
@@ -279,10 +317,10 @@ const ServiceHub = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {(featuredProviders || []).map((provider) => (
                   <Card key={provider.id} className="hover:shadow-lg transition-shadow bg-white border-orange-100">
-                    {/* FIX: Consistent card content padding */}
-                    <CardContent className="p-4"> 
+                    {/* Consistent card content padding */}
+                    <CardContent className="p-4">
                       <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4">
-                        <img 
+                        <img
                           src={provider.avatar_url || '/placeholder-avatar.png'}
                           alt={provider.business_name}
                           className="w-16 h-16 rounded-full object-cover flex-shrink-0"
@@ -290,7 +328,7 @@ const ServiceHub = () => {
                         <div className="flex-1 text-center sm:text-left">
                           <h3 className="text-lg font-semibold text-gray-900">{provider.business_name}</h3>
                           <p className="text-orange-600 font-medium mb-2">Service Provider</p>
-                          
+
                           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-3 gap-y-1 text-sm text-gray-600 mb-3">
                             <div className="flex items-center">
                               <Star className="h-4 w-4 text-gray-400 mr-1" />
@@ -307,17 +345,17 @@ const ServiceHub = () => {
                           </div>
 
                           <div className="flex flex-col sm:flex-row gap-2 w-full mt-3">
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
+                            <Button
+                              size="sm"
+                              variant="outline"
                               className="border-orange-300 text-orange-700 hover:bg-orange-50 bg-white w-full"
                               onClick={() => handleContactProvider(provider)}
                             >
                               <Phone className="h-4 w-4 mr-1" />
                               Contact
                             </Button>
-                            <Button 
-                              size="sm" 
+                            <Button
+                              size="sm"
                               className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 w-full"
                               onClick={() => handleBookService(provider)}
                             >
@@ -345,8 +383,8 @@ const ServiceHub = () => {
                 Why Join as a Service Provider?
               </CardTitle>
             </CardHeader>
-            {/* FIX: Consistent card content padding */}
-            <CardContent className="p-4"> 
+            {/* Consistent card content padding */}
+            <CardContent className="p-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="text-center">
                   <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -362,7 +400,7 @@ const ServiceHub = () => {
                   <h3 className="text-lg font-semibold mb-2">Flexible Schedule</h3>
                   <p className="text-gray-600">Work on your own terms and choose jobs that fit your schedule.</p>
                 </div>
-                <div className="text-center"> 
+                <div className="text-center">
                   <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Star className="h-8 w-8 text-white" />
                   </div>
