@@ -105,8 +105,8 @@ const AdminProducts = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-products'] }); // Refetch products
-      toast({ title: "Product deleted successfully", variant: "success" }); // Show success toast
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      toast({ title: "Product deleted successfully" }); // Removed invalid variant
     },
     onError: (error: any) => {
       toast({
@@ -373,4 +373,3 @@ const AdminProducts = () => {
 };
 
 export default AdminProducts;
-

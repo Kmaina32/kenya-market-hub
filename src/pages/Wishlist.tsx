@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,20 +13,26 @@ import HeroSection from '@/components/shared/HeroSection';
 
 const Wishlist = () => {
   const { user } = useAuth();
-  const { wishlistItems, removeFromWishlist, data, isLoading } = useWishlist();
-  const { addToCart } = useCartContext();
+  const { wishlistItems, wishlistLoading, removeFromWishlist } = useWishlist();
+  const { addItem } = useCartContext();
   const { toast } = useToast();
 
   if (!user) {
     return <Navigate to="/auth" replace />;
   }
 
-  // Use data if available (for database version), otherwise use wishlistItems (for localStorage version)
-  const items = data || wishlistItems || [];
-  const loading = isLoading || false;
+  // Use wishlistItems directly since that's what the hook returns
+  const items = wishlistItems || [];
+  const loading = wishlistLoading || false;
 
   const handleAddToCart = (item: any) => {
-    addToCart(item.id);
+    addItem({
+      id: item.id,
+      name: item.name || 'Product',
+      price: item.price || 0,
+      image: item.image_url,
+      in_stock: true
+    });
     toast({ title: "Added to cart", description: `${item.name || 'Product'} has been added to your cart.` });
   };
 

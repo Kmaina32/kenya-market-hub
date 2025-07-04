@@ -15,10 +15,6 @@ interface Order {
   id: string;
   total_amount: number;
   status: string;
-  shipping_address: string;
-  shipping_city: string;
-  contact_phone: string;
-  contact_email: string;
   payment_method: string;
   payment_status: string;
   created_at: string;
@@ -61,10 +57,6 @@ const Orders = () => {
           payment_method,
           payment_status,
           created_at,
-          shipping_address,
-          shipping_city,
-          contact_phone,
-          contact_email,
           order_items (
             id,
             quantity,
@@ -82,20 +74,7 @@ const Orders = () => {
 
       if (error) throw error;
       
-      // Transform the data to match our interface
-      return (data || []).map(order => ({
-        id: order.id,
-        total_amount: order.total_amount,
-        status: order.status,
-        shipping_address: order.shipping_address || '',
-        shipping_city: order.shipping_city || '',
-        contact_phone: order.contact_phone || '',
-        contact_email: order.contact_email || '',
-        payment_method: order.payment_method,
-        payment_status: order.payment_status,
-        created_at: order.created_at,
-        order_items: order.order_items || []
-      }));
+      return (data || []) as Order[];
     },
     enabled: !!user && !authLoading,
   });
@@ -189,70 +168,39 @@ const Orders = () => {
                 </CardHeader>
 
                 <CardContent className="p-6">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    {/* Order Items */}
-                    <div>
-                      <h4 className="font-semibold mb-3 flex items-center gap-2">
-                        <Package className="h-4 w-4" />
-                        Items Ordered
-                      </h4>
-                      <div className="space-y-3">
-                        {order.order_items?.map((item) => (
-                          <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                            <img
-                              src={item.products?.image_url || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=60'}
-                              alt={item.products?.name}
-                              className="w-12 h-12 rounded object-cover"
-                            />
-                            <div className="flex-1">
-                              <div className="font-medium">{item.products?.name}</div>
-                              <div className="text-sm text-gray-600">
-                                Qty: {item.quantity} × KSh {item.unit_price.toLocaleString()}
-                              </div>
-                            </div>
-                            <div className="font-medium">
-                              KSh {item.total_price.toLocaleString()}
+                  <div>
+                    <h4 className="font-semibold mb-3 flex items-center gap-2">
+                      <Package className="h-4 w-4" />
+                      Items Ordered
+                    </h4>
+                    <div className="space-y-3">
+                      {order.order_items?.map((item) => (
+                        <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                          <img
+                            src={item.products?.image_url || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=60'}
+                            alt={item.products?.name}
+                            className="w-12 h-12 rounded object-cover"
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium">{item.products?.name}</div>
+                            <div className="text-sm text-gray-600">
+                              Qty: {item.quantity} × KSh {item.unit_price.toLocaleString()}
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Shipping Information */}
-                    <div>
-                      <h4 className="font-semibold mb-3 flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        Delivery Information
-                      </h4>
-                      <div className="space-y-3 text-sm">
-                        <div className="p-3 bg-gray-50 rounded-lg">
-                          <div className="font-medium mb-1">Shipping Address</div>
-                          <div className="text-gray-600">
-                            {order.shipping_address}
-                            <br />
-                            {order.shipping_city}
+                          <div className="font-medium">
+                            KSh {item.total_price.toLocaleString()}
                           </div>
                         </div>
-                        
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <Phone className="h-4 w-4" />
-                          {order.contact_phone}
-                        </div>
-                        
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <Mail className="h-4 w-4" />
-                          {order.contact_email}
-                        </div>
-
-                        {order.status === 'delivered' && (
-                          <div className="flex items-center gap-2 text-green-600 mt-3">
-                            <CheckCircle className="h-4 w-4" />
-                            <span className="text-sm font-medium">Delivered successfully</span>
-                          </div>
-                        )}
-                      </div>
+                      )) || []}
                     </div>
                   </div>
+
+                  {order.status === 'delivered' && (
+                    <div className="flex items-center gap-2 text-green-600 mt-4">
+                      <CheckCircle className="h-4 w-4" />
+                      <span className="text-sm font-medium">Delivered successfully</span>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}

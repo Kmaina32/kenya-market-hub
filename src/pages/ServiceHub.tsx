@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import FrontendLayout from '@/components/layouts/FrontendLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,7 +23,6 @@ import { supabase } from '@/integrations/supabase/client';
 type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
-import AppointmentBookingModal from '@/components/AppointmentBookingModal';
 
 interface ServiceCategory {
   id: string;
@@ -35,8 +35,6 @@ interface ServiceProvider {
   id: string;
   user_id: string;
   business_name: string;        
-  total_reviews?: number | null; 
-  avatar_url?: string | null;   
   phone?: string | null;        
   email?: string | null;        
   is_active?: boolean | null;
@@ -49,11 +47,6 @@ interface ServiceProvider {
   location_address?: string | null; 
   location_coordinates?: any | null;
   verification_status?: string | null;
-
-  rating?: number | null; 
-  completed_jobs?: number | null; 
-  location?: string | null; 
-  hourly_rate?: number | null; 
 }
 
 interface ServiceBookingData {
@@ -95,7 +88,7 @@ const ServiceHub = () => {
       const { data, error } = await supabase
         .from('service_provider_profiles')
         .select(`
-          id, user_id, business_name, avatar_url, phone, email,
+          id, user_id, business_name, phone, email,
           is_active, is_verified, created_at, updated_at,
           business_description, documents, location_address, location_coordinates, verification_status
         `) 
@@ -195,7 +188,6 @@ const ServiceHub = () => {
           className="mb-8 h-64 rounded-3xl mx-4 sm:mx-6 lg:mx-12 xl:mx-24"
         />
 
-        {/* FIX: Main content wrapper adjusted for consistency */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 xl:px-24 py-10"> 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
@@ -228,15 +220,14 @@ const ServiceHub = () => {
               <div className="text-center py-6 text-red-600">
                 <p>Error loading categories: {categoriesError.message}</p>
               </div>
-            ) : (serviceCategories || []).length > 0 ? (
+            ) : (serviceCategories && serviceCategories.length > 0) ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {(serviceCategories || []).map((category) => (
+                {serviceCategories.map((category) => (
                   <Card key={category.id} className="hover:shadow-lg transition-shadow bg-white border-orange-100">
                     <CardHeader className="text-center">
                       <div className="text-4xl mb-2">{category.icon_emoji || '⚙️'}</div>
                       <CardTitle className="text-lg">{category.name}</CardTitle>
                     </CardHeader>
-                    {/* FIX: Consistent card content padding */}
                     <CardContent className="p-4 space-y-3">
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Avg. Rating:</span>
@@ -275,15 +266,14 @@ const ServiceHub = () => {
               <div className="text-center py-6 text-red-600">
                 <p>Error loading providers: {providersError.message}</p>
               </div>
-            ) : (featuredProviders || []).length > 0 ? (
+            ) : (featuredProviders && featuredProviders.length > 0) ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {(featuredProviders || []).map((provider) => (
+                {featuredProviders.map((provider) => (
                   <Card key={provider.id} className="hover:shadow-lg transition-shadow bg-white border-orange-100">
-                    {/* FIX: Consistent card content padding */}
                     <CardContent className="p-4"> 
                       <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4">
                         <img 
-                          src={provider.avatar_url || '/placeholder-avatar.png'}
+                          src="/placeholder-avatar.png"
                           alt={provider.business_name}
                           className="w-16 h-16 rounded-full object-cover flex-shrink-0"
                         />
@@ -345,7 +335,6 @@ const ServiceHub = () => {
                 Why Join as a Service Provider?
               </CardTitle>
             </CardHeader>
-            {/* FIX: Consistent card content padding */}
             <CardContent className="p-4"> 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="text-center">
@@ -373,28 +362,6 @@ const ServiceHub = () => {
             </CardContent>
           </Card>
         </div>
-
-        {/* Appointment Booking Modal */}
-        {selectedProviderForBooking && (
-          <AppointmentBookingModal
-            open={isBookingModalOpen}
-            onOpenChange={(open) => {
-              setIsBookingModal(open);
-              if (!open) setSelectedProviderForBooking(null);
-            }}
-            providerName={selectedProviderForBooking.business_name}
-            serviceType={"Service Provider"}
-            onBookingSubmit={({ date, time }) => {
-              bookServiceMutation.mutate({
-                providerId: selectedProviderForBooking.id,
-                serviceName: selectedProviderForBooking.business_name,
-                bookingDate: date,
-                timeSlot: time,
-              });
-            }}
-            isLoading={bookServiceMutation.isPending}
-          />
-        )}
       </div>
     </FrontendLayout>
   );
