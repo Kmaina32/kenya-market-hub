@@ -29,7 +29,9 @@ const WishlistButton = ({ productId, size = 'sm' }: WishlistButtonProps) => {
       // This is a simplified version - in a real app you'd fetch the product details
       addToWishlist({
         id: productId,
-        name: 'Product'
+        name: 'Product', // This should come from props or be fetched
+        price: 0, // This should come from props or be fetched
+        category: 'Unknown' // This should come from props or be fetched
       });
     }
   };

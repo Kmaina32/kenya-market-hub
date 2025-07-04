@@ -2973,21 +2973,6 @@ export type Database = {
         Args: { post_id: string }
         Returns: undefined
       }
-      place_order_with_stock_update: {
-        Args: {
-          p_user_id: string
-          p_total_amount: number
-          p_shipping_address: string
-          p_shipping_city: string
-          p_contact_phone: string
-          p_contact_email: string
-          p_payment_method: string
-          p_transaction_id: string
-          p_payment_status: string
-          p_cart_items: Json
-        }
-        Returns: string
-      }
       reject_driver_application: {
         Args: { p_application_id: string; p_admin_notes?: string }
         Returns: undefined

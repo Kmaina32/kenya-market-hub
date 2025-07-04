@@ -20,8 +20,6 @@ import {
   Phone,
   Globe
 } from 'lucide-react';
-import JobApplicationModal from '@/components/jobs/JobApplicationModal'; // Import the modal
-import { useAuth } from '@/contexts/AuthContext'; // To check if user is logged in
 
 interface Job {
   id: number;
@@ -48,10 +46,8 @@ const JobDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, loading: authLoading } = useAuth(); // Get user from AuthContext
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false); // State for modal
 
   useEffect(() => {
     if (id) {
@@ -83,23 +79,6 @@ const JobDetail: React.FC = () => {
       month: 'long', 
       day: 'numeric' 
     });
-  };
-
-  const handleApplyNowClick = () => {
-    if (authLoading) {
-        toast({ title: 'Please wait', description: 'Loading user data...', variant: 'default' });
-        return;
-    }
-    if (!user) {
-      toast({ 
-        title: 'Authentication Required', 
-        description: 'Please log in to apply for a job.', 
-        variant: 'destructive' 
-      });
-      navigate('/auth'); // Redirect to login
-      return;
-    }
-    setIsApplicationModalOpen(true); // Open the modal
   };
 
   if (loading) {
@@ -314,7 +293,7 @@ const JobDetail: React.FC = () => {
 
                 <Button 
                   className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white"
-                  onClick={handleApplyNowClick} // FIX: Changed onClick to open modal
+                  onClick={() => job.contact_email && window.open(`mailto:${job.contact_email}?subject=Application for ${job.title}`, '_blank')}
                 >
                   Apply Now
                 </Button>
@@ -356,16 +335,6 @@ const JobDetail: React.FC = () => {
           </div>
         </section>
       </div>
-
-      {/* FIX: JobApplicationModal rendered conditionally */}
-      {job && (
-        <JobApplicationModal
-          jobId={job.id}
-          jobTitle={job.title}
-          isOpen={isApplicationModalOpen}
-          onClose={() => setIsApplicationModalOpen(false)}
-        />
-      )}
     </MainLayout>
   );
 };

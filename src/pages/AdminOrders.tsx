@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ShoppingCart, Eye, Package, DollarSign, Clock, CheckCircle } from 'lucide-react';
+import { ShoppingCart, Eye, Package, DollarSign, Clock, CheckCircle, XCircle } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import ProtectedAdminRoute from '@/components/ProtectedAdminRoute';
 import { useToast } from '@/hooks/use-toast';
@@ -279,6 +279,12 @@ const AdminOrders = () => {
                             <span>Total Amount:</span>
                             <span className="font-bold text-green-600">KSH {Number(selectedOrder.total_amount).toLocaleString()}</span>
                           </div>
+                          {selectedOrder.discount_amount > 0 && (
+                            <div className="flex justify-between text-red-600">
+                              <span>Discount:</span>
+                              <span>-KSH {Number(selectedOrder.discount_amount).toLocaleString()}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                       
@@ -303,6 +309,24 @@ const AdminOrders = () => {
                       )}
                     </div>
                   </div>
+                  
+                  {selectedOrder.shipping_address && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-bold mb-2">Shipping Address</h3>
+                      <div className="text-sm">
+                        {typeof selectedOrder.shipping_address === 'object' ? (
+                          <div className="space-y-1">
+                            <p>{selectedOrder.shipping_address.street}</p>
+                            <p>{selectedOrder.shipping_address.city}, {selectedOrder.shipping_address.state}</p>
+                            <p>{selectedOrder.shipping_address.postal_code}</p>
+                            <p>{selectedOrder.shipping_address.country}</p>
+                          </div>
+                        ) : (
+                          <p>{selectedOrder.shipping_address}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </DialogContent>

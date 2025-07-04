@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { CreditCard, Smartphone, DollarSign } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCartContext } from '@/contexts/CartContext';
+import { useCart } from '@/contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
 import MpesaPayment from '@/components/MpesaPayment';
 
@@ -31,7 +32,7 @@ const PaymentModal = ({ open, onOpenChange, total, items }: PaymentModalProps) =
   });
   const { toast } = useToast();
   const { user } = useAuth();
-  const { clearCart } = useCartContext();
+  const { clearCart } = useCart();
 
   const createOrder = async () => {
     if (!customerInfo.fullName || !customerInfo.email || !customerInfo.phone) {

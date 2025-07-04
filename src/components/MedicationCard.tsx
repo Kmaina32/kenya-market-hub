@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,16 +12,10 @@ interface MedicationCardProps {
 }
 
 const MedicationCard: React.FC<MedicationCardProps> = ({ medication }) => {
-  const { addItem } = useCartContext();
+  const { addToCart } = useCartContext();
 
   const handleAddToCart = () => {
-    addItem({
-      id: medication.id,
-      name: medication.name,
-      price: medication.price,
-      image: medication.image_url,
-      in_stock: (medication.stock_quantity ?? 0) > 0
-    });
+    addToCart(medication.id);
     toast({
       title: "Added to cart",
       description: `${medication.name} has been added to your cart.`,

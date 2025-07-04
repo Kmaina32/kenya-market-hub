@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -20,7 +19,7 @@ interface ProductDetailModalProps {
 }
 
 const ProductDetailModal = ({ open, onOpenChange, product }: ProductDetailModalProps) => {
-  const { addItem } = useCartContext();
+  const { addToCart } = useCartContext();
   const { toast } = useToast();
   const { user } = useAuth();
   const addToRecentlyViewed = useAddToRecentlyViewed();
@@ -47,13 +46,7 @@ const ProductDetailModal = ({ open, onOpenChange, product }: ProductDetailModalP
       : ['/placeholder.svg'];
 
   const handleAddToCart = () => {
-    addItem({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.image_url,
-      in_stock: product.in_stock
-    });
+    addToCart(product.id);
     toast({ title: "Added to cart", description: `${product.name} has been added to your cart.` });
   };
 
