@@ -1,163 +1,154 @@
+// src/components/MapBox.tsx
 
 import React, { useEffect, useRef, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
-
-// Set your Mapbox access token here
-mapboxgl.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw'; // This is a demo token, user should replace with their own
+import { loadGoogleMapsScript } from '@/integrations/googlemaps/googleMapsLoader'; // Import our loader
 
 interface MapBoxProps {
-  center?: [number, number];
+  center?: google.maps.LatLngLiteral;
   zoom?: number;
   markers?: Array<{
     id: string;
-    coordinates: [number, number];
+    position: google.maps.LatLngLiteral;
     title?: string;
     color?: string;
     onClick?: () => void;
   }>;
-  onMapClick?: (coordinates: [number, number]) => void;
+  onMapClick?: (coordinates: google.maps.LatLngLiteral) => void;
   showRoute?: {
-    start: [number, number];
-    end: [number, number];
+    start: google.maps.LatLngLiteral;
+    end: google.maps.LatLngLiteral;
+    path?: google.maps.LatLng[];
   };
   className?: string;
 }
 
 const MapBox: React.FC<MapBoxProps> = ({
-  center = [36.8219, -1.2921], // Default to Nairobi
+  center = { lat: -1.2921, lng: 36.8219 },
   zoom = 12,
   markers = [],
   onMapClick,
   showRoute,
-  className = "w-full h-96"
+  className = "w-full h-96" // This className will be overridden by inline style for testing
 }) => {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
+  const markersRef = useRef<google.maps.Marker[]>([]);
+  const polylineRef = useRef<google.maps.Polyline | null>(null);
+
   const [mapLoaded, setMapLoaded] = useState(false);
 
   useEffect(() => {
-    if (map.current) return; // Initialize map only once
+    const initMap = async () => {
+      const googleMaps = await loadGoogleMapsScript();
+      if (!googleMaps || !mapContainerRef.current) {
+        console.error('Failed to load Google Maps or map container not found.');
+        return;
+      }
 
-    if (mapContainer.current) {
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
+      const mapOptions: google.maps.MapOptions = {
         center: center,
         zoom: zoom,
+        mapId: 'YOUR_MAP_ID_HERE', // Check this again, or comment out if not using custom style
+        disableDefaultUI: false,
+      };
+
+      mapRef.current = new googleMaps.Map(mapContainerRef.current, mapOptions);
+
+      mapRef.current.addListener('click', (e: google.maps.MapMouseEvent) => {
+        if (onMapClick && e.latLng) {
+          onMapClick(e.latLng.toJSON());
+        }
       });
 
-      map.current.on('load', () => {
-        setMapLoaded(true);
-      });
+      setMapLoaded(true);
+    };
 
-      if (onMapClick) {
-        map.current.on('click', (e) => {
-          onMapClick([e.lngLat.lng, e.lngLat.lat]);
-        });
-      }
+    if (!mapRef.current) {
+      initMap();
     }
 
     return () => {
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
+      if (polylineRef.current) {
+        polylineRef.current.setMap(null);
       }
+      markersRef.current.forEach(marker => marker.setMap(null));
+      markersRef.current = [];
     };
   }, []);
 
-  // Update markers
+  // Update markers (unchanged)
   useEffect(() => {
-    if (!map.current || !mapLoaded) return;
-
-    // Clear existing markers
-    const existingMarkers = document.querySelectorAll('.mapboxgl-marker');
-    existingMarkers.forEach(marker => marker.remove());
-
-    // Add new markers
-    markers.forEach(marker => {
-      const el = document.createElement('div');
-      el.className = 'marker';
-      el.style.backgroundColor = marker.color || '#3b82f6';
-      el.style.width = '20px';
-      el.style.height = '20px';
-      el.style.borderRadius = '50%';
-      el.style.border = '2px solid white';
-      el.style.cursor = 'pointer';
-
-      const mapboxMarker = new mapboxgl.Marker(el)
-        .setLngLat(marker.coordinates)
-        .addTo(map.current!);
-
-      if (marker.title) {
-        new mapboxgl.Popup({ offset: 25 })
-          .setHTML(`<div>${marker.title}</div>`)
-          .setLngLat(marker.coordinates)
-          .addTo(map.current!);
+    if (!mapRef.current || !mapLoaded) return;
+    markersRef.current.forEach(marker => marker.setMap(null));
+    markersRef.current = [];
+    markers.forEach(markerData => {
+      const marker = new google.maps.Marker({
+        position: markerData.position,
+        map: mapRef.current,
+        title: markerData.title,
+      });
+      if (markerData.onClick) {
+        marker.addListener('click', markerData.onClick);
       }
-
-      if (marker.onClick) {
-        el.addEventListener('click', marker.onClick);
-      }
+      markersRef.current.push(marker);
     });
   }, [markers, mapLoaded]);
 
-  // Show route
+  // Show route (unchanged)
   useEffect(() => {
-    if (!map.current || !mapLoaded || !showRoute) return;
-
-    const getRoute = async () => {
-      const query = await fetch(
-        `https://api.mapbox.com/directions/v5/mapbox/driving/${showRoute.start[0]},${showRoute.start[1]};${showRoute.end[0]},${showRoute.end[1]}?steps=true&geometries=geojson&access_token=${mapboxgl.accessToken}`,
-        { method: 'GET' }
-      );
-      const json = await query.json();
-      const data = json.routes[0];
-      const route = data.geometry.coordinates;
-
-      const geojson = {
-        type: 'Feature' as const,
-        properties: {},
-        geometry: {
-          type: 'LineString' as const,
-          coordinates: route
-        }
-      };
-
-      // Add route to map
-      if (map.current!.getSource('route')) {
-        (map.current!.getSource('route') as mapboxgl.GeoJSONSource).setData(geojson);
-      } else {
-        map.current!.addLayer({
-          id: 'route',
-          type: 'line',
-          source: {
-            type: 'geojson',
-            data: geojson
-          },
-          layout: {
-            'line-join': 'round',
-            'line-cap': 'round'
-          },
-          paint: {
-            'line-color': '#3b82f6',
-            'line-width': 5,
-            'line-opacity': 0.75
-          }
+    if (!mapRef.current || !mapLoaded) return;
+    if (polylineRef.current) {
+      polylineRef.current.setMap(null);
+      polylineRef.current = null;
+    }
+    if (showRoute) {
+      if (showRoute.path && showRoute.path.length > 0) {
+        polylineRef.current = new google.maps.Polyline({
+          path: showRoute.path,
+          geodesic: true,
+          strokeColor: '#FF0000',
+          strokeOpacity: 0.7,
+          strokeWeight: 5,
         });
+        polylineRef.current.setMap(mapRef.current);
+        const bounds = new google.maps.LatLngBounds();
+        showRoute.path.forEach(point => bounds.extend(point));
+        mapRef.current.fitBounds(bounds, { padding: 50 });
+      } else {
+        const directionsService = new google.maps.DirectionsService();
+        directionsService.route(
+          {
+            origin: showRoute.start,
+            destination: showRoute.end,
+            travelMode: google.maps.TravelMode.DRIVING,
+          },
+          (response, status) => {
+            if (status === 'OK' && response && response.routes && response.routes[0]) {
+              if (polylineRef.current) {
+                polylineRef.current.setMap(null);
+              }
+              const path = response.routes[0].overview_path;
+              polylineRef.current = new google.maps.Polyline({
+                path: path,
+                geodesic: true,
+                strokeColor: '#FF0000',
+                strokeOpacity: 0.7,
+                strokeWeight: 5,
+              });
+              polylineRef.current.setMap(mapRef.current);
+              const bounds = new google.maps.LatLngBounds();
+              path.forEach(point => bounds.extend(point));
+              mapRef.current.fitBounds(bounds, { padding: 50 });
+            } else {
+              console.error('Directions request failed due to ' + status);
+            }
+          }
+        );
       }
-
-      // Fit map to route bounds
-      const coordinates = route;
-      const bounds = new mapboxgl.LngLatBounds();
-      coordinates.forEach((coord: [number, number]) => bounds.extend(coord));
-      map.current!.fitBounds(bounds, { padding: 50 });
-    };
-
-    getRoute();
+    }
   }, [showRoute, mapLoaded]);
 
-  return <div ref={mapContainer} className={className} />;
+  return <div ref={mapContainerRef} className={className} style={{ width: '100%', height: '400px', border: '2px solid red' }} />;
 };
 
 export default MapBox;

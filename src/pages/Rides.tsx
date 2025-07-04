@@ -3,71 +3,66 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Car, MapPin, Navigation, Clock, Star, Phone, User, CalendarDays, Wallet } from 'lucide-react'; // Added more icons
+import { Car, MapPin, Navigation, Clock, Star, Phone, User, Wallet } from 'lucide-react'; 
 import MainLayout from '@/components/MainLayout';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner'; // For notifications (assuming you have sonner installed)
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'; // For booking confirmation modal
+import { toast } from 'sonner'; 
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'; 
+
+// Import Google Maps utilities and the refactored MapBox component
+import { geocodeAddress, getRouteDetails } from '@/integrations/googlemaps/googleMapsLoader';
+import MapBox from '@/components/MapBox'; 
 
 // --- Interfaces for better type safety and clarity ---
 interface Driver {
-  id: string; // Changed to string for UUIDs
-  user_id: string; // Assuming a link to a user table
+  id: string; 
+  user_id: string; 
   vehicle_make?: string;
   vehicle_model?: string;
   vehicle_year?: number;
   license_plate: string;
-  vehicle_type: 'taxi' | 'motorbike'; // Updated to match database
+  vehicle_type: 'taxi' | 'motorbike'; 
   rating?: number;
   total_rides?: number;
   status: 'available' | 'on_trip' | 'offline';
-  phone_number: string; // Added phone number
+  phone_number: string; 
   is_active: boolean;
   is_verified: boolean;
   created_at?: string;
   updated_at?: string;
-  eta_minutes?: number; // This will be calculated separately
+  eta_minutes?: number; 
 }
 
 interface VehicleType {
-  id: 'taxi' | 'motorbike'; // Updated to match database
+  id: 'taxi' | 'motorbike'; 
   name: string;
   icon: string;
-  pricePerKm: number; // Changed to number for calculations
+  pricePerKm: number; 
   description: string;
 }
 
-// --- Mock Data for demonstration (replace with actual API calls/real-time data) ---
 const VEHICLE_TYPES: VehicleType[] = [
   { id: 'taxi', name: 'Taxi', icon: '🚗', pricePerKm: 80, description: '4 seats, Standard comfort' },
   { id: 'motorbike', name: 'Boda Boda', icon: '🏍️', pricePerKm: 50, description: 'Quick & affordable' }
 ];
 
-// In a real app, `calculateDistanceAndEta` would use a mapping API (e.g., Google Maps API)
-const calculateDistanceAndEta = async (pickup: string, destination: string, driverLat: number, driverLon: number) => {
-  // Mocking API call for distance and ETA calculation
-  await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
-
-  // Dummy values based on current location and destination.
-  // In a real app, this would involve complex geospatial calculations or API calls.
-  const distanceKm = Math.random() * 20 + 5; // 5-25 km
-  const etaMinutes = Math.floor(distanceKm * (Math.random() * 1.5 + 2)); // 2-3.5 mins per km
-  const driverEta = Math.floor(Math.random() * 10) + 2; // Driver is 2-12 mins away
-
-  return { distanceKm, etaMinutes, driverEta };
-};
-
 const Rides: React.FC = () => {
-  const [pickup, setPickup] = useState('');
-  const [destination, setDestination] = useState('');
+  const [pickup, setPickup] = useState(''); // User input string for pickup
+  const [destination, setDestination] = useState(''); // User input string for destination
+  
+  // New state to store geocoded coordinates and route path
+  const [pickupLocation, setPickupLocation] = useState<{ name: string; lat: number; lng: number } | null>(null);
+  const [destinationLocation, setDestinationLocation] = useState<{ name: string; lat: number; lng: number } | null>(null);
+  const [routePath, setRoutePath] = useState<google.maps.LatLng[] | null>(null);
+
   const [selectedVehicleType, setSelectedVehicleType] = useState<VehicleType['id']>('taxi');
   const [estimatedFare, setEstimatedFare] = useState<number | null>(null);
   const [tripDetails, setTripDetails] = useState<{ distance: number; eta: number; } | null>(null);
-  const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false); // State for booking confirmation modal
+  const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false); 
 
   const { data: drivers, isLoading, refetch, isRefetching } = useQuery<Driver[]>({
-    queryKey: ['available-drivers', selectedVehicleType], // Add vehicle type to query key
+    queryKey: ['available-drivers', selectedVehicleType], 
     queryFn: async () => {
       const { data, error } = await supabase
         .from('drivers')
@@ -75,8 +70,8 @@ const Rides: React.FC = () => {
         .eq('is_active', true)
         .eq('is_verified', true)
         .eq('status', 'available')
-        .eq('vehicle_type', selectedVehicleType) // Filter by selected vehicle type
-        .limit(10); // Still limiting for performance
+        .eq('vehicle_type', selectedVehicleType)
+        .limit(10); 
 
       if (error) {
         console.error('Error fetching drivers:', error.message);
@@ -84,76 +79,114 @@ const Rides: React.FC = () => {
         throw error;
       }
       
-      // Transform the data to match our Driver interface and add ETA
       return (data || []).map(driver => ({
         ...driver,
-        eta_minutes: Math.floor(Math.random() * 15) + 5 // Mock ETA calculation
+        eta_minutes: Math.floor(Math.random() * 15) + 5 // Keep mock ETA for driver distance from user for now
       })) as Driver[];
     },
-    refetchInterval: 30 * 1000, // Refetch every 30 seconds to keep driver list fresh
-    staleTime: 20 * 1000, // Data considered fresh for 20 seconds
+    refetchInterval: 30 * 1000, 
+    staleTime: 20 * 1000, 
   });
 
-  // Effect to calculate fare when pickup, destination, or vehicle type changes
+  // Effect to calculate fare and route when pickup, destination, or vehicle type changes
   useEffect(() => {
-    const calculateFare = async () => {
+    const calculateFareAndRoute = async () => {
       if (pickup && destination) {
         try {
           const selectedVehicle = VEHICLE_TYPES.find(v => v.id === selectedVehicleType);
           if (!selectedVehicle) return;
 
-          // In a real app, you'd pass actual coordinates for pickup/destination
-          // For now, use dummy driver location
-          const { distanceKm, etaMinutes } = await calculateDistanceAndEta(pickup, destination, 0, 0); // Lat/Lon dummy
-          const fare = distanceKm * selectedVehicle.pricePerKm;
-          setEstimatedFare(fare);
-          setTripDetails({ distance: distanceKm, eta: etaMinutes });
+          // Geocode pickup and destination addresses
+          const pickupCoords = await geocodeAddress(pickup);
+          const destinationCoords = await geocodeAddress(destination);
+
+          if (pickupCoords && destinationCoords) {
+            setPickupLocation(pickupCoords);
+            setDestinationLocation(destinationCoords);
+
+            // Get route details (distance, ETA, and path) using Google Maps Directions Service
+            const routeDetails = await getRouteDetails(
+              { lat: pickupCoords.lat, lng: pickupCoords.lng },
+              { lat: destinationCoords.lat, lng: destinationCoords.lng }
+            );
+
+            if (routeDetails) {
+              const fare = routeDetails.distanceKm * selectedVehicle.pricePerKm;
+              setEstimatedFare(fare);
+              setTripDetails({ distance: routeDetails.distanceKm, eta: routeDetails.etaMinutes });
+              setRoutePath(routeDetails.path); // Set the path for the map component
+            } else {
+              setEstimatedFare(null);
+              setTripDetails(null);
+              setRoutePath(null);
+              toast.error("Could not calculate route details. Please check locations again.");
+            }
+          } else {
+            setEstimatedFare(null);
+            setTripDetails(null);
+            setRoutePath(null);
+            toast.error("Could not find coordinates for one or both locations. Please be more specific.");
+          }
         } catch (error) {
-          console.error('Error calculating fare:', error);
+          console.error('Error calculating fare or geocoding:', error);
           setEstimatedFare(null);
           setTripDetails(null);
+          setRoutePath(null);
+          toast.error("An error occurred during location lookup or fare calculation.");
         }
       } else {
         setEstimatedFare(null);
         setTripDetails(null);
+        setRoutePath(null);
+        setPickupLocation(null);
+        setDestinationLocation(null);
       }
     };
 
     const debounceCalculate = setTimeout(() => {
-      calculateFare();
-    }, 500); // Debounce to prevent excessive API calls on input change
+      calculateFareAndRoute();
+    }, 800); // Debounce to prevent excessive API calls on input change
 
     return () => clearTimeout(debounceCalculate);
   }, [pickup, destination, selectedVehicleType]);
 
   // Handle booking a ride
   const handleBookRide = useCallback(async (driverId: string) => {
-    if (!pickup || !destination) {
-      toast.error("Please enter both pickup and destination locations.");
+    if (!pickupLocation || !destinationLocation) { // Check for geocoded locations
+      toast.error("Please ensure both pickup and destination locations are valid.");
       return;
     }
-    if (!estimatedFare) {
-      toast.error("Could not calculate fare. Please check locations.");
+    if (estimatedFare === null) {
+      toast.error("Fare not calculated. Please ensure valid locations.");
       return;
     }
 
     try {
-      // Simulate booking process
       toast.info(`Booking ride with driver ${driverId}...`);
-      // In a real app, you would insert a new 'ride' record into your database
-      // await supabase.from('rides').insert({...});
+      // In a real app, you would send pickupLocation, destinationLocation,
+      // selectedVehicleType, and estimatedFare to your backend to create a ride.
+      // e.g., await supabase.from('rides').insert({
+      //   pickup_lat: pickupLocation.lat,
+      //   pickup_lng: pickupLocation.lng,
+      //   destination_lat: destinationLocation.lat,
+      //   destination_lng: destinationLocation.lng,
+      //   vehicle_type: selectedVehicleType,
+      //   estimated_fare: estimatedFare,
+      //   driver_id: driverId,
+      //   status: 'pending',
+      // });
       await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
 
       toast.success('Ride booked successfully! Driver is on their way.');
-      setIsBookingDialogOpen(false); // Close modal on success
-      // Potentially navigate to a live tracking page or update UI
+      setIsBookingDialogOpen(false); 
+      // Further steps: navigate to a live tracking page, update UI with ride status etc.
     } catch (error) {
       console.error("Booking failed:", error);
       toast.error("Failed to book ride. Please try again.");
     }
-  }, [pickup, destination, estimatedFare]);
+  }, [pickupLocation, destinationLocation, estimatedFare]);
 
-  // Memoize the available drivers section to avoid re-renders if nothing changes
+  // Memoize the available drivers section
   const MemoizedDriverList = useMemo(() => {
     if (isLoading) {
       return (
@@ -211,7 +244,7 @@ const Rides: React.FC = () => {
                     <DialogTrigger asChild>
                       <Button
                         className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-                        disabled={!pickup || !destination || !estimatedFare}
+                        disabled={!pickupLocation || !destinationLocation || estimatedFare === null} // Use geocoded locations
                       >
                         Book Ride
                       </Button>
@@ -226,11 +259,11 @@ const Rides: React.FC = () => {
                       <div className="space-y-4 py-4">
                         <div className="flex items-center gap-3">
                           <MapPin className="h-5 w-5 text-gray-500" />
-                          <p className="text-base font-medium">From: <span className="font-semibold">{pickup}</span></p>
+                          <p className="text-base font-medium">From: <span className="font-semibold">{pickupLocation?.name || pickup}</span></p>
                         </div>
                         <div className="flex items-center gap-3">
                           <Navigation className="h-5 w-5 text-gray-500" />
-                          <p className="text-base font-medium">To: <span className="font-semibold">{destination}</span></p>
+                          <p className="text-base font-medium">To: <span className="font-semibold">{destinationLocation?.name || destination}</span></p>
                         </div>
                         {tripDetails && (
                           <>
@@ -299,7 +332,7 @@ const Rides: React.FC = () => {
         </Button>
       </div>
     );
-  }, [isLoading, drivers, selectedVehicleType, pickup, destination, estimatedFare, tripDetails, handleBookRide, isBookingDialogOpen, isRefetching, refetch]);
+  }, [isLoading, drivers, selectedVehicleType, pickup, destination, estimatedFare, tripDetails, handleBookRide, isBookingDialogOpen, isRefetching, refetch, pickupLocation, destinationLocation]);
 
   return (
     <MainLayout>
@@ -415,15 +448,35 @@ const Rides: React.FC = () => {
                 </div>
               )}
 
+              {/* This button will trigger the updated fare calculation logic via useEffect debounce */}
               <Button
                 className="w-full h-12 text-lg bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-md transition-all duration-200"
                 disabled={!pickup || !destination || isLoading || estimatedFare === null}
-                onClick={() => { /* This button triggers driver search/fare calculation */ }}
+                onClick={() => { /* No direct action here, useEffect handles it */ }}
               >
                 {isLoading ? 'Searching...' : 'Find Drivers & Estimate Fare'}
               </Button>
             </CardContent>
           </Card>
+
+          {/* Map Display Section - Added the MapBox component here */}
+          {(pickupLocation && destinationLocation) && (
+            <div className="mt-8">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <MapPin className="h-6 w-6 text-orange-500" /> Your Route
+              </h2>
+              <MapBox
+                center={pickupLocation} // Center map on pickup location initially
+                zoom={12}
+                markers={[
+                  { id: 'pickup', position: pickupLocation, title: pickupLocation.name, color: '#3b82f6' },
+                  { id: 'destination', position: destinationLocation, title: destinationLocation.name, color: '#ef4444' },
+                ]}
+                showRoute={routePath ? { start: pickupLocation, end: destinationLocation, path: routePath } : undefined}
+                className="rounded-lg shadow-md border-2 border-gray-100"
+              />
+            </div>
+          )}
 
           {/* Available Drivers Section */}
           <div className="space-y-6 pt-4">
