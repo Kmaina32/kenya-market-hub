@@ -19,7 +19,6 @@ import {
   Wrench, 
   Building, 
   Heart, 
-  ShoppingCart, 
   User, 
   Stethoscope, 
   Briefcase, 
@@ -60,7 +59,6 @@ const AppSidebar = () => {
   ];
 
   const userItems = [
-    { icon: ShoppingCart, label: 'Cart', path: '/cart', hasQuantityBadge: true },
     { icon: Heart, label: 'Wishlist', path: '/wishlist' },
     { icon: User, label: 'Profile', path: '/profile' },
     { icon: Settings, label: 'Service Hub', path: '/service-hub' }

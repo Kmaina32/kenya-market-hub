@@ -1,13 +1,16 @@
 
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { WifiOff } from 'lucide-react';
+import { WifiOff, ShoppingCart } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import AppSidebar from './AppSidebar';
 import UserNav from './UserNav';
 import NotificationDropdown from './NotificationDropdown';
 import GlobalSearch from './GlobalSearch';
 import Footer from './Footer';
+import CartQuantityBadge from './CartQuantityBadge';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { useNavigate } from 'react-router-dom';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -15,6 +18,11 @@ interface MainLayoutProps {
 
 const MainLayout = ({ children }: MainLayoutProps) => {
   const isOnline = useOnlineStatus();
+  const navigate = useNavigate();
+
+  const handleCartClick = () => {
+    navigate('/cart');
+  };
 
   return (
     <SidebarProvider>
@@ -45,6 +53,17 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             </div>
             
             <div className="flex items-center gap-2">
+              {/* Cart Icon */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleCartClick}
+                className="relative hover:bg-orange-50 hover:text-orange-600"
+              >
+                <ShoppingCart className="h-5 w-5" />
+                <CartQuantityBadge />
+              </Button>
+              
               <NotificationDropdown />
               <UserNav />
             </div>

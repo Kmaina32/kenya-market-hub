@@ -2,12 +2,15 @@
 import React from 'react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { WifiOff } from 'lucide-react';
+import { WifiOff, ShoppingCart } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import AppSidebar from '@/components/AppSidebar';
 import UserNav from '@/components/UserNav';
 import GlobalSearch from '@/components/GlobalSearch';
 import Footer from '@/components/Footer';
+import CartQuantityBadge from '@/components/CartQuantityBadge';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { useNavigate } from 'react-router-dom';
 
 interface FrontendLayoutProps {
   children: React.ReactNode;
@@ -15,6 +18,11 @@ interface FrontendLayoutProps {
 
 const FrontendLayout = ({ children }: FrontendLayoutProps) => {
   const isOnline = useOnlineStatus();
+  const navigate = useNavigate();
+
+  const handleCartClick = () => {
+    navigate('/cart');
+  };
 
   return (
     <SidebarProvider>
@@ -43,7 +51,21 @@ const FrontendLayout = ({ children }: FrontendLayoutProps) => {
                 <GlobalSearch />
               </div>
             </div>
-            <UserNav />
+            
+            <div className="flex items-center gap-2">
+              {/* Cart Icon */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleCartClick}
+                className="relative hover:bg-orange-50 hover:text-orange-600"
+              >
+                <ShoppingCart className="h-5 w-5" />
+                <CartQuantityBadge />
+              </Button>
+              
+              <UserNav />
+            </div>
           </div>
           
           {!isOnline && (
