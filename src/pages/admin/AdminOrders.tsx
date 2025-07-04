@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -80,7 +79,7 @@ const ViewOrderModal: React.FC<ViewOrderModalProps> = ({ open, onOpenChange, ord
           </div>
         </div>
         <div className="mt-4">
-          <h3 className="font-semibold text-lg mb-2">Order Items ({order.order_items?.length || 0})</h3>
+          <h3 className="font-semibold text-lg mb-2">Order Items ({(order.order_items || []).length})</h3>
           {order.order_items && order.order_items.length > 0 ? (
             <Table>
               <TableHeader>
@@ -331,7 +330,7 @@ const AdminOrders = () => {
                             <TableCell className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center text-gray-700">
                                 <Package className="h-4 w-4 mr-1 text-gray-400" />
-                                <span>{order.order_items?.length || 0} items</span>
+                                <span>{(order.order_items || []).length} items</span>
                               </div>
                             </TableCell>
                             <TableCell className="px-6 py-4 whitespace-nowrap font-semibold text-green-600">
