@@ -1,61 +1,88 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react'; // Added useMemo for filteredJobs, useCallback for handlers
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Briefcase, MapPin, Clock, DollarSign, Building } from 'lucide-react';
+import { Search, Briefcase, MapPin, Clock, DollarSign, Building, Loader2 } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import HeroSection from '@/components/shared/HeroSection';
+import { toast } from 'sonner';
+
+// FIX: Updated Job interface to include 'company' and 'job_type'
+interface Job {
+  id: number;
+  title: string;
+  description: string;
+  location?: string | null; // Made nullable
+  category?: string | null; // Made nullable
+  salary?: string | null;   // Made nullable
+  status?: string | null;   // Made nullable
+  created_at: string;
+  company?: string | null;  // Added, made nullable
+  job_type?: string | null; // Added, made nullable
+  // Add any other properties your 'jobs' table returns from select('*')
+}
 
 const Jobs = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
-  const { data: jobs, isLoading } = useQuery({
-    queryKey: ['jobs'],
+  const { data: jobs, isLoading, error } = useQuery<Job[]>({
+    queryKey: ['jobs', debouncedSearchTerm, selectedCategory],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('jobs')
-        .select('*')
-        .eq('status', 'open')
-        .order('created_at', { ascending: false });
+        .select(`
+          id, title, description, location, category, salary, status, created_at,
+          company, job_type, -- Explicitly selecting these as they are used in UI
+          remote_option, experience_level, company_name, responsibilities, qualifications, benefits,
+          application_instructions, company_website, contact_email, contact_phone
+        `) 
+        .eq('status', 'open');
+
+      if (debouncedSearchTerm) {
+        query = query.or(`title.ilike.%${debouncedSearchTerm}%,company.ilike.%${debouncedSearchTerm}%,category.ilike.%${debouncedSearchTerm}%`);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching jobs:", error.message);
+        toast.error("Failed to load jobs. Please try again.");
+        throw error;
+      }
       return data || [];
     }
   });
 
-  const filteredJobs = jobs?.filter(job =>
-    job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    job.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    job.category?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  // Since filtering is handled in queryFn, no need for client-side filteredJobs
+  // The 'jobs' data already represents the filtered results.
+
+  const handleClearSearch = useCallback(() => {
+    setSearchTerm('');
+  }, []);
 
   return (
     <MainLayout>
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        {/* Hero Section with Background Image - Added proper padding and rounded borders */}
-        <div 
-          className="relative h-64 overflow-hidden bg-gradient-to-r from-blue-600 to-purple-700 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4"
-          style={{
-            backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1486312338219-ce68e2c6b696?ixlib=rb-4.0.3&auto=format&fit=crop&w=2072&q=80')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }}
-        >
-          <div className="absolute inset-0 bg-black bg-opacity-40 rounded-3xl" />
-          <div className="relative z-10 flex items-center justify-center h-full px-6 sm:px-8 lg:px-12">
-            <div className="text-center text-white max-w-3xl mx-auto">
-              <Briefcase className="h-16 w-16 mx-auto mb-4" />
-              <h1 className="text-3xl md:text-4xl font-bold mb-4">Find Your Dream Job</h1>
-              <p className="text-lg text-blue-100 mb-6">
-                Discover career opportunities from top companies across Kenya
-              </p>
-            </div>
-          </div>
-        </div>
+        <HeroSection
+          title="Find Your Dream Job"
+          subtitle="Discover career opportunities from top companies across Kenya"
+          description=" " // Added a space or a proper description
+          imageUrl="photo-1486312338219-ce68e2c6b696"
+          className="mb-8 h-64 rounded-3xl mx-4 sm:mx-6 lg:mx-12 xl:mx-24"
+        />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Search Bar */}
@@ -66,77 +93,89 @@ const Jobs = () => {
                 placeholder="Search jobs by title, company, or category..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-12 pr-4 py-3 text-base border-orange-200 focus:border-orange-400 rounded-xl"
+                className="pl-12 pr-4 py-3 text-base border-orange-200 focus:ring-orange-500 focus:border-orange-500 rounded-xl"
               />
             </div>
           </div>
 
           {isLoading ? (
             <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
+              <Loader2 className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></Loader2>
               <p className="mt-4 text-gray-600">Loading jobs...</p>
             </div>
-          ) : filteredJobs.length === 0 ? (
+          ) : (jobs || []).length === 0 ? (
             <div className="text-center py-12">
               <Briefcase className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 mb-2">No Jobs Available</h3>
               <p className="text-gray-600 mb-6">
-                {searchTerm ? 'No jobs match your search criteria.' : 'Job listings will be available soon. Check back later!'}
+                {debouncedSearchTerm ? 'No jobs match your search criteria.' : 'Job listings will be available soon. Check back later!'}
               </p>
-              {searchTerm && (
-                <Button onClick={() => setSearchTerm('')} variant="outline">
+              {debouncedSearchTerm && ( // Use debouncedSearchTerm for conditional rendering
+                <Button onClick={handleClearSearch} variant="outline">
                   Clear Search
                 </Button>
               )}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredJobs.map((job) => (
+              {(jobs || []).map((job) => (
                 <Card key={job.id} className="hover:shadow-xl transition-all duration-300 border-2 hover:border-orange-300">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between mb-2">
-                      <Badge variant="outline" className="text-orange-600 border-orange-200">
-                        {job.category}
-                      </Badge>
-                      <Badge variant="secondary" className="text-xs">
-                        {job.job_type}
-                      </Badge>
-                    </div>
-                    <CardTitle className="text-lg text-gray-900 line-clamp-2">
-                      {job.title}
-                    </CardTitle>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Building className="h-4 w-4 text-orange-500" />
-                      <span>{job.company}</span>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="space-y-3">
-                    <p className="text-sm text-gray-600 line-clamp-3">
-                      {job.description}
-                    </p>
-                    
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <MapPin className="h-4 w-4 text-orange-500" />
-                      <span className="truncate">{job.location}</span>
-                    </div>
-
-                    {job.salary && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <DollarSign className="h-4 w-4 text-orange-500" />
-                        <span>{job.salary}</span>
+                  {/* FIX: Make entire card content clickable using Link */}
+                  <Link to={`/job/${job.id}`} className="block h-full w-full p-4"> {/* Added p-4 here to ensure content is inside the link */}
+                    <CardHeader className="pb-3 px-0 pt-0"> {/* Adjusted padding for header within Link */}
+                      <div className="flex items-start justify-between mb-2">
+                        {job.category && (
+                          <Badge variant="outline" className="text-orange-600 border-orange-200">
+                            {job.category}
+                          </Badge>
+                        )}
+                        {job.job_type && (
+                          <Badge variant="secondary" className="text-xs">
+                            {job.job_type}
+                          </Badge>
+                        )}
                       </div>
-                    )}
+                      <CardTitle className="text-lg text-gray-900 line-clamp-2">
+                        {job.title}
+                      </CardTitle>
+                      {job.company && (
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Building className="h-4 w-4 text-orange-500" />
+                          <span>{job.company}</span>
+                        </div>
+                      )}
+                    </CardHeader>
 
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <Clock className="h-4 w-4" />
-                      <span>Posted {new Date(job.created_at).toLocaleDateString()}</span>
-                    </div>
+                    <CardContent className="space-y-3 px-0 pb-0"> {/* Adjusted padding for content within Link */}
+                      <p className="text-sm text-gray-600 line-clamp-3">
+                        {job.description}
+                      </p>
+                      
+                      {job.location && (
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <MapPin className="h-4 w-4 text-orange-500" />
+                          <span className="truncate">{job.location}</span>
+                        </div>
+                      )}
 
-                    <Button className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600">
-                      Apply Now
-                    </Button>
-                  </CardContent>
+                      {job.salary && (
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <DollarSign className="h-4 w-4 text-orange-500" />
+                          <span>{job.salary}</span>
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <Clock className="h-4 w-4" />
+                        <span>Posted {new Date(job.created_at).toLocaleDateString()}</span>
+                      </div>
+
+                      {/* FIX: Changed button to "View Details" */}
+                      <Button className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600">
+                        View Details
+                      </Button>
+                    </CardContent>
+                  </Link>
                 </Card>
               ))}
             </div>
