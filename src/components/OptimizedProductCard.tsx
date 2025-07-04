@@ -29,7 +29,7 @@ const OptimizedProductCard: React.FC<OptimizedProductCardProps> = ({
   product, 
   onViewDetails 
 }) => {
-  const { addToCart, isLoading } = useCartContext();
+  const { addItem, isLoading } = useCartContext();
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   const handleAddToCart = async (e: React.MouseEvent) => {
@@ -41,10 +41,17 @@ const OptimizedProductCard: React.FC<OptimizedProductCardProps> = ({
     }
 
     try {
-      // Pass only the product ID to addToCart
-      addToCart(product.id, 1);
+      addItem({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image_url,
+        in_stock: product.in_stock
+      });
+      toast.success(`${product.name} added to cart`);
     } catch (error) {
       console.error('Error adding to cart:', error);
+      toast.error('Failed to add to cart');
     }
   };
 

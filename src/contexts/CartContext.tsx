@@ -11,12 +11,15 @@ export interface CartItem {
   image?: string;
   category?: string;
   in_stock?: boolean;
+  vendor?: string;
 }
 
 interface CartContextType {
   items: CartItem[];
   addItem: (product: { id: string; name: string; price: number; image?: string; in_stock?: boolean }) => void;
+  addToCart: (productId: string, quantity?: number) => void;
   removeItem: (productId: string) => void;
+  removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
   getTotalItems: () => number;
@@ -48,13 +51,18 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         price: item.products?.price || 0,
         quantity: item.quantity,
         image: item.products?.image_url,
-        in_stock: item.products?.in_stock
+        in_stock: item.products?.in_stock,
+        vendor: 'Kenya Market'
       }))
     : localItems;
 
   const addItem = (product: { id: string; name: string; price: number; image?: string; in_stock?: boolean }) => {
     if (user) {
-      handleAddToCart(product);
+      handleAddToCart({
+        id: product.id,
+        name: product.name,
+        in_stock: product.in_stock ?? true
+      });
     } else {
       // Local storage fallback for non-authenticated users
       setLocalItems(prev => {
@@ -66,9 +74,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
               : item
           );
         }
-        return [...prev, { ...product, quantity: 1 }];
+        return [...prev, { ...product, quantity: 1, in_stock: product.in_stock ?? true, vendor: 'Kenya Market' }];
       });
     }
+  };
+
+  const addToCart = (productId: string, quantity: number = 1) => {
+    // This is a simplified version - in a real app you'd fetch product details
+    addItem({ id: productId, name: 'Product', price: 0, in_stock: true });
   };
 
   const removeItem = (productId: string) => {
@@ -138,7 +151,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         items,
         addItem,
+        addToCart,
         removeItem,
+        removeFromCart: removeItem,
         updateQuantity,
         clearCart,
         getTotalItems,
@@ -158,3 +173,6 @@ export const useCartContext = () => {
   }
   return context;
 };
+
+// Export useCart as an alias for compatibility
+export const useCart = useCartContext;

@@ -12,7 +12,7 @@ import HeroSection from '@/components/shared/HeroSection';
 
 const Cart = () => {
   const { user } = useAuth();
-  const { items, removeFromCart, updateQuantity, getTotalPrice, getTotalItems } = useCartContext();
+  const { items, removeItem, updateQuantity, getTotalPrice, getTotalItems } = useCartContext();
   const navigate = useNavigate();
 
   if (!user) {
@@ -73,7 +73,7 @@ const Cart = () => {
                         
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-gray-900 truncate text-sm">{item.name}</h3>
-                          <p className="text-xs text-gray-600 mb-1">{item.vendor}</p>
+                          <p className="text-xs text-gray-600 mb-1">{item.vendor || 'Kenya Market'}</p>
                           <div className="flex items-center space-x-3">
                             <span className="text-sm font-bold text-orange-600">
                               KSH {item.price.toLocaleString()}
@@ -107,7 +107,7 @@ const Cart = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => removeFromCart(item.id)}
+                            onClick={() => removeItem(item.id)}
                             className="text-red-600 border-red-200 hover:bg-red-50 h-6 w-6 p-0"
                           >
                             <Trash2 className="h-3 w-3" />

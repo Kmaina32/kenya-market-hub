@@ -55,7 +55,16 @@ const Orders = () => {
       const { data, error } = await supabase
         .from('orders')
         .select(`
-          *,
+          id,
+          total_amount,
+          status,
+          payment_method,
+          payment_status,
+          created_at,
+          shipping_address,
+          shipping_city,
+          contact_phone,
+          contact_email,
           order_items (
             id,
             quantity,
@@ -72,7 +81,21 @@ const Orders = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Order[];
+      
+      // Transform the data to match our interface
+      return (data || []).map(order => ({
+        id: order.id,
+        total_amount: order.total_amount,
+        status: order.status,
+        shipping_address: order.shipping_address || '',
+        shipping_city: order.shipping_city || '',
+        contact_phone: order.contact_phone || '',
+        contact_email: order.contact_email || '',
+        payment_method: order.payment_method,
+        payment_status: order.payment_status,
+        created_at: order.created_at,
+        order_items: order.order_items || []
+      }));
     },
     enabled: !!user && !authLoading,
   });
