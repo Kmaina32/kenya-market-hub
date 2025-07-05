@@ -1,3 +1,4 @@
+// src/components/PaymentMethodSelector.tsx
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,9 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { CreditCard, Smartphone, DollarSign } from 'lucide-react';
+// PaymentData is correctly imported from usePayments here, not exported
 import { useMpesaPayment, usePayPalPayment, useStripePayment, PaymentData } from '@/hooks/usePayments';
 
-interface PaymentMethodSelectorProps {
+// FIX: Export the interface so it can be used by parent components
+export interface PaymentMethodSelectorProps {
   paymentData: PaymentData;
   onPaymentSuccess: () => void;
   onCancel: () => void;
@@ -40,12 +43,10 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
           break;
         case 'paypal':
           const paypalResult = await paypalPayment.mutateAsync(paymentData);
-          // Redirect to PayPal
           window.location.href = paypalResult.approvalUrl;
           break;
         case 'stripe':
           const stripeResult = await stripePayment.mutateAsync(paymentData);
-          // Handle Stripe client secret for card input
           console.log('Stripe client secret:', stripeResult.clientSecret);
           break;
       }
@@ -66,7 +67,6 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Payment Amount Display */}
         <div className="bg-gray-50 p-4 rounded-lg">
           <div className="flex justify-between items-center">
             <span className="font-medium">Total Amount:</span>
@@ -76,7 +76,6 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
           </div>
         </div>
 
-        {/* Payment Method Selection */}
         <RadioGroup value={selectedMethod} onValueChange={(value: any) => setSelectedMethod(value)}>
           <div className="flex items-center space-x-2 p-3 border rounded-lg">
             <RadioGroupItem value="mpesa" id="mpesa" />
@@ -112,7 +111,6 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
           </div>
         </RadioGroup>
 
-        {/* M-Pesa Phone Number Input */}
         {selectedMethod === 'mpesa' && (
           <div className="space-y-2">
             <Label htmlFor="phone">M-Pesa Phone Number</Label>
@@ -130,7 +128,6 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
           </div>
         )}
 
-        {/* Payment Buttons */}
         <div className="flex gap-3 pt-4">
           <Button 
             variant="outline" 
