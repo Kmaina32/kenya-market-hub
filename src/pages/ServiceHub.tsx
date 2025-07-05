@@ -38,14 +38,13 @@ interface ServiceProvider {
   avatar_url?: string | null;
   email?: string | null;
   is_active?: boolean | null;
-  is_verified?: boolean | null;
+  verification_status?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
   business_description?: string | null;
   documents?: any | null;
   location_address?: string | null;
   location_coordinates?: any | null;
-  verification_status?: string | null;
   rating?: number | null;
   completed_jobs?: number | null;
   location?: string | null;
@@ -93,11 +92,10 @@ const ServiceHub = () => {
         .from('service_provider_profiles')
         .select(`
           id, user_id, business_name, email,
-          is_active, is_verified, created_at, updated_at,
+          is_active, created_at, updated_at,
           business_description, documents, location_address, location_coordinates, verification_status
         `)
         .eq('is_active', true)
-        .eq('is_verified', true)
         .limit(2);
 
       if (error) {
@@ -294,7 +292,7 @@ const ServiceHub = () => {
                     <CardContent className="p-4">
                       <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4">
                         <img
-                          src={provider.avatar_url || '/placeholder-avatar.png'}
+                          src="/placeholder-avatar.png"
                           alt={provider.business_name}
                           className="w-16 h-16 rounded-full object-cover flex-shrink-0"
                         />

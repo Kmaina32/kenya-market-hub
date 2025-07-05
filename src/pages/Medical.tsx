@@ -138,6 +138,12 @@ const Medical: React.FC = () => {
     setIsBookingModalOpen(true);
   };
 
+  const handleBookingSubmit = ({ date, time }: { date: Date; time: string }) => {
+    console.log('Medical appointment booked:', { date, time, provider: selectedProvider?.id });
+    setIsBookingModalOpen(false);
+    setSelectedProvider(null);
+  };
+
   const getProviderDisplayType = (dbType: string): string => {
     switch (dbType) {
       case 'lab_technician':
@@ -507,6 +513,8 @@ const Medical: React.FC = () => {
             }}
             providerName={selectedProvider.full_name}
             serviceType={getServiceType(selectedProvider.provider_type)}
+            onBookingSubmit={handleBookingSubmit}
+            isLoading={false}
           />
         )}
       </div>

@@ -103,7 +103,7 @@ const Wishlist = () => {
                       <h4 className="font-semibold text-gray-900 mb-1 text-sm line-clamp-2">
                         {item.products?.name || 'Unknown Product'}
                       </h4>
-                      <p className="text-xs text-gray-600 mb-2">{item.products?.category || 'Unknown Category'}</p>
+                      <p className="text-xs text-gray-600 mb-2">General</p>
 
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-sm font-bold text-orange-600">

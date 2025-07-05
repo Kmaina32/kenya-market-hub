@@ -37,6 +37,11 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({ provider, onA
     setShowContactModal(true);
   };
 
+  const handleBookingSubmit = ({ date, time }: { date: Date; time: string }) => {
+    console.log('Booking submitted:', { date, time, provider: provider.id });
+    setShowAppointmentModal(false);
+  };
+
   return (
     <>
       <Card className="hover:shadow-lg transition-shadow duration-300 border border-gray-200">
@@ -112,6 +117,8 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({ provider, onA
         onOpenChange={setShowAppointmentModal}
         providerName={provider.business_name || 'Service Provider'}
         serviceType={provider.provider_type}
+        onBookingSubmit={handleBookingSubmit}
+        isLoading={false}
       />
 
       <ContactProviderModal
