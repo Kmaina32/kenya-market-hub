@@ -27,7 +27,9 @@ import {
 interface OrderItem {
   product_id: string;
   quantity: number;
-  price_at_purchase: number;
+  price_at_purchase?: number;
+  unit_price?: number;
+  total_price?: number;
   products?: {
     name: string;
   };
@@ -42,8 +44,8 @@ interface OrderData {
   id: string;
   user_id: string;
   total_amount: number;
-  payment_status: 'pending' | 'paid' | 'failed';
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  payment_status: string;
+  status: string;
   created_at: string;
   order_items?: OrderItem[];
   profiles?: OrderProfile;
@@ -109,7 +111,7 @@ const ViewOrderModal: React.FC<ViewOrderModalProps> = ({ open, onOpenChange, ord
                   <TableRow key={index}>
                     <TableCell>{item.products?.name || 'N/A'}</TableCell>
                     <TableCell>{item.quantity}</TableCell>
-                    <TableCell>KSh {Number(item.price_at_purchase).toLocaleString()}</TableCell>
+                    <TableCell>KSh {Number(item.price_at_purchase || item.unit_price || 0).toLocaleString()}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -139,30 +141,61 @@ const AdminOrders = () => {
   const { data: orders, isLoading } = useQuery<OrderData[]>({
     queryKey: ['admin-orders'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First fetch orders
+      const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
-        .select(`
-          id,
-          user_id,
-          total_amount,
-          payment_status,
-          status,
-          created_at,
-          profiles (full_name, email),
-          order_items (product_id, quantity, price_at_purchase, products (name))
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching orders:', error);
-        throw error;
+      if (ordersError) {
+        console.error('Error fetching orders:', ordersError);
+        throw ordersError;
       }
-      return data;
+
+      // Then fetch order items and profiles separately to avoid relation issues
+      const orderIds = ordersData.map(order => order.id);
+      const userIds = ordersData.map(order => order.user_id);
+
+      // Fetch order items
+      const { data: orderItemsData, error: itemsError } = await supabase
+        .from('order_items')
+        .select(`
+          order_id,
+          product_id,
+          quantity,
+          unit_price,
+          total_price,
+          products (name)
+        `)
+        .in('order_id', orderIds);
+
+      if (itemsError) {
+        console.error('Error fetching order items:', itemsError);
+      }
+
+      // Fetch user profiles
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+      }
+
+      // Combine the data
+      const ordersWithDetails = ordersData.map(order => ({
+        ...order,
+        order_items: orderItemsData?.filter(item => item.order_id === order.id) || [],
+        profiles: profilesData?.find(profile => profile.id === order.user_id) || null
+      }));
+
+      return ordersWithDetails;
     }
   });
 
   const updateOrderStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: OrderData['status'] }) => {
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { error } = await supabase
         .from('orders')
         .update({ status })
@@ -209,7 +242,7 @@ const AdminOrders = () => {
     }
   });
 
-  const handleStatusChange = (id: string, status: OrderData['status']) => {
+  const handleStatusChange = (id: string, status: string) => {
     updateOrderStatusMutation.mutate({ id, status });
   };
 
@@ -333,7 +366,7 @@ const AdminOrders = () => {
                           <TableCell className="px-6 py-4 whitespace-nowrap">
                             <Select
                               value={order.status}
-                              onValueChange={(value) => handleStatusChange(order.id, value as OrderData['status'])}
+                              onValueChange={(value) => handleStatusChange(order.id, value)}
                             >
                               <SelectTrigger className="w-32">
                                 <SelectValue />
@@ -408,14 +441,17 @@ const AdminOrders = () => {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={deleteOrderMutation.isPending}>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDeleteOrder}
-                disabled={deleteOrderMutation.isPending}
                 className="bg-red-600 hover:bg-red-700"
+                disabled={deleteOrderMutation.isPending}
               >
                 {deleteOrderMutation.isPending ? (
-                  <span className="flex items-center"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting...</span>
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Deleting...
+                  </>
                 ) : (
                   'Delete Order'
                 )}

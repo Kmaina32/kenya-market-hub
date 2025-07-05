@@ -25,18 +25,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const checkAdminStatus = async (userId: string) => {
     try {
+      // Check if user_roles table exists and user has admin role
       const { data: adminCheck, error } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
         .eq('role', 'admin')
-        .single();
+        .maybeSingle();
       
-      if (!error && adminCheck) {
-        setIsAdmin(true);
-      } else {
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error checking admin status:', error);
         setIsAdmin(false);
+        return;
       }
+      
+      setIsAdmin(!!adminCheck);
     } catch (error) {
       console.error('Error checking admin status:', error);
       setIsAdmin(false);
