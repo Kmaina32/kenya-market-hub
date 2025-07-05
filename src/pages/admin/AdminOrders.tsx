@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -267,13 +268,16 @@ const AdminOrders = () => {
     }
   };
 
-  // Ensure orders is properly typed and handle filtering with explicit type safety
-  const ordersArray: OrderData[] = Array.isArray(orders) ? orders : [];
-  const filteredOrders: OrderData[] = ordersArray.filter((order: OrderData) =>
-    order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.profiles?.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Fix the type inference issue by ensuring we have proper array types
+  const ordersData: OrderData[] = orders || [];
+  const filteredOrders: OrderData[] = ordersData.filter((order: OrderData) => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      order.id.toLowerCase().includes(searchLower) ||
+      order.profiles?.full_name?.toLowerCase().includes(searchLower) ||
+      order.profiles?.email?.toLowerCase().includes(searchLower)
+    );
+  });
 
   const handleViewClick = (order: OrderData) => {
     setSelectedOrder(order);
