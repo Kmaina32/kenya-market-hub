@@ -267,9 +267,9 @@ const AdminOrders = () => {
     }
   };
 
-  // Explicitly type the arrays to fix TypeScript inference
-  const ordersArray: OrderData[] = orders ?? [];
-  const filteredOrders: OrderData[] = ordersArray.filter((order: OrderData) => {
+  // Fix TypeScript inference by properly typing the variables
+  const ordersArray = Array.isArray(orders) ? orders : [];
+  const filteredOrders = ordersArray.filter((order) => {
     const searchLower = searchTerm.toLowerCase();
     return (
       order.id.toLowerCase().includes(searchLower) ||
