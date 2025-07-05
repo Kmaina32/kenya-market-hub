@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -268,9 +269,9 @@ const AdminOrders = () => {
     }
   };
 
-  // Ensure orders is always an array and explicitly type the filtered result
-  const ordersData: OrderData[] = orders || [];
-  const filteredOrders: OrderData[] = ordersData.filter((order: OrderData) => {
+  // Fix the type inference issue by explicitly typing the arrays
+  const safeOrders: OrderData[] = Array.isArray(orders) ? orders : [];
+  const filteredOrders: OrderData[] = safeOrders.filter((order: OrderData) => {
     const searchLower = searchTerm.toLowerCase();
     return (
       order.id.toLowerCase().includes(searchLower) ||
@@ -479,3 +480,4 @@ const AdminOrders = () => {
 };
 
 export default AdminOrders;
+
