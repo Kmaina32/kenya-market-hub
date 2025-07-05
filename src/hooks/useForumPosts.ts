@@ -35,9 +35,18 @@ export const useForumPosts = (categoryId?: string) => {
       let query = supabase
         .from('forum_posts')
         .select(`
-          *,
+          id,
+          title,
+          content,
+          category_id,
+          author_id,
+          like_count,
+          reply_count,
+          view_count,
+          created_at,
+          updated_at,
           author_profile:profiles!author_id(full_name, avatar_url),
-          category:forum_categories(name)
+          category:forum_categories!category_id(name, color)
         `)
         .order('created_at', { ascending: false });
 
@@ -71,12 +80,8 @@ export const useForumPosts = (categoryId?: string) => {
         return {
           ...post,
           has_liked,
-          author_profile: Array.isArray(post.author_profile) 
-            ? post.author_profile[0] 
-            : post.author_profile || { full_name: 'Unknown User' },
-          category: Array.isArray(post.category) 
-            ? post.category[0] 
-            : post.category || { name: 'General' }
+          author_profile: post.author_profile || { full_name: 'Unknown User' },
+          category: post.category || { name: 'General' }
         };
       }));
 

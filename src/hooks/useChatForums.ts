@@ -33,61 +33,7 @@ export interface UserSearchResult {
   email: string;
 }
 
-// Get all forum posts with author and category info
-export const useForumPosts = () => {
-  return useQuery({
-    queryKey: ['forum-posts'],
-    queryFn: async () => {
-      console.log('Fetching forum posts...');
-      
-      // First get the posts
-      const { data: posts, error: postsError } = await supabase
-        .from('forum_posts')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (postsError) {
-        console.error('Error fetching forum posts:', postsError);
-        throw postsError;
-      }
-
-      if (!posts) return [];
-
-      // Get unique author IDs and category IDs
-      const authorIds = [...new Set(posts.map(p => p.author_id))];
-      const categoryIds = [...new Set(posts.map(p => p.category_id))];
-
-      // Fetch author profiles
-      let authorProfiles: any[] = [];
-      if (authorIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, full_name, avatar_url')
-          .in('id', authorIds);
-        authorProfiles = profiles || [];
-      }
-
-      // Fetch categories
-      let categories: any[] = [];
-      if (categoryIds.length > 0) {
-        const { data: cats } = await supabase
-          .from('forum_categories')
-          .select('id, name')
-          .in('id', categoryIds);
-        categories = cats || [];
-      }
-
-      // Combine the data
-      return posts.map(post => ({
-        ...post,
-        author_profile: authorProfiles.find(p => p.id === post.author_id),
-        category: categories.find(c => c.id === post.category_id)
-      })) as ForumPost[];
-    },
-  });
-};
-
-// Get forum categories - renamed from useChatForums to avoid confusion
+// Get forum categories
 export const useForumCategories = () => {
   return useQuery({
     queryKey: ['forum-categories'],
@@ -99,6 +45,36 @@ export const useForumCategories = () => {
 
       if (error) throw error;
       return data || [];
+    },
+  });
+};
+
+// Get all forum posts with author and category info
+export const useForumPosts = () => {
+  return useQuery({
+    queryKey: ['forum-posts'],
+    queryFn: async () => {
+      console.log('Fetching forum posts...');
+      
+      const { data: posts, error: postsError } = await supabase
+        .from('forum_posts')
+        .select(`
+          *,
+          author_profile:profiles!author_id(full_name, avatar_url),
+          category:forum_categories!category_id(name)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (postsError) {
+        console.error('Error fetching forum posts:', postsError);
+        throw postsError;
+      }
+
+      return (posts || []).map(post => ({
+        ...post,
+        author_profile: post.author_profile || { full_name: 'Anonymous' },
+        category: post.category || { name: 'General' }
+      })) as ForumPost[];
     },
   });
 };
