@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -268,9 +267,9 @@ const AdminOrders = () => {
     }
   };
 
-  // Fix the type inference issue by ensuring we have proper array types
-  const ordersData: OrderData[] = orders || [];
-  const filteredOrders: OrderData[] = ordersData.filter((order: OrderData) => {
+  // Explicitly type the arrays to fix TypeScript inference
+  const ordersArray: OrderData[] = orders ?? [];
+  const filteredOrders: OrderData[] = ordersArray.filter((order: OrderData) => {
     const searchLower = searchTerm.toLowerCase();
     return (
       order.id.toLowerCase().includes(searchLower) ||
