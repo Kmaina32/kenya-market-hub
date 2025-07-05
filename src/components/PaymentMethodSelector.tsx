@@ -7,15 +7,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { CreditCard, Smartphone, DollarSign } from 'lucide-react';
-// PaymentData is correctly imported from usePayments here, not exported
-import { useMpesaPayment, usePayPalPayment, useStripePayment, PaymentData } from '@/hooks/usePayments';
+import { useMpesaPayment, usePayPalPayment, useStripePayment, type PaymentData } from '@/hooks/usePayments';
 
-// FIX: Export the interface so it can be used by parent components
+// Export the interface so it can be used by parent components
 export interface PaymentMethodSelectorProps {
   paymentData: PaymentData;
   onPaymentSuccess: () => void;
   onCancel: () => void;
 }
+
+// Re-export PaymentData for external usage
+export type { PaymentData } from '@/hooks/usePayments';
 
 const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   paymentData,
