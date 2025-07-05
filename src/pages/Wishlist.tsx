@@ -1,18 +1,18 @@
+
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Trash2, Heart, ShoppingBag } from 'lucide-react'; // Import ShoppingBag icon
+import { ShoppingCart, Trash2, Heart, ShoppingBag } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useCartContext } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
-// import HeroSection from '@/components/shared/HeroSection'; // Removed HeroSection import as it's no longer used directly
 
 const Wishlist = () => {
   const { user } = useAuth();
-  const { wishlistItems, removeFromWishlist, data, isLoading } = useWishlist();
+  const { wishlistItems, wishlistLoading, removeFromWishlist } = useWishlist();
   const { addToCart } = useCartContext();
   const { toast } = useToast();
 
@@ -20,9 +20,8 @@ const Wishlist = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  // Use data if available (for database version), otherwise use wishlistItems (for localStorage version)
-  const items = data || wishlistItems || [];
-  const loading = isLoading || false;
+  const items = wishlistItems || [];
+  const loading = wishlistLoading || false;
 
   const handleAddToCart = (item: any) => {
     addToCart(item.id);
@@ -33,17 +32,15 @@ const Wishlist = () => {
     removeFromWishlist(itemId);
   };
 
-  // Define the hero image URL and content based on the desired Shop.tsx style
-  const heroImageUrl = "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=2070&q=80"; // Converted to full Unsplash URL
+  const heroImageUrl = "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=2070&q=80";
   const heroTitle = "My Wishlist";
-  const heroSubtitle = "Saved Items"; // This will function as the main descriptive text
-  const heroDescription = "Products you've saved for later."; // This will also be part of the descriptive text
-
+  const heroSubtitle = "Saved Items";
+  const heroDescription = "Products you've saved for later.";
 
   return (
     <MainLayout>
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        {/* Hero Section - Implemented with Shop.tsx styling */}
+        {/* Hero Section */}
         <div
           className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-600 to-red-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4 px-4 sm:px-6 lg:px-8 shadow-xl"
           style={{
@@ -54,11 +51,11 @@ const Wishlist = () => {
         >
           <div className="relative z-10 flex items-center justify-center h-full px-6 sm:px-8 lg:px-12">
             <div className="text-center text-white max-w-3xl mx-auto">
-              <ShoppingBag className="h-16 w-16 mx-auto mb-4 text-orange-100 drop-shadow-lg" /> {/* Using ShoppingBag icon */}
+              <ShoppingBag className="h-16 w-16 mx-auto mb-4 text-orange-100 drop-shadow-lg" />
               <h1 className="text-3xl md:text-4xl font-bold mb-3 drop-shadow-lg">{heroTitle}</h1>
               <p className="text-lg text-orange-100 font-light leading-relaxed">
-                {heroSubtitle} {/* Using subtitle as main descriptive line */}
-                {heroDescription && <span className="block">{heroDescription}</span>} {/* Adding description as a block */}
+                {heroSubtitle}
+                {heroDescription && <span className="block">{heroDescription}</span>}
               </p>
             </div>
           </div>

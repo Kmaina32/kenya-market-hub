@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,12 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2, Plus, Package2, Edit, Eye, Loader2 } from 'lucide-react'; // Added Loader2 for spinners
+import { Trash2, Plus, Package2, Edit, Eye, Loader2 } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import ProtectedAdminRoute from '@/components/ProtectedAdminRoute';
-import AddProductModal from '@/components/AddProductModal'; // Modal for adding products
-import EditProductModal from '@/components/EditProductModal'; // Modal for editing products
-import ViewProductModal from '@/components/ViewProductModal'; // Modal for viewing product details
+import AddProductModal from '@/components/AddProductModal';
+import EditProductModal from '@/components/EditProductModal';
+import ViewProductModal from '@/components/ViewProductModal';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,19 +23,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'; // Shadcn UI AlertDialog for confirmation
+} from '@/components/ui/alert-dialog';
 
-/**
- * @typedef {object} ProductData
- * @property {string} id - Unique identifier for the product.
- * @property {string} name - Name of the product.
- * @property {string} category - Category the product belongs to.
- * @property {number} price - Price of the product.
- * @property {number} stock_quantity - Current stock quantity.
- * @property {boolean} in_stock - Boolean indicating if the product is in stock.
- * @property {string} created_at - Timestamp of product creation.
- * // Add other relevant product properties as needed (e.g., description, image_url, vendor_id)
- */
 interface ProductData {
   id: string;
   name: string;
@@ -43,20 +33,14 @@ interface ProductData {
   stock_quantity: number;
   in_stock: boolean;
   created_at: string;
-  // Add any other fields that your 'products' table might have
   description?: string;
   image_url?: string;
   vendor_id?: string;
 }
 
-/**
- * `AdminProducts` component provides an administrative interface for managing products.
- * It allows viewing, adding, editing, and deleting products in the marketplace.
- * It uses `react-query` for data fetching and mutations, and Shadcn UI for styling.
- */
 const AdminProducts = () => {
-  const { toast } = useToast(); // Hook for displaying toast notifications
-  const queryClient = useQueryClient(); // Client for invalidating react-query caches
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // State for controlling modal visibility and selected product for edit/view
   const [showAddProduct, setShowAddProduct] = useState<boolean>(false);
@@ -68,17 +52,13 @@ const AdminProducts = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
   const [productToDeleteId, setProductToDeleteId] = useState<string | null>(null);
 
-  /**
-   * Fetches all products from the 'products' table.
-   * Uses `react-query` for caching and state management.
-   */
   const { data: products, isLoading: productsLoading } = useQuery<ProductData[]>({
     queryKey: ['admin-products'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .order('created_at', { ascending: false }); // Order by creation date
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching products:', error);
@@ -88,25 +68,20 @@ const AdminProducts = () => {
     }
   });
 
-  /**
-   * Mutation for deleting a product.
-   * On success, invalidates the 'admin-products' query to refetch data and shows a toast.
-   * On error, shows a destructive toast.
-   */
   const deleteProductMutation = useMutation({
     mutationFn: async (productId: string) => {
       const { error } = await supabase
         .from('products')
         .delete()
-        .eq('id', productId); // Delete product by ID
+        .eq('id', productId);
       if (error) {
         console.error('Supabase delete error:', error);
         throw error;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-products'] }); // Refetch products
-      toast({ title: "Product deleted successfully", variant: "success" }); // Show success toast
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      toast({ title: "Product deleted successfully" });
     },
     onError: (error: any) => {
       toast({
@@ -117,59 +92,34 @@ const AdminProducts = () => {
     }
   });
 
-  /**
-   * Opens the delete confirmation dialog for a specific product.
-   * @param {string} productId - The ID of the product to be deleted.
-   */
   const confirmDeleteProduct = (productId: string) => {
     setProductToDeleteId(productId);
     setIsDeleteDialogOpen(true);
   };
 
-  /**
-   * Executes the delete mutation after user confirmation.
-   */
   const handleDeleteProduct = () => {
     if (productToDeleteId) {
       deleteProductMutation.mutate(productToDeleteId);
-      setIsDeleteDialogOpen(false); // Close the dialog
-      setProductToDeleteId(null); // Reset the ID
+      setIsDeleteDialogOpen(false);
+      setProductToDeleteId(null);
     }
   };
 
-  /**
-   * Callback function for when a new product is successfully added.
-   * Invalidates the query to refresh the list and closes the modal.
-   */
   const handleProductAdded = () => {
     queryClient.invalidateQueries({ queryKey: ['admin-products'] });
     setShowAddProduct(false);
   };
 
-  /**
-   * Handles click on the "Edit" button for a product.
-   * Sets the selected product and opens the Edit Product modal.
-   * @param {ProductData} product - The product data to be edited.
-   */
   const handleEditClick = (product: ProductData) => {
     setSelectedProduct(product);
     setShowEditProduct(true);
   };
 
-  /**
-   * Handles click on the "View" button for a product.
-   * Sets the selected product and opens the View Product modal.
-   * @param {ProductData} product - The product data to be viewed.
-   */
   const handleViewClick = (product: ProductData) => {
     setSelectedProduct(product);
     setShowViewProduct(true);
   };
 
-  /**
-   * Callback function for when a product is successfully edited.
-   * Invalidates the query to refresh the list and closes the modal.
-   */
   const handleEditSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ['admin-products'] });
     setShowEditProduct(false);
@@ -206,18 +156,15 @@ const AdminProducts = () => {
                   A comprehensive list of all products in your marketplace.
                 </CardDescription>
               </div>
-              {/* Optional: Add search/filter components here if needed */}
             </CardHeader>
             <CardContent className="p-0">
               {productsLoading ? (
-                // Full-page loading spinner for initial data fetch
                 <div className="flex flex-col items-center justify-center py-16 text-gray-500">
                   <Loader2 className="h-12 w-12 animate-spin text-blue-500 mb-4" />
                   <span className="text-lg font-medium">Loading products...</span>
                   <p className="text-sm mt-1">Fetching the latest product data.</p>
                 </div>
               ) : products && products.length > 0 ? (
-                // Display table if products are available
                 <div className="overflow-x-auto">
                   <Table className="min-w-full divide-y divide-gray-200">
                     <TableHeader className="bg-gray-50">
@@ -234,7 +181,7 @@ const AdminProducts = () => {
                         <TableRow
                           key={product.id}
                           className="hover:bg-blue-50 transition-colors duration-200 ease-in-out"
-                          style={{ animationDelay: `${index * 0.05}s` }} // Subtle staggered animation
+                          style={{ animationDelay: `${index * 0.05}s` }}
                         >
                           <TableCell className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{product.name}</TableCell>
                           <TableCell className="px-6 py-4 whitespace-nowrap">
@@ -255,7 +202,6 @@ const AdminProducts = () => {
                           </TableCell>
                           <TableCell className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div className="flex items-center space-x-2">
-                              {/* View Product Button */}
                               <Button
                                 variant="outline"
                                 size="icon"
@@ -265,7 +211,6 @@ const AdminProducts = () => {
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
-                              {/* Edit Product Button */}
                               <Button
                                 variant="secondary"
                                 size="icon"
@@ -275,12 +220,11 @@ const AdminProducts = () => {
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
-                              {/* Delete Product Button */}
                               <Button
                                 variant="destructive"
                                 size="icon"
                                 onClick={() => confirmDeleteProduct(product.id)}
-                                disabled={deleteProductMutation.isPending} // Disable during deletion
+                                disabled={deleteProductMutation.isPending}
                                 className="h-9 w-9 bg-red-500 hover:bg-red-600 text-white transition-all duration-200 rounded-full"
                                 aria-label={`Delete ${product.name}`}
                               >
@@ -298,7 +242,6 @@ const AdminProducts = () => {
                   </Table>
                 </div>
               ) : (
-                // Empty state when no products are found after loading
                 <div className="text-center py-16 text-gray-500">
                   <Package2 className="h-20 w-20 text-gray-300 mx-auto mb-6" />
                   <p className="text-xl font-semibold">No products found</p>
@@ -373,4 +316,3 @@ const AdminProducts = () => {
 };
 
 export default AdminProducts;
-

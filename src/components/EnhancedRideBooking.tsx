@@ -72,11 +72,11 @@ const EnhancedRideBooking: React.FC<EnhancedRideBookingProps> = ({ onRideBooked 
     return R * c;
   };
 
-  const handleMapClick = (coordinates: [number, number]) => {
+  const handleMapClick = (coordinates: { lat: number; lng: number }) => {
     if (step === 1) {
-      setPickupLocation({ lat: coordinates[1], lng: coordinates[0] });
+      setPickupLocation(coordinates);
     } else if (step === 2) {
-      setDestinationLocation({ lat: coordinates[1], lng: coordinates[0] });
+      setDestinationLocation(coordinates);
     }
   };
 
@@ -108,7 +108,7 @@ const EnhancedRideBooking: React.FC<EnhancedRideBookingProps> = ({ onRideBooked 
   if (pickupLocation) {
     markers.push({
       id: 'pickup',
-      coordinates: [pickupLocation.lng, pickupLocation.lat] as [number, number],
+      position: pickupLocation,
       title: 'Pickup Location',
       color: '#10b981'
     });
@@ -116,15 +116,15 @@ const EnhancedRideBooking: React.FC<EnhancedRideBookingProps> = ({ onRideBooked 
   if (destinationLocation) {
     markers.push({
       id: 'destination',
-      coordinates: [destinationLocation.lng, destinationLocation.lat] as [number, number],
+      position: destinationLocation,
       title: 'Destination',
       color: '#ef4444'
     });
   }
 
   const showRoute = pickupLocation && destinationLocation ? {
-    start: [pickupLocation.lng, pickupLocation.lat] as [number, number],
-    end: [destinationLocation.lng, destinationLocation.lat] as [number, number]
+    start: pickupLocation,
+    end: destinationLocation
   } : undefined;
 
   return (
@@ -256,7 +256,7 @@ const EnhancedRideBooking: React.FC<EnhancedRideBookingProps> = ({ onRideBooked 
       <Card>
         <CardContent className="p-4">
           <MapBox
-            center={pickupLocation ? [pickupLocation.lng, pickupLocation.lat] : [36.8219, -1.2921]}
+            center={pickupLocation || { lat: -1.2921, lng: 36.8219 }}
             zoom={13}
             markers={markers}
             onMapClick={handleMapClick}
