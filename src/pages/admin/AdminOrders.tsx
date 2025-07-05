@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -268,7 +269,7 @@ const AdminOrders = () => {
   };
 
   // Fix the type inference issue by explicitly typing the arrays and ensuring safe filtering
-  const ordersArray: OrderData[] = orders || [];
+  const ordersArray: OrderData[] = Array.isArray(orders) ? orders : [];
   const filteredOrders: OrderData[] = ordersArray.filter((order: OrderData) => {
     if (!searchTerm) return true;
     const searchLower = searchTerm.toLowerCase();
