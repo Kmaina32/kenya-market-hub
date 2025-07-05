@@ -1,4 +1,6 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+// src/pages/Services.tsx
+
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,7 +25,7 @@ import {
   Sparkles,
   Eye,
   Share2,
-  DollarSign // Fixed: Added DollarSign import
+  DollarSign 
 } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
 import { useQuery } from '@tanstack/react-query';
@@ -33,30 +35,28 @@ import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Slider } from '@/components/ui/slider';
-
+import SEOManager from '@/components/seo/SEOManager'; // FIX: Import SEOManager
 
 // --- Interfaces for better type safety and clarity ---
-// Extending the service provider profile interface
 interface ServiceProvider {
   id: string;
   business_name: string;
   business_description?: string;
-  provider_type: string; // e.g., "Home Services", "Automotive", "Beauty"
-  location_address?: string; // Full address string
-  latitude?: number; // For map integration if desired
-  longitude?: number; // For map integration if desired
+  provider_type: string; 
+  location_address?: string; 
+  latitude?: number; 
+  longitude?: number; 
   phone_number?: string;
   email?: string;
   is_active: boolean;
-  // Fixed: Ensure this matches your Supabase ENUM type exactly
   verification_status: 'pending' | 'verified' | 'rejected';
-  average_rating?: number; // e.g., 4.5
-  total_reviews?: number; // e.g., 120
-  profile_image_url?: string; // For provider's profile picture/logo
-  banner_image_url?: string; // For a banner on their profile/card
-  hourly_rate_min?: number; // New: Minimum hourly rate
-  hourly_rate_max?: number; // New: Maximum hourly rate
-  created_at: string; // To identify new providers
+  average_rating?: number; 
+  total_reviews?: number; 
+  profile_image_url?: string; 
+  banner_image_url?: string; 
+  hourly_rate_min?: number; 
+  hourly_rate_max?: number; 
+  created_at: string; 
 }
 
 // --- Constants for better maintainability and structured filters ---
@@ -85,7 +85,6 @@ const Services: React.FC = () => {
   const [sortBy, setSortBy] = useState('relevance');
   const [minRating, setMinRating] = useState<number>(0);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
-  // Fixed: Adjusted type for selectedService to match the expected format for ServiceBookingModal
   const [selectedService, setSelectedService] = useState<({
     id: string;
     title: string;
@@ -97,7 +96,6 @@ const Services: React.FC = () => {
   }) | null>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
 
-  // Debounced search term for better performance
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -112,12 +110,7 @@ const Services: React.FC = () => {
       let query = supabase
         .from('service_provider_profiles')
         .select('*')
-        .eq('is_active', true)
-        // Removed eq('verification_status', 'verified') here to allow filtering,
-        // or ensure your DB schema matches 'verified' string literal if you keep it.
-        // It's better to filter the data client-side if the DB column is generic string.
-        // If you want to strictly query verified, ensure your DB enum and generated types support it.
-        ;
+        .eq('is_active', true);
 
       if (debouncedSearchTerm) {
         query = query.or(`business_name.ilike.%${debouncedSearchTerm}%,business_description.ilike.%${debouncedSearchTerm}%,provider_type.ilike.%${debouncedSearchTerm}%`);
@@ -129,7 +122,6 @@ const Services: React.FC = () => {
         query = query.gte('average_rating', minRating);
       }
       query = query.gte('hourly_rate_min', priceRange[0]).lte('hourly_rate_max', priceRange[1]);
-
 
       switch (sortBy) {
         case 'rating_desc': query = query.order('average_rating', { ascending: false, nullsFirst: true }); break;
@@ -146,8 +138,6 @@ const Services: React.FC = () => {
         throw error;
       }
 
-      // Fixed: Explicitly map and cast incoming data to ServiceProvider interface
-      // This is crucial for matching the strict union types like 'verification_status'
       const processedData: ServiceProvider[] = (data || []).map((d: any) => ({
         id: d.id,
         business_name: d.business_name,
@@ -159,7 +149,6 @@ const Services: React.FC = () => {
         phone_number: d.phone_number,
         email: d.email,
         is_active: d.is_active,
-        // Fixed: Safely cast to the union type, assuming your DB values conform
         verification_status: d.verification_status as 'pending' | 'verified' | 'rejected',
         average_rating: d.average_rating,
         total_reviews: d.total_reviews,
@@ -170,24 +159,22 @@ const Services: React.FC = () => {
         created_at: d.created_at,
       }));
 
-      // If you want to ensure only 'verified' status is shown client-side:
       const filteredOnClient = processedData.filter(service => service.verification_status === 'verified');
-      return filteredOnClient; // Or return processedData if you want to show all statuses
+      return filteredOnClient;
     },
     staleTime: 60 * 1000,
     placeholderData: (previousData) => previousData,
   });
 
   const handleBookService = useCallback((service: ServiceProvider) => {
-    // Fixed: Transform service object to match ServiceBookingModal's expected props
     setSelectedService({
       id: service.id,
-      title: service.business_name, // Map business_name to title
-      provider: service.business_name, // Keep business_name as provider
-      type: service.provider_type, // Keep provider_type as type
-      location: service.location_address, // Add location
-      phone_number: service.phone_number, // Add phone_number
-      description: service.business_description, // Add description
+      title: service.business_name, 
+      provider: service.business_name, 
+      type: service.provider_type, 
+      location: service.location_address, 
+      phone_number: service.phone_number, 
+      description: service.business_description, 
     });
     setShowBookingModal(true);
     toast.info(`Initiating booking for ${service.business_name}.`);
@@ -223,7 +210,6 @@ const Services: React.FC = () => {
     toast.info("All filters cleared!");
   }, [refetch]);
 
-  // Memoized Service Provider Card Component
   const ServiceProviderCard = React.memo(({ service }: { service: ServiceProvider }) => {
     const isNewProvider = new Date(service.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const displayRating = service.average_rating ? service.average_rating.toFixed(1) : 'N/A';
@@ -299,7 +285,7 @@ const Services: React.FC = () => {
             <Button
               size="sm"
               onClick={() => handleBookService(service)}
-              className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-md transition-all duration-200"
+              className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
             >
               <Calendar className="h-4 w-4 mr-1" />
               Book Now
@@ -308,7 +294,7 @@ const Services: React.FC = () => {
               size="sm"
               variant="outline"
               onClick={() => handleViewProfile(service)}
-              className="border-orange-200 text-orange-600 hover:bg-orange-50 shadow-sm"
+              className="border-orange-200 text-orange-600 hover:bg-orange-50"
             >
               <Eye className="h-4 w-4" />
             </Button>
@@ -316,7 +302,7 @@ const Services: React.FC = () => {
               size="sm"
               variant="outline"
               onClick={() => handleShareService(service)}
-              className="border-orange-200 text-orange-600 hover:bg-orange-50 shadow-sm"
+              className="border-orange-200 text-orange-600 hover:bg-orange-50"
             >
               <Share2 className="h-4 w-4" />
             </Button>
