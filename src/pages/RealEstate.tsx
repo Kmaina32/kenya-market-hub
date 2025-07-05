@@ -1,3 +1,4 @@
+// src/pages/RealEstate.tsx
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +20,7 @@ import {
 import MainLayout from '@/components/MainLayout';
 import { useProperties } from '@/hooks/useProperties';
 import { Link } from 'react-router-dom';
+import SEOManager from '@/components/seo/SEOManager'; // FIX: Import SEOManager
 
 const RealEstate = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,6 +33,23 @@ const RealEstate = () => {
 
   return (
     <MainLayout>
+      {/* FIX: Add SEOManager component here for Real Estate page */}
+      <SEOManager
+        title="Rent or Buy Houses in Nairobi & Kenya | Sokko Sasa Real Estate"
+        description="Discover houses, apartments, and commercial properties for rent and sale in Nairobi and across Kenya. Find your dream home or investment with Sokko Sasa."
+        keywords="rent house Nairobi, buy house Nairobi, apartments for rent Nairobi, houses for sale Kenya, property Nairobi, real estate Kenya, Sokko Sasa property"
+        url={`${window.location.origin}/real-estate`} // Replace with your actual domain
+        type="website"
+        // If you have specific structured data for a listing page, you can add it here.
+        // structuredData={{
+        //   "@context": "https://schema.org",
+        //   "@type": "WebPage", // Or CollectionPage if it's a listing of properties
+        //   "name": "Sokko Sasa Real Estate Listings",
+        //   "description": "Browse houses and apartments for sale or rent in Kenya.",
+        //   "url": `${window.location.origin}/real-estate`,
+        // }}
+      />
+
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
         {/* Hero Section with Background Image */}
         <div 
