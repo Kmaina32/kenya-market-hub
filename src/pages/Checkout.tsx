@@ -1,5 +1,6 @@
+// src/pages/Checkout.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,10 +10,13 @@ import MainLayout from '@/components/MainLayout';
 import PaymentMethodSelector from '@/components/PaymentMethodSelector';
 import { useCartContext } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { PaymentData } from '@/hooks/usePayments';
+import { PaymentData } from '@/hooks/usePayments'; 
 import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { v4 as uuidv4 } from 'uuid'; 
+import { Input } from '@/components/ui/input'; 
+
 
 // Define interfaces for data types expected by the RPC function
 interface CartItemForOrder {
@@ -25,24 +29,25 @@ interface PlaceOrderPayload {
   p_user_id: string;
   p_total_amount: number;
   p_shipping_address: string;
-  p_shipping_city: string;
+  p_shipping_city: string; 
   p_contact_phone: string;
   p_contact_email: string;
-  p_payment_method: string;
+  p_payment_method: string; 
   p_transaction_id: string | null;
   p_payment_status: string;
-  p_cart_items: CartItemForOrder[];
+  p_cart_items: CartItemForOrder[] | any; 
+  p_order_id: string; 
 }
 
 const Checkout = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { items: cart, getTotalPrice, clearCart } = useCartContext();
   const { user, loading: authLoading } = useAuth();
   const [showPayment, setShowPayment] = useState(false);
-  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [shippingInfo, setShippingInfo] = useState({
     address: '',
-    city: '',
+    city: '', 
     phone: '',
     email: user?.email || ''
   });
@@ -52,111 +57,63 @@ const Checkout = () => {
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
+      toast.info("Please log in to proceed to checkout."); // FIX: Added toast for unauthenticated users
       navigate('/auth');
       return;
     }
     if (cart.length === 0) {
+      toast.info("Your cart is empty. Please add items before checking out."); // FIX: Added toast for empty cart
       navigate('/shop');
       return;
     }
-  }, [user, cart, navigate, authLoading]);
+    if (user && user.user_metadata) {
+      setShippingInfo(prev => ({
+        ...prev,
+        address: prev.address || user.user_metadata.address || '',
+        city: prev.city || user.user_metadata.city || '',
+        phone: prev.phone || user.phone || '',
+        email: prev.email || user.email || ''
+      }));
+    }
+  }, [user, cart, navigate, authLoading]); // FIX: Added cart to dependency array
 
-  // Mutation to create order first
-  const createOrderMutation = useMutation({
-    mutationFn: async (): Promise<string> => {
-      if (!user) throw new Error('User not authenticated');
+  const mapPaymentMethodToDB = useCallback((method: 'mpesa' | 'paypal' | 'stripe' | string): string => {
+    switch (method.toLowerCase()) {
+      case 'mpesa': return 'M-Pesa';
+      case 'paypal': return 'PayPal';
+      case 'stripe': return 'Stripe';
+      default: return 'Other'; 
+    }
+  }, []);
 
-      const { data, error } = await supabase
-        .from('orders')
-        .insert([{
-          user_id: user.id,
-          total_amount: totalAmount,
-          shipping_address: shippingInfo.address,
-          shipping_city: shippingInfo.city,
-          contact_phone: shippingInfo.phone,
-          contact_email: shippingInfo.email,
-          payment_method: 'pending',
-          payment_status: 'pending',
-          status: 'pending'
-        }])
-        .select('id')
-        .single();
+  const placeOrderMutation = useMutation({
+    mutationFn: async (payload: PlaceOrderPayload) => {
+      const { data, error } = await supabase.rpc('place_order_with_stock_update', payload);
 
       if (error) {
-        console.error('Error creating order:', error);
-        throw new Error('Failed to create order');
+        console.error('Order placement RPC error:', error);
+        if (error.message.includes('Insufficient stock')) {
+            throw new Error(`Order failed: ${error.message}`);
+        }
+        throw new Error('Failed to place order. Please try again.');
       }
-
-      return data.id;
+      return data;
     },
-    onSuccess: (orderId: string) => {
-      console.log('Order created successfully:', orderId);
-      setCreatedOrderId(orderId);
-      setShowPayment(true);
-    },
-    onError: (error: any) => {
-      console.error('Error creating order:', error);
-      toast.error('Failed to create order. Please try again.');
-    }
-  });
-
-  // Mutation to complete the order after successful payment
-  const completeOrderMutation = useMutation({
-    mutationFn: async ({ orderId, paymentMethod, transactionId }: { 
-      orderId: string; 
-      paymentMethod: string; 
-      transactionId?: string; 
-    }) => {
-      // Update the order with payment details
-      const { error: orderError } = await supabase
-        .from('orders')
-        .update({
-          payment_method: paymentMethod,
-          payment_status: 'paid',
-          status: 'processing',
-          transaction_id: transactionId
-        })
-        .eq('id', orderId);
-
-      if (orderError) {
-        console.error('Error updating order:', orderError);
-        throw orderError;
-      }
-
-      // Create order items
-      const orderItems = cart.map(item => ({
-        order_id: orderId,
-        product_id: item.id,
-        quantity: item.quantity,
-        unit_price: item.price,
-        total_price: item.price * item.quantity
-      }));
-
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
-
-      if (itemsError) {
-        console.error('Error creating order items:', itemsError);
-        throw itemsError;
-      }
-
-      return orderId;
-    },
-    onSuccess: (orderId: string) => {
+    onSuccess: (newOrderId: string) => {
       toast.success('Payment successful! Your order has been placed.');
       clearCart();
       navigate('/orders', { 
         state: { 
           message: 'Payment successful! Your order has been placed.',
-          orderId 
+          orderId: newOrderId 
         }
       });
     },
     onError: (error: any) => {
-      console.error('Error completing order:', error);
-      toast.error('Payment processing failed. Please contact support.');
-    }
+      console.error('Error placing order:', error.message);
+      toast.error(error.message || 'Payment failed and order could not be placed.');
+      setShowPayment(false);
+    },
   });
 
   const handleProceedToPayment = () => {
@@ -164,60 +121,86 @@ const Checkout = () => {
       toast.error('Please fill in all shipping information (address, city, phone, email).');
       return;
     }
+    if (totalAmount <= 0) { // FIX: Changed totalPrice to totalAmount
+      toast.error('Cart total must be greater than zero.');
+      return;
+    }
     
-    createOrderMutation.mutate();
-  };
-
-  const handlePaymentSuccess = async (paymentDetails?: { transactionId?: string; paymentMethod?: string }) => {
-    if (!createdOrderId) {
-      toast.error('Order ID not found. Please try again.');
+    if (!user) {
+      toast.error('User not authenticated. Please log in.');
+      navigate('/auth');
       return;
     }
 
-    completeOrderMutation.mutate({
-      orderId: createdOrderId,
-      paymentMethod: paymentDetails?.paymentMethod || 'unknown',
-      transactionId: paymentDetails?.transactionId
-    });
+    setShowPayment(true);
   };
 
-  const paymentData: PaymentData = {
-    amount: totalAmount,
+  const paymentData: PaymentData = useMemo(() => ({
+    orderId: uuidv4(), 
+    amount: totalAmount, // FIX: Use totalAmount here
     currency: 'KSh',
-    orderId: createdOrderId || '',
+    description: `Order from Kenya Market Hub - Total: KSh ${totalAmount.toLocaleString()}`, // FIX: Use totalAmount here
     customerInfo: {
-      name: user?.user_metadata?.full_name || 'Customer',
+      name: user?.user_metadata?.full_name || user?.email || 'Customer',
       email: shippingInfo.email,
-      phone: shippingInfo.phone
+      phone: shippingInfo.phone,
     },
-    shippingInfo: shippingInfo 
+    shippingInfo: { 
+      address: shippingInfo.address,
+      city: shippingInfo.city,
+      phone: shippingInfo.phone,
+      email: shippingInfo.email,
+    },
+  }), [totalAmount, user, shippingInfo]);
+
+
+  const handlePaymentSuccess = async (paymentDetails?: { transactionId?: string; paymentMethod?: string }) => {
+    if (!user) {
+      toast.error("User not authenticated for order placement.");
+      return;
+    }
+
+    const orderPayload: PlaceOrderPayload = {
+      p_user_id: user.id,
+      p_total_amount: totalAmount,
+      p_shipping_address: shippingInfo.address,
+      p_shipping_city: shippingInfo.city, 
+      p_contact_phone: shippingInfo.phone,
+      p_contact_email: shippingInfo.email,
+      p_payment_method: mapPaymentMethodToDB(paymentDetails?.paymentMethod || 'unknown'), // FIX: Apply the mapping function
+      p_transaction_id: paymentDetails?.transactionId || null,
+      p_payment_status: 'paid', 
+      p_order_id: paymentData.orderId, 
+      p_cart_items: cart.map(item => ({
+        product_id: item.id,
+        quantity: item.quantity,
+        price_at_purchase: item.price,
+      })) as any 
+    };
+
+    placeOrderMutation.mutate(orderPayload);
   };
 
-  if (createOrderMutation.isPending || completeOrderMutation.isPending) {
+  if (placeOrderMutation.isPending) {
     return (
       <MainLayout>
         <div className="flex flex-col items-center justify-center min-h-screen-minus-header">
           <Loader2 className="h-16 w-16 text-orange-600 animate-spin mb-4" />
-          <h2 className="text-xl font-semibold text-gray-800">
-            {createOrderMutation.isPending ? 'Creating your order...' : 'Processing your payment...'}
-          </h2>
+          <h2 className="text-xl font-semibold text-gray-800">Processing your order...</h2>
           <p className="text-gray-600">Please do not close this window.</p>
         </div>
       </MainLayout>
     );
   }
 
-  if (showPayment && createdOrderId) {
+  if (showPayment) {
     return (
       <MainLayout>
         <div className="max-w-2xl mx-auto p-6">
           <PaymentMethodSelector
             paymentData={paymentData}
-            onPaymentSuccess={handlePaymentSuccess}
-            onCancel={() => {
-              setShowPayment(false);
-              setCreatedOrderId(null);
-            }}
+            onPaymentSuccess={handlePaymentSuccess} 
+            onCancel={() => setShowPayment(false)}
           />
         </div>
       </MainLayout>
@@ -244,7 +227,7 @@ const Checkout = () => {
               {cart.map((item) => (
                 <div key={item.id} className="flex items-center gap-4">
                   <img
-                    src={item.image || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=80'}
+                    src={item.image || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=80'} 
                     alt={item.name}
                     className="w-12 h-12 rounded-lg object-cover"
                   />
@@ -292,7 +275,7 @@ const Checkout = () => {
 
               <div>
                 <label className="block text-sm font-medium mb-1">City</label>
-                <input
+                <Input 
                   type="text"
                   value={shippingInfo.city}
                   onChange={(e) => setShippingInfo(prev => ({ ...prev, city: e.target.value }))}
@@ -307,7 +290,7 @@ const Checkout = () => {
                   <Phone className="h-4 w-4 inline mr-1" />
                   Phone Number
                 </label>
-                <input
+                <Input 
                   type="tel"
                   value={shippingInfo.phone}
                   onChange={(e) => setShippingInfo(prev => ({ ...prev, phone: e.target.value }))}
@@ -322,7 +305,7 @@ const Checkout = () => {
                   <Mail className="h-4 w-4 inline mr-1" />
                   Email Address
                 </label>
-                <input
+                <Input 
                   type="email"
                   value={shippingInfo.email}
                   onChange={(e) => setShippingInfo(prev => ({ ...prev, email: e.target.value }))}
@@ -336,7 +319,7 @@ const Checkout = () => {
                 onClick={handleProceedToPayment}
                 className="w-full mt-6 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
                 size="lg"
-                disabled={createOrderMutation.isPending}
+                disabled={placeOrderMutation.isPending}
               >
                 Proceed to Payment
               </Button>
