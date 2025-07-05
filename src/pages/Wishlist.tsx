@@ -24,8 +24,8 @@ const Wishlist = () => {
   const loading = wishlistLoading || false;
 
   const handleAddToCart = (item: any) => {
-    addToCart(item.id);
-    toast({ title: "Added to cart", description: `${item.name || 'Product'} has been added to your cart.` });
+    addToCart(item.product_id || item.id);
+    toast({ title: "Added to cart", description: `Product has been added to your cart.` });
   };
 
   const handleRemove = (itemId: string) => {
@@ -94,20 +94,20 @@ const Wishlist = () => {
                     <CardContent className="p-3">
                       <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 mb-3">
                         <img
-                          src={item.image_url || '/placeholder.svg'}
-                          alt={item.name || 'Product'}
+                          src={item.products?.image_url || '/placeholder.svg'}
+                          alt={item.products?.name || 'Product'}
                           className="w-full h-full object-cover"
                         />
                       </div>
 
                       <h4 className="font-semibold text-gray-900 mb-1 text-sm line-clamp-2">
-                        {item.name || 'Unknown Product'}
+                        {item.products?.name || 'Unknown Product'}
                       </h4>
-                      <p className="text-xs text-gray-600 mb-2">{item.vendor || 'Unknown Vendor'}</p>
+                      <p className="text-xs text-gray-600 mb-2">{item.products?.category || 'Unknown Category'}</p>
 
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-sm font-bold text-orange-600">
-                          KSH {Number(item.price || 0).toLocaleString()}
+                          KSH {Number(item.products?.price || 0).toLocaleString()}
                         </span>
                       </div>
 

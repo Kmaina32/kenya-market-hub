@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import FrontendLayout from '@/components/layouts/FrontendLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  Wrench, // Icon for ServiceHub
+  Wrench,
   User,
   Star,
   MapPin,
@@ -14,17 +15,13 @@ import {
   Clock,
   DollarSign,
   Loader2,
-  Search // Added Search for consistency if needed in hero
 } from 'lucide-react';
-// import HeroSection from '@/components/shared/HeroSection'; // Removed as we're using custom div
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import AppointmentBookingModal from '@/components/AppointmentBookingModal';
-import { Input } from '@/components/ui/input'; // Imported Input for consistency if needed in hero
 
 interface ServiceCategory {
   id: string;
@@ -38,20 +35,17 @@ interface ServiceProvider {
   user_id: string;
   business_name: string;
   total_reviews?: number | null;
-  avatar_url?: string | null; // Keep optional in interface
-  phone?: string | null;
+  avatar_url?: string | null;
   email?: string | null;
   is_active?: boolean | null;
   is_verified?: boolean | null;
   created_at?: string | null;
   updated_at?: string | null;
-
   business_description?: string | null;
-  documents?: Json | null;
+  documents?: any | null;
   location_address?: string | null;
   location_coordinates?: any | null;
   verification_status?: string | null;
-
   rating?: number | null;
   completed_jobs?: number | null;
   location?: string | null;
@@ -72,10 +66,7 @@ const ServiceHub = () => {
 
   const [isBookingModalOpen, setIsBookingModal] = useState(false);
   const [selectedProviderForBooking, setSelectedProviderForBooking] = useState<ServiceProvider | null>(null);
-
-  // Added searchTerm for consistency with other pages, though not currently used in query
   const [searchTerm, setSearchTerm] = useState('');
-
 
   const { data: serviceCategories, isLoading: categoriesLoading, error: categoriesError } = useQuery<ServiceCategory[]>({
     queryKey: ['serviceCategories'],
@@ -101,7 +92,7 @@ const ServiceHub = () => {
       const { data, error } = await supabase
         .from('service_provider_profiles')
         .select(`
-          id, user_id, business_name, phone, email,
+          id, user_id, business_name, email,
           is_active, is_verified, created_at, updated_at,
           business_description, documents, location_address, location_coordinates, verification_status
         `)
@@ -167,9 +158,7 @@ const ServiceHub = () => {
   }, [navigate, user, authLoading]);
 
   const handleContactProvider = useCallback((provider: ServiceProvider) => {
-    if (provider.phone) {
-      alert(`Contacting ${provider.business_name} at ${provider.phone}.`);
-    } else if (provider.email) {
+    if (provider.email) {
       alert(`Emailing ${provider.business_name} at ${provider.email}.`);
     } else {
       toast.info(`No direct contact info available for ${provider.business_name}.`);
@@ -190,17 +179,15 @@ const ServiceHub = () => {
     setIsBookingModal(true);
   }, [user, authLoading, navigate]);
 
-  // Define the hero image URL and content
   const heroImageUrl = "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?auto=format&fit=crop&w=2070&q=80";
   const heroTitle = "Service Hub";
   const heroSubtitle = "Join Our Community";
   const heroDescription = "Apply to become a service provider and grow your business with Kenya's largest marketplace.";
 
-
   return (
     <FrontendLayout>
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        {/* Hero Section - Rebuilt with consistent styling, using original image */}
+        {/* Hero Section */}
         <div
           className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-600 to-red-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4 px-4 sm:px-6 lg:px-8 shadow-xl"
           style={{
@@ -211,29 +198,17 @@ const ServiceHub = () => {
         >
           <div className="relative z-10 flex items-center justify-center h-full px-6 sm:px-8 lg:px-12">
             <div className="text-center text-white max-w-3xl mx-auto">
-              <Wrench className="h-16 w-16 mx-auto mb-4 text-orange-100 drop-shadow-lg" /> {/* Using Wrench icon */}
+              <Wrench className="h-16 w-16 mx-auto mb-4 text-orange-100 drop-shadow-lg" />
               <h1 className="text-3xl md:text-4xl font-bold mb-3 drop-shadow-lg">{heroTitle}</h1>
               <p className="text-lg text-orange-100 font-light leading-relaxed">
                 {heroSubtitle}
                 {heroDescription && <span className="block">{heroDescription}</span>}
               </p>
-              {/* Optional: Search input in hero, like on Insurance page */}
-              {/* <div className="max-w-md mx-auto mt-6">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search services..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 bg-white/90 border-0 text-gray-900 placeholder-gray-500"
-                  />
-                </div>
-              </div> */}
             </div>
           </div>
         </div>
 
-        {/* Main Content Wrapper - Adjusted max-width for smaller containers and consistent padding */}
+        {/* Main Content Wrapper */}
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
@@ -266,15 +241,14 @@ const ServiceHub = () => {
               <div className="text-center py-6 text-red-600">
                 <p>Error loading categories: {categoriesError.message}</p>
               </div>
-            ) : (serviceCategories || []).length > 0 ? (
+            ) : (serviceCategories && serviceCategories.length > 0) ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {(serviceCategories || []).map((category) => (
+                {serviceCategories.map((category) => (
                   <Card key={category.id} className="hover:shadow-lg transition-shadow bg-white border-orange-100">
                     <CardHeader className="text-center">
                       <div className="text-4xl mb-2">{category.icon_emoji || '⚙️'}</div>
                       <CardTitle className="text-lg">{category.name}</CardTitle>
                     </CardHeader>
-                    {/* Consistent card content padding */}
                     <CardContent className="p-4 space-y-3">
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Avg. Rating:</span>
@@ -313,15 +287,14 @@ const ServiceHub = () => {
               <div className="text-center py-6 text-red-600">
                 <p>Error loading providers: {providersError.message}</p>
               </div>
-            ) : (featuredProviders || []).length > 0 ? (
+            ) : (featuredProviders && featuredProviders.length > 0) ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {(featuredProviders || []).map((provider) => (
+                {featuredProviders.map((provider) => (
                   <Card key={provider.id} className="hover:shadow-lg transition-shadow bg-white border-orange-100">
-                    {/* Consistent card content padding */}
                     <CardContent className="p-4">
                       <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4">
                         <img
-                          src={provider.avatar_url || '/placeholder-avatar.png'} // Use optional chaining for safety
+                          src={provider.avatar_url || '/placeholder-avatar.png'}
                           alt={provider.business_name}
                           className="w-16 h-16 rounded-full object-cover flex-shrink-0"
                         />
@@ -383,7 +356,6 @@ const ServiceHub = () => {
                 Why Join as a Service Provider?
               </CardTitle>
             </CardHeader>
-            {/* Consistent card content padding */}
             <CardContent className="p-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="text-center">
@@ -421,7 +393,7 @@ const ServiceHub = () => {
               if (!open) setSelectedProviderForBooking(null);
             }}
             providerName={selectedProviderForBooking.business_name}
-            serviceType={"Service Provider"}
+            serviceType="Service Provider"
             onBookingSubmit={({ date, time }) => {
               bookServiceMutation.mutate({
                 providerId: selectedProviderForBooking.id,
