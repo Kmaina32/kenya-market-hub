@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -267,9 +268,9 @@ const AdminOrders = () => {
     }
   };
 
-  // Fix TypeScript inference by properly typing the variables
-  const ordersArray = Array.isArray(orders) ? orders : [];
-  const filteredOrders = ordersArray.filter((order) => {
+  // Ensure orders is always an array and explicitly type the filtered result
+  const ordersData: OrderData[] = orders || [];
+  const filteredOrders: OrderData[] = ordersData.filter((order: OrderData) => {
     const searchLower = searchTerm.toLowerCase();
     return (
       order.id.toLowerCase().includes(searchLower) ||
