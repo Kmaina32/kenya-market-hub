@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -267,9 +268,9 @@ const AdminOrders = () => {
     }
   };
 
-  // Ensure orders is always an array and properly typed
-  const ordersArray: OrderData[] = Array.isArray(orders) ? orders : [];
-  const filteredOrders: OrderData[] = ordersArray.filter(order =>
+  // Ensure orders is properly typed and handle filtering
+  const safeOrders: OrderData[] = orders ?? [];
+  const filteredOrders: OrderData[] = safeOrders.filter((order: OrderData) =>
     order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
     order.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     order.profiles?.email?.toLowerCase().includes(searchTerm.toLowerCase())
