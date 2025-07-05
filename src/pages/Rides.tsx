@@ -14,6 +14,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 
 import { geocodeAddress, getRouteDetails, loadGoogleMapsScript } from '@/integrations/googlemaps/googleMapsLoader'; 
 import MapBox from '@/components/MapBox'; 
+// FIX: Import SEOManager
+import SEOManager from '@/components/seo/SEOManager'; 
 
 interface Driver {
   id: string; 
@@ -356,6 +358,24 @@ const Rides: React.FC = () => {
 
   return (
     <MainLayout> 
+      {/* FIX: Add SEOManager component here */}
+      <SEOManager
+        title="Book Taxi & Cab in Kenya | Affordable Transport | Sokko Sasa Rides"
+        description="Find and book reliable taxis, cabs, and transport services across Kenya, including Nairobi. Quick, safe, and affordable rideshare options on Sokko Sasa."
+        keywords="taxi Kenya, cab Kenya, transport Kenya, rideshare Kenya, book a ride Nairobi, cheap taxi Nairobi, Sokko Sasa, ride booking app"
+        url={`${window.location.origin}/rides`} // Dynamically generate URL based on current origin
+        type="website"
+        // Consider adding specific structuredData for RideService if applicable
+        // structuredData={{
+        //   "@context": "https://schema.org",
+        //   "@type": "RideHailingService",
+        //   "name": "Sokko Sasa Rides",
+        //   "description": "On-demand taxi and transport service in Kenya",
+        //   "url": `${window.location.origin}/rides`,
+        //   // ... more specific properties
+        // }}
+      />
+
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
         {/* Hero Section */}
         <div
