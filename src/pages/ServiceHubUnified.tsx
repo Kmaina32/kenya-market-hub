@@ -230,7 +230,7 @@ const ServiceHubUnified = () => {
 
           {/* Benefits Section */}
           <div className="text-center">
-            <h3 className="text-2xl font-bold mb-6">Why Join Soko Smart?</h3>
+            <h3 className="text-2xl font-bold mb-6">Why Join Sokko Sasa?</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div>
                 <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">

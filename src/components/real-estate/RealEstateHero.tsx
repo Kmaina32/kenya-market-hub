@@ -14,7 +14,7 @@ const RealEstateHero: React.FC = () => {
       />
       <div className="relative z-10">
         <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-          Soko Smart Properties
+          Sokko Sasa Properties
         </h1>
         <p className="text-xl text-gray-700 mb-8 max-w-2xl mx-auto">
           Find your perfect home or investment property in Kenya's prime locations

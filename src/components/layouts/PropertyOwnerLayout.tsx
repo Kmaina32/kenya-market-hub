@@ -48,7 +48,7 @@ const PropertyOwnerLayout: React.FC<PropertyOwnerLayoutProps> = ({ children }) =
           </div>
 
           <footer className="bg-white border-t border-gray-200 p-4 text-center text-sm text-gray-600">
-            © 2025 Soko Smart by Milleast.tech
+            © 2025 Sokko Sasa by Milleast.tech
           </footer>
         </main>
       </div>

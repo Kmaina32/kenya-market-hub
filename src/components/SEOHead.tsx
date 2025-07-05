@@ -11,7 +11,7 @@ interface SEOHeadProps {
 }
 
 const SEOHead: React.FC<SEOHeadProps> = ({
-  title = 'Soko Smart - Kenya\'s Premier Marketplace',
+  title = 'Sokko Sasa - Kenya\'s Premier Marketplace',
   description = 'Discover amazing products, services, rides, and real estate in Kenya. Your one-stop marketplace for everything you need.',
   keywords = 'marketplace, Kenya, shopping, services, rides, real estate, products',
   image = '/lovable-uploads/79fe9f77-6c77-4b5c-b7e0-4c0f7d6b4b4b.png',
@@ -66,7 +66,7 @@ const SEOHead: React.FC<SEOHeadProps> = ({
     const structuredData = {
       "@context": "https://schema.org",
       "@type": "Organization",
-      "name": "Soko Smart",
+      "name": "Sokko Sasa",
       "description": description,
       "url": currentUrl,
       "logo": image

@@ -113,7 +113,7 @@ const ProductPreviewModal = ({ open, onOpenChange, product }: ProductPreviewModa
               </DialogHeader>
               
               <div className="space-y-4">
-                <p className="text-base text-gray-600">{product.vendor || 'Soko Smart'}</p>
+                <p className="text-base text-gray-600">{product.vendor || 'Sokko Sasa'}</p>
                 <div className="flex items-center gap-3 flex-wrap">
                   <Badge variant="outline" className="text-orange-600 border-orange-200 px-3 py-1">
                     {product.category}

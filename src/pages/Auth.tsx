@@ -90,7 +90,7 @@ const Auth = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Sign In</CardTitle>
-                <CardDescription>Welcome back to Soko Smart</CardDescription>
+                <CardDescription>Welcome back to Sokko Sasa</CardDescription>
               </CardHeader>
               <CardContent>
                 <Form {...signInForm}>
@@ -134,7 +134,7 @@ const Auth = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Sign Up</CardTitle>
-                <CardDescription>Create your Soko Smart account</CardDescription>
+                <CardDescription>Create your Sokko Sasa account</CardDescription>
               </CardHeader>
               <CardContent>
                 <Form {...signUpForm}>

@@ -63,7 +63,7 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Unified Soko Smart orange-red color palette
+				// Unified Sokko Sasa orange-red color palette
 				'soko-orange': {
 					50: '#fff7ed',
 					100: '#ffedd5',

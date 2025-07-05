@@ -35,13 +35,13 @@ const FrontendLayout = ({ children }: FrontendLayoutProps) => {
               <div className="flex items-center space-x-2 sm:space-x-3 md:hidden">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg overflow-hidden flex-shrink-0">
                   <img
-                    alt="Sokko Smart Logo"
+                    alt="Sokko Sasa Logo"
                     src="/lovable-uploads/563ee6fb-f94f-43f3-a4f3-a61873a1b491.png"
                     className="w-full h-full object-contain"
                   />
                 </div>
                 <div>
-                  <h1 className="text-sm sm:text-lg font-bold text-gray-900">Sokko Smart</h1>
+                  <h1 className="text-sm sm:text-lg font-bold text-gray-900">Sokko Sasa</h1>
                   <p className="text-xs text-gray-600 hidden sm:block">Kenya's Smart Marketplace</p>
                 </div>
               </div>

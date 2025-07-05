@@ -113,7 +113,7 @@ const PropertyOwnerSidebar = () => {
       
       <SidebarFooter className="p-4 border-t">
         <div className="text-xs text-gray-500 text-center">
-          © 2025 Soko Smart by Milleast.tech
+          © 2025 Sokko Sasa by Milleast.tech
         </div>
       </SidebarFooter>
     </Sidebar>

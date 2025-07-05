@@ -15,7 +15,7 @@ const CityLandingPage: React.FC = () => {
   const cityFAQs = [
     {
       question: `What services are available in ${cityName}?`,
-      answer: `Soko Smart offers products, real estate, rides, services, and job opportunities in ${cityName}. Find everything you need from local vendors and service providers.`
+      answer: `Sokko Sasa offers products, real estate, rides, services, and job opportunities in ${cityName}. Find everything you need from local vendors and service providers.`
     },
     {
       question: `How do I buy products in ${cityName}?`,
@@ -42,7 +42,7 @@ const CityLandingPage: React.FC = () => {
     >
       <LocalBusinessSchema
         businessType="LocalBusiness"
-        name={`Soko Smart ${cityName}`}
+        name={`Sokko Sasa ${cityName}`}
         description={cityConfig.description}
         address={{
           street: `${cityName} CBD`,
@@ -56,7 +56,7 @@ const CityLandingPage: React.FC = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">
-            {cityName} Marketplace - Soko Smart
+            {cityName} Marketplace - Sokko Sasa
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             {cityConfig.description}

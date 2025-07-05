@@ -17,7 +17,7 @@ interface LocalBusinessSchemaProps {
 
 const LocalBusinessSchema: React.FC<LocalBusinessSchemaProps> = ({
   businessType = 'LocalBusiness',
-  name = 'Soko Smart',
+  name = 'Sokko Sasa',
   description = "Kenya's premier marketplace for products, real estate, rides, services and jobs",
   address = {
     street: 'Nairobi CBD',

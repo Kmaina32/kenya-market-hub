@@ -36,7 +36,7 @@ export const useSEO = (props: UseSEOProps = {}) => {
     }
 
     const finalConfig = {
-      title: props.title || config?.title || 'Soko Smart - Kenya\'s Premier Marketplace',
+      title: props.title || config?.title || 'Sokko Sasa - Kenya\'s Premier Marketplace',
       description: props.description || config?.description || 'Discover amazing products, services, rides, and real estate in Kenya.',
       keywords: props.keywords || config?.keywords || 'marketplace Kenya, online shopping Kenya',
       image: props.image || '/lovable-uploads/563ee6fb-f94f-43f3-a61873a1b491.png',

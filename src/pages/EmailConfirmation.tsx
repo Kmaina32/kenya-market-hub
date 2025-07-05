@@ -52,7 +52,7 @@ const EmailConfirmation = () => {
             <span className="text-white font-bold text-2xl">🛒</span>
           </div>
           <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
-            Soko Smart
+            Sokko Sasa
           </h1>
           <p className="text-gray-600 text-sm">Kenya's Premier Digital Marketplace</p>
         </div>
@@ -77,7 +77,7 @@ const EmailConfirmation = () => {
             </CardTitle>
             <CardDescription className="text-gray-600">
               {status === 'loading' && 'Please wait while we verify your email address.'}
-              {status === 'success' && 'Welcome to Soko Smart! Your account is now active.'}
+              {status === 'success' && 'Welcome to Sokko Sasa! Your account is now active.'}
               {status === 'error' && 'There was a problem confirming your email address.'}
             </CardDescription>
           </CardHeader>

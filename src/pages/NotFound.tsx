@@ -29,7 +29,7 @@ const NotFound = () => {
         </p>
         <p className="text-sm text-gray-500 mb-6">
           The page you&apos;re looking for doesn&apos;t exist, moved, or is temporarily unavailable.<br />
-          Let&apos;s get you back to browsing Soko Smart!
+          Let&apos;s get you back to browsing Sokko Sasa!
         </p>
         <Button
           size="lg"

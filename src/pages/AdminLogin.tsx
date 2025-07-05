@@ -47,7 +47,7 @@ const AdminLogin = () => {
             </div>
           </div>
           <CardTitle className="text-2xl font-bold text-gray-900">
-            Soko Smart Admin
+            Sokko Sasa Admin
           </CardTitle>
           <p className="text-gray-600 mt-2">Sign in to your admin dashboard</p>
         </CardHeader>

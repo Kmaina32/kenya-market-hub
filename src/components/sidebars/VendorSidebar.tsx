@@ -111,7 +111,7 @@ const VendorSidebar = () => {
       
       <SidebarFooter className="p-4 border-t">
         <div className="text-xs text-gray-500 text-center">
-          © 2024 Soko Smart Vendor
+          © 2024 Sokko Sasa Vendor
         </div>
       </SidebarFooter>
     </Sidebar>

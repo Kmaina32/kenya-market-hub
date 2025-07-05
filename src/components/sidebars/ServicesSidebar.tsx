@@ -54,7 +54,7 @@ const ServicesSidebar = () => {
           Back to Main App
         </Button>
         <div className="text-xs text-gray-500 text-center mt-2">
-          © 2025 Soko Smart by Milleast.tech
+          © 2025 Sokko Sasa by Milleast.tech
         </div>
       </SidebarFooter>
     </Sidebar>

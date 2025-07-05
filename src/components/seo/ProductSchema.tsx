@@ -12,11 +12,11 @@ const ProductSchema: React.FC<ProductSchemaProps> = ({ product }) => {
       "@context": "https://schema.org",
       "@type": "Product",
       "name": product.name,
-      "description": product.description || `${product.name} available at Soko Smart Kenya`,
+      "description": product.description || `${product.name} available at Sokko Sasa Kenya`,
       "image": product.image_url || '/placeholder.svg',
       "brand": {
         "@type": "Brand",
-        "name": product.brand || product.vendor || 'Soko Smart'
+        "name": product.brand || product.vendor || 'Sokko Sasa'
       },
       "offers": {
         "@type": "Offer",
@@ -25,7 +25,7 @@ const ProductSchema: React.FC<ProductSchemaProps> = ({ product }) => {
         "availability": product.in_stock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
         "seller": {
           "@type": "Organization",
-          "name": product.vendor || 'Soko Smart'
+          "name": product.vendor || 'Sokko Sasa'
         }
       },
       "aggregateRating": product.rating > 0 ? {

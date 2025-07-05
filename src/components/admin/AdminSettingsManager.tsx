@@ -15,7 +15,7 @@ const AdminSettingsManager = () => {
   const updateSettings = useUpdateAdminSettings();
   
   const [localSettings, setLocalSettings] = useState({
-    platform_name: 'Soko Smart',
+    platform_name: 'Sokko Sasa',
     platform_description: 'Kenya\'s Premier Multi-Service Platform',
     maintenance_mode: false,
     registration_enabled: true,

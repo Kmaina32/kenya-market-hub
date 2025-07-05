@@ -308,7 +308,7 @@ const Products = () => {
                   
                   <div className="p-4">
                     <h4 className="font-semibold text-gray-900 mb-1 text-sm line-clamp-2">{product.name}</h4>
-                    <p className="text-xs text-gray-600 mb-2">{product.vendor || 'Soko Smart'}</p>
+                    <p className="text-xs text-gray-600 mb-2">{product.vendor || 'Sokko Sasa'}</p>
                     
                     <div className="flex items-center mb-2">
                       <div className="flex items-center">

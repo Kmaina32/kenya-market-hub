@@ -17,7 +17,7 @@ const SocialMediaMeta: React.FC<SocialMediaMetaProps> = ({
   image,
   url,
   type = 'website',
-  siteName = 'Soko Smart',
+  siteName = 'Sokko Sasa',
   twitterHandle = '@SokoSmart'
 }) => {
   useEffect(() => {

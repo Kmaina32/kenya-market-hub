@@ -36,7 +36,7 @@ const ModernAdminDashboard = () => {
             <div>
               <h1 className="text-2xl lg:text-3xl font-bold mb-2">Welcome back!</h1>
               <p className="text-orange-100 opacity-90">
-                Here's what's happening with Soko Smart today.
+                Here's what's happening with Sokko Sasa today.
               </p>
             </div>
             <div className="mt-4 lg:mt-0 flex flex-col sm:flex-row gap-3">

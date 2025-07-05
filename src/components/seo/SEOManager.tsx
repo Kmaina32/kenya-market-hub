@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 /**
  * @typedef {object} SEOManagerProps
  * @property {string} [title] - The title of the page. Appears in the browser tab and search results.
- * Defaults to 'Soko Smart - Kenya\'s Premier Marketplace'.
+ * Defaults to 'Sokko Sasa - Kenya\'s Premier Marketplace'.
  * @property {string} [description] - A brief summary of the page content. Used by search engines.
  * Defaults to 'Discover amazing products, services, rides, and real estate in Kenya. Your one-stop marketplace for everything you need.'.
  * @property {string} [keywords] - Comma-separated keywords relevant to the page. (Less impactful for modern SEO, but can be included).
@@ -38,7 +38,7 @@ interface SEOManagerProps {
  * @returns {null} This component does not render any visible UI elements.
  */
 const SEOManager: React.FC<SEOManagerProps> = ({
-  title = 'Soko Smart - Kenya\'s Premier Marketplace',
+  title = 'Sokko Sasa - Kenya\'s Premier Marketplace',
   description = 'Discover amazing products, services, rides, and real estate in Kenya. Your one-stop marketplace for everything you need.',
   keywords = 'marketplace Kenya, online shopping Kenya, property Kenya, services Kenya, rides Kenya, jobs Kenya',
   // Ensure image is an absolute URL for Open Graph and Twitter cards
@@ -92,7 +92,7 @@ const SEOManager: React.FC<SEOManagerProps> = ({
     // --- Basic Meta Tags ---
     updateMeta('description', description);
     updateMeta('keywords', keywords);
-    updateMeta('author', 'Soko Smart');
+    updateMeta('author', 'Sokko Sasa');
     updateMeta('robots', 'index,follow'); // Instructs search engine robots to index the page and follow links
     updateMeta('viewport', 'width=device-width, initial-scale=1.0'); // Ensures proper responsive behavior
 
@@ -103,7 +103,7 @@ const SEOManager: React.FC<SEOManagerProps> = ({
     updateProperty('og:image', image);
     updateProperty('og:url', currentUrl);
     updateProperty('og:type', type);
-    updateProperty('og:site_name', 'Soko Smart');
+    updateProperty('og:site_name', 'Sokko Sasa');
     updateProperty('og:locale', 'en_KE'); // Specifies the language and locale (English, Kenya)
 
     // --- Twitter Card Tags ---
@@ -130,7 +130,7 @@ const SEOManager: React.FC<SEOManagerProps> = ({
     const defaultStructuredData = {
       "@context": "https://schema.org",
       "@type": "Organization", // Defaulting to Organization schema
-      "name": "Soko Smart",
+      "name": "Sokko Sasa",
       "description": description,
       "url": currentUrl,
       "logo": image, // Use the provided image as the organization's logo

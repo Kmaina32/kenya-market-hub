@@ -127,7 +127,7 @@ const ProductDetailModal = ({ open, onOpenChange, product }: ProductDetailModalP
           
           <div className="space-y-4">
             <div>
-              <p className="text-sm text-gray-600 mb-1">{product.vendor || 'Soko Smart'}</p>
+              <p className="text-sm text-gray-600 mb-1">{product.vendor || 'Sokko Sasa'}</p>
               <Badge variant="outline" className="mb-2">{product.category}</Badge>
               
               <div className="flex items-center space-x-2 mb-2">

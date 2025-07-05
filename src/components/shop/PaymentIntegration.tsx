@@ -257,7 +257,7 @@ const PaymentIntegration: React.FC<PaymentIntegrationProps> = ({
               <h4 className="font-semibold mb-2">Bank Details:</h4>
               <p><strong>Bank:</strong> KCB Bank Kenya</p>
               <p><strong>Account:</strong> 1234567890</p>
-              <p><strong>Name:</strong> Soko Smart Ltd</p>
+              <p><strong>Name:</strong> Sokko Sasa Ltd</p>
               <p><strong>Reference:</strong> ORDER-{Date.now()}</p>
             </div>
             <Button 
