@@ -140,57 +140,66 @@ const AdminOrders = () => {
 
   const { data: orders, isLoading } = useQuery<OrderData[]>({
     queryKey: ['admin-orders'],
-    queryFn: async () => {
-      // First fetch orders
-      const { data: ordersData, error: ordersError } = await supabase
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false });
+    queryFn: async (): Promise<OrderData[]> => {
+      try {
+        // First fetch orders
+        const { data: ordersData, error: ordersError } = await supabase
+          .from('orders')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (ordersError) {
-        console.error('Error fetching orders:', ordersError);
-        throw ordersError;
+        if (ordersError) {
+          console.error('Error fetching orders:', ordersError);
+          throw ordersError;
+        }
+
+        if (!ordersData || ordersData.length === 0) {
+          return [];
+        }
+
+        // Then fetch order items and profiles separately to avoid relation issues
+        const orderIds = ordersData.map(order => order.id);
+        const userIds = ordersData.map(order => order.user_id);
+
+        // Fetch order items
+        const { data: orderItemsData, error: itemsError } = await supabase
+          .from('order_items')
+          .select(`
+            order_id,
+            product_id,
+            quantity,
+            unit_price,
+            total_price,
+            products (name)
+          `)
+          .in('order_id', orderIds);
+
+        if (itemsError) {
+          console.error('Error fetching order items:', itemsError);
+        }
+
+        // Fetch user profiles
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', userIds);
+
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
+        }
+
+        // Combine the data
+        const ordersWithDetails: OrderData[] = ordersData.map(order => ({
+          ...order,
+          order_items: orderItemsData?.filter(item => item.order_id === order.id) || [],
+          profiles: profilesData?.find(profile => profile.id === order.user_id) || null
+        }));
+
+        return ordersWithDetails;
+      } catch (error) {
+        console.error('Error in admin orders query:', error);
+        return [];
       }
-
-      // Then fetch order items and profiles separately to avoid relation issues
-      const orderIds = ordersData.map(order => order.id);
-      const userIds = ordersData.map(order => order.user_id);
-
-      // Fetch order items
-      const { data: orderItemsData, error: itemsError } = await supabase
-        .from('order_items')
-        .select(`
-          order_id,
-          product_id,
-          quantity,
-          unit_price,
-          total_price,
-          products (name)
-        `)
-        .in('order_id', orderIds);
-
-      if (itemsError) {
-        console.error('Error fetching order items:', itemsError);
-      }
-
-      // Fetch user profiles
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, full_name, email')
-        .in('id', userIds);
-
-      if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
-      }
-
-      // Combine the data
-      const ordersWithDetails = ordersData.map(order => ({
-        ...order,
-        order_items: orderItemsData?.filter(item => item.order_id === order.id) || [],
-        profiles: profilesData?.find(profile => profile.id === order.user_id) || null
-      }));
-
-      return ordersWithDetails;
     }
   });
 
@@ -259,11 +268,13 @@ const AdminOrders = () => {
     }
   };
 
-  const filteredOrders = orders?.filter(order =>
+  // Ensure orders is always an array before filtering
+  const ordersArray = orders || [];
+  const filteredOrders = ordersArray.filter(order =>
     order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
     order.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     order.profiles?.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  );
 
   const handleViewClick = (order: OrderData) => {
     setSelectedOrder(order);
