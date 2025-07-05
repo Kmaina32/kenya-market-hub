@@ -1,3 +1,5 @@
+// src/pages/Shop.tsx
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,10 +12,10 @@ import {
   Heart,
   Eye,
   ShoppingCart,
-  DollarSign, // Added for price range
-  Tag,        // Added for category filter icon
-  Loader2,     // For loading spinners
-  Star // Imported Star icon
+  DollarSign,
+  Tag,
+  Loader2,
+  Star 
 } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
 import ProductQuickView from '@/components/shop/ProductQuickView';
@@ -32,8 +34,9 @@ import { useWishlist } from '@/hooks/useWishlist';
 import { useCartOperations } from '@/hooks/useCartOperations';
 import { QuantitySelector } from '@/components/shop/QuantitySelector';
 import { toast } from 'sonner';
-import { Slider } from '@/components/ui/slider'; // Assuming Shadcn UI Slider
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'; // Assuming Shadcn UI Sheet
+import { Slider } from '@/components/ui/slider';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import SEOManager from '@/components/seo/SEOManager'; // FIX: Import SEOManager
 
 // --- Interfaces for better type safety and clarity ---
 interface Product {
@@ -44,8 +47,8 @@ interface Product {
   image_url?: string;
   category: string;
   in_stock: boolean;
-  rating?: number; // Optional, can be null
-  total_reviews?: number; // Optional
+  rating?: number;
+  total_reviews?: number;
   created_at: string;
   vendor_id: string;
   vendors: {
@@ -71,7 +74,7 @@ const Shop: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]); // Default price range
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]); 
   const [minPriceInput, setMinPriceInput] = useState<string>('0');
   const [maxPriceInput, setMaxPriceInput] = useState<string>('5000');
 
@@ -79,12 +82,11 @@ const Shop: React.FC = () => {
   const { addToWishlist, isInWishlist } = useWishlist();
   const { getQuantity, setQuantity, handleAddToCart } = useCartOperations();
 
-  // Debounced search term for better performance
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
-    }, 500); // Debounce for 500ms
+    }, 500); 
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
@@ -93,22 +95,18 @@ const Shop: React.FC = () => {
     queryFn: async () => {
       let query = supabase.from('products').select(`*, vendors ( business_name, logo_url )`).eq('in_stock', true);
 
-      // Apply search term
       if (debouncedSearchTerm) {
         query = query.or(`name.ilike.%${debouncedSearchTerm}%,description.ilike.%${debouncedSearchTerm}%`);
       }
-      // Apply category filter
       if (selectedCategory !== 'all') {
         query = query.eq('category', selectedCategory);
       }
-      // Apply price range filter
       query = query.gte('price', priceRange[0]).lte('price', priceRange[1]);
 
-      // Apply sorting
       switch (sortBy) {
         case 'price_low': query = query.order('price', { ascending: true }); break;
         case 'price_high': query = query.order('price', { ascending: false }); break;
-        case 'rating': query = query.order('rating', { ascending: false, nullsFirst: false }); break; // Ensure null ratings are last
+        case 'rating': query = query.order('rating', { ascending: false, nullsFirst: false }); break; 
         case 'name': query = query.order('name', { ascending: true }); break;
         default: query = query.order('created_at', { ascending: false });
       }
@@ -121,11 +119,10 @@ const Shop: React.FC = () => {
       }
       return data || [];
     },
-    staleTime: 60 * 1000, // Data is fresh for 1 minute
-    placeholderData: (previousData) => previousData, // Fixed: Replaced keepPreviousData
+    staleTime: 60 * 1000, 
+    placeholderData: (previousData) => previousData, 
   });
 
-  // Sync price range slider with input fields
   useEffect(() => {
     setMinPriceInput(priceRange[0].toString());
     setMaxPriceInput(priceRange[1].toString());
@@ -168,11 +165,10 @@ const Shop: React.FC = () => {
     setSelectedCategory('all');
     setSortBy('newest');
     setPriceRange([0, 5000]);
-    refetch(); // Manually refetch after clearing filters
+    refetch(); 
     toast.info("Filters cleared!");
   }, [refetch]);
 
-  // Memoized Product Card to prevent unnecessary re-renders
   const EnhancedProductCard = React.memo(({ product }: { product: Product }) => (
     <Card className="w-full group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-2 hover:border-orange-300 bg-white rounded-2xl overflow-hidden">
       <div className="aspect-square bg-gray-200 relative overflow-hidden">
@@ -181,7 +177,7 @@ const Shop: React.FC = () => {
             src={product.image_url}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            loading="lazy" // Lazy load images
+            loading="lazy" 
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
@@ -209,7 +205,7 @@ const Shop: React.FC = () => {
         )}
         {product.rating && product.total_reviews !== undefined && (
           <div className="absolute bottom-3 left-3 bg-white/90 rounded-full px-3 py-1 text-xs font-semibold flex items-center gap-1 shadow-sm">
-            <Star className="h-3 w-3 text-yellow-500 fill-current" /> {/* Fixed: Star icon used */}
+            <Star className="h-3 w-3 text-yellow-500 fill-current" /> 
             {product.rating.toFixed(1)} ({product.total_reviews})
           </div>
         )}
@@ -228,7 +224,7 @@ const Shop: React.FC = () => {
           <Button
             className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-md"
             onClick={() => handleAddToCartCallback(product)}
-            disabled={!product.in_stock || getQuantity(product.id) === 0} // Disable if out of stock or quantity is 0
+            disabled={!product.in_stock || getQuantity(product.id) === 0} 
           >
             <ShoppingCart className="h-4 w-4 mr-2" />
             {product.in_stock ? 'Add to Cart' : 'Out of Stock'}
@@ -262,7 +258,7 @@ const Shop: React.FC = () => {
           <p className="text-xl font-bold text-orange-600">KSh {product.price.toLocaleString()}</p>
           {product.rating && product.total_reviews !== undefined && (
             <div className="flex items-center gap-1 text-sm text-gray-600">
-              <Star className="h-4 w-4 text-yellow-500 fill-current" /> {/* Fixed: Star icon used */}
+              <Star className="h-4 w-4 text-yellow-500 fill-current" /> 
               {product.rating.toFixed(1)} ({product.total_reviews} reviews)
             </div>
           )}
@@ -299,6 +295,23 @@ const Shop: React.FC = () => {
 
   return (
     <MainLayout>
+      {/* FIX: Add SEOManager component here for Shop/Products page */}
+      <SEOManager
+        title="Buy Products Online in Kenya | Electronics, Fashion & More | Sokko Sasa Shop"
+        description="Explore and buy a wide range of products online in Kenya. From electronics to fashion, find the best deals and trusted vendors on Sokko Sasa."
+        keywords="buy products Kenya, online shopping Kenya, e-commerce Kenya, shop electronics Nairobi, local products Kenya, best deals Kenya, Sokko Sasa online store"
+        url={`${window.location.origin}/shop`} // Replace with your actual domain
+        type="website"
+        // Consider adding specific structuredData for a listing page (e.g., CollectionPage)
+        // structuredData={{
+        //   "@context": "https://schema.org",
+        //   "@type": "CollectionPage", // or WebPage
+        //   "name": "Sokko Sasa Online Shop",
+        //   "description": "Wide range of products for sale in Kenya.",
+        //   "url": `${window.location.origin}/shop`,
+        // }}
+      />
+
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
         {/* Hero Section */}
         <div className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-600 to-red-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4 shadow-xl" style={{ backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=2070&q=80')`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
@@ -501,9 +514,9 @@ const Shop: React.FC = () => {
               <Loader2 className="h-10 w-10 text-orange-600 animate-spin mx-auto mb-4" />
               <p className="text-lg text-gray-600">Loading amazing products...</p>
             </div>
-          ) : products && products.length > 0 ? ( // Fixed: Safely check products.length
+          ) : products && products.length > 0 ? ( 
             <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' : 'grid-cols-1'}`}>
-              {products.map(product => ( // Fixed: Safely check products.map
+              {products.map(product => ( 
                 viewMode === 'grid'
                   ? <EnhancedProductCard key={product.id} product={product} />
                   : <EnhancedProductListItem key={product.id} product={product} />
@@ -518,7 +531,7 @@ const Shop: React.FC = () => {
                   ? 'No products match your current search and filter criteria. Try adjusting them!'
                   : 'It looks a bit empty here! Products will be added soon. Check back later!'}
               </p>
-              <Button onClick={handleClearFilters} className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-md flex items-center gap-2">
+              <Button onClick={handleClearFilters} className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-700 shadow-md flex items-center gap-2">
                 <Filter className="h-5 w-5" /> Clear All Filters
               </Button>
             </div>
