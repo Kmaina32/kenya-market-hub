@@ -52,22 +52,22 @@ export const useAdminOrders = () => {
       
       if (error) throw error;
       
-      // Fetch user profiles separately to avoid relation issues
-      if (data && data.length > 0) {
-        const userIds = [...new Set(data.map(order => order.user_id))];
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, full_name, email')
-          .in('id', userIds);
-        
-        // Add profile data to orders
-        return data.map(order => ({
-          ...order,
-          profiles: profiles?.find(p => p.id === order.user_id) || null
-        })) as OrderWithProfile[];
+      if (!data || data.length === 0) {
+        return [];
       }
+
+      // Fetch user profiles separately to avoid relation issues
+      const userIds = [...new Set(data.map(order => order.user_id))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', userIds);
       
-      return (data as OrderWithProfile[]) || [];
+      // Add profile data to orders
+      return data.map(order => ({
+        ...order,
+        profiles: profiles?.find(p => p.id === order.user_id) || null
+      })) as OrderWithProfile[];
     }
   });
 };
