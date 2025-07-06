@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import {
@@ -68,7 +67,7 @@ const AppSidebar = () => {
     <Sidebar variant="inset" className="border-r border-orange-200">
       <SidebarHeader className="border-b border-white-200 p-4">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-orange-500 to-red-500 flex items-center justify-center shadow-lg overflow-hidden flex-shrink-0">
+          <div className="w-14 h-14 rounded-lg bg-gradient-to-r from-white-500 to-red-500 flex items-center justify-center shadow-lg overflow-hidden flex-shrink-0"> {/* Increased size to w-14 h-14 */}
             <img 
               alt="Sokko Sasa Logo" 
               src="/LOGO/Sokko.svg" // Path to your logo
