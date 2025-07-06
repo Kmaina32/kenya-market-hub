@@ -1,6 +1,8 @@
+
 import { useMutation } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { useCreateTransaction, useUpdateTransactionStatus } from './useTransactions';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface PaymentData {
   amount: number;
@@ -11,7 +13,6 @@ export interface PaymentData {
     email: string;
     phone?: string;
   };
-  // FIX: Added shippingInfo to PaymentData interface
   shippingInfo?: { 
     address: string;
     city: string;
@@ -22,6 +23,7 @@ export interface PaymentData {
 
 export const useMpesaPayment = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const createTransaction = useCreateTransaction();
   const updateTransaction = useUpdateTransactionStatus();
 
@@ -29,11 +31,16 @@ export const useMpesaPayment = () => {
     mutationFn: async (paymentData: PaymentData & { phoneNumber: string }) => {
       console.log('Processing M-Pesa payment:', paymentData);
       
-      // Create transaction record
+      if (!user) {
+        throw new Error('User must be authenticated to make payment');
+      }
+      
+      // Create transaction record with user_id
       const transaction = await createTransaction.mutateAsync({
         order_id: paymentData.orderId,
         payment_method: 'mpesa',
         amount: paymentData.amount,
+        user_id: user.id,
         payment_data: {
           phone_number: paymentData.phoneNumber,
           customer_info: paymentData.customerInfo
@@ -88,17 +95,23 @@ export const useMpesaPayment = () => {
 
 export const usePayPalPayment = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const createTransaction = useCreateTransaction();
 
   return useMutation({
     mutationFn: async (paymentData: PaymentData) => {
       console.log('Processing PayPal payment:', paymentData);
       
-      // Create transaction record
+      if (!user) {
+        throw new Error('User must be authenticated to make payment');
+      }
+      
+      // Create transaction record with user_id
       const transaction = await createTransaction.mutateAsync({
         order_id: paymentData.orderId,
         payment_method: 'paypal',
         amount: paymentData.amount,
+        user_id: user.id,
         payment_data: {
           currency: paymentData.currency,
           customer_info: paymentData.customerInfo
@@ -145,17 +158,23 @@ export const usePayPalPayment = () => {
 
 export const useStripePayment = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const createTransaction = useCreateTransaction();
 
   return useMutation({
     mutationFn: async (paymentData: PaymentData) => {
       console.log('Processing Stripe payment:', paymentData);
       
-      // Create transaction record
+      if (!user) {
+        throw new Error('User must be authenticated to make payment');
+      }
+      
+      // Create transaction record with user_id
       const transaction = await createTransaction.mutateAsync({
         order_id: paymentData.orderId,
         payment_method: 'stripe',
         amount: paymentData.amount,
+        user_id: user.id,
         payment_data: {
           currency: paymentData.currency,
           customer_info: paymentData.customerInfo

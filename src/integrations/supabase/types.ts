@@ -1542,6 +1542,8 @@ export type Database = {
       }
       orders: {
         Row: {
+          contact_email: string | null
+          contact_phone: string | null
           coupon_id: string | null
           created_at: string | null
           discount_amount: number | null
@@ -1549,12 +1551,15 @@ export type Database = {
           payment_method: string | null
           payment_status: string | null
           shipping_address: Json | null
+          shipping_city: string | null
           status: string | null
           total_amount: number
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          contact_email?: string | null
+          contact_phone?: string | null
           coupon_id?: string | null
           created_at?: string | null
           discount_amount?: number | null
@@ -1562,12 +1567,15 @@ export type Database = {
           payment_method?: string | null
           payment_status?: string | null
           shipping_address?: Json | null
+          shipping_city?: string | null
           status?: string | null
           total_amount: number
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          contact_email?: string | null
+          contact_phone?: string | null
           coupon_id?: string | null
           created_at?: string | null
           discount_amount?: number | null
@@ -1575,6 +1583,7 @@ export type Database = {
           payment_method?: string | null
           payment_status?: string | null
           shipping_address?: Json | null
+          shipping_city?: string | null
           status?: string | null
           total_amount?: number
           updated_at?: string | null
@@ -2536,6 +2545,7 @@ export type Database = {
           status: string | null
           transaction_id: string | null
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           amount: number
@@ -2547,6 +2557,7 @@ export type Database = {
           status?: string | null
           transaction_id?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           amount?: number
@@ -2558,6 +2569,7 @@ export type Database = {
           status?: string | null
           transaction_id?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {

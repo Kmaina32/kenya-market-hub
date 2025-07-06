@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,6 +11,7 @@ export interface Transaction {
   status: 'pending' | 'completed' | 'failed' | 'refunded';
   transaction_id?: string;
   payment_data?: any;
+  user_id: string;
   created_at: string;
   updated_at: string;
 }
@@ -53,6 +53,7 @@ export const useCreateTransaction = () => {
       order_id: string;
       payment_method: string;
       amount: number;
+      user_id: string;
       transaction_id?: string;
       payment_data?: any;
     }) => {
