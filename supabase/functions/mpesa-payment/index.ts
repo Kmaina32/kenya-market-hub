@@ -23,10 +23,20 @@ serve(async (req) => {
 
     console.log('Processing M-Pesa payment:', { phoneNumber, amount, orderId })
 
+    // Validate inputs
+    if (!phoneNumber || !amount || !orderId) {
+      throw new Error('Missing required parameters: phoneNumber, amount, or orderId')
+    }
+
+    if (amount < 1) {
+      throw new Error('Amount must be at least 1 KSh')
+    }
+
     // Get M-Pesa access token
     const tokenResponse = await getMpesaToken()
     if (!tokenResponse.success) {
-      throw new Error('Failed to get M-Pesa access token')
+      console.error('Failed to get M-Pesa token:', tokenResponse.error)
+      throw new Error('Failed to authenticate with M-Pesa service')
     }
 
     // Initiate STK Push
@@ -45,12 +55,14 @@ serve(async (req) => {
           payment_data: {
             phone_number: phoneNumber,
             checkout_request_id: stkResponse.CheckoutRequestID,
-            merchant_request_id: stkResponse.MerchantRequestID
+            merchant_request_id: stkResponse.MerchantRequestID,
+            initiated_at: new Date().toISOString()
           }
         })
 
       if (dbError) {
         console.error('Database error:', dbError)
+        // Don't fail the request if DB insert fails, M-Pesa request was successful
       }
 
       return new Response(
@@ -66,19 +78,36 @@ serve(async (req) => {
         }
       )
     } else {
+      console.error('STK Push failed:', stkResponse.errorMessage)
       throw new Error(stkResponse.errorMessage || 'STK Push failed')
     }
 
   } catch (error) {
     console.error('M-Pesa payment error:', error)
+    
+    let errorMessage = 'Payment processing failed'
+    let statusCode = 400
+    
+    if (error.message) {
+      errorMessage = error.message
+    }
+    
+    // Check for specific error types
+    if (error.message?.includes('authenticate')) {
+      statusCode = 503
+      errorMessage = 'Payment service temporarily unavailable'
+    } else if (error.message?.includes('phone') || error.message?.includes('Phone')) {
+      errorMessage = 'Invalid phone number format'
+    }
+    
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message || 'Payment processing failed' 
+        error: errorMessage
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400 
+        status: statusCode
       }
     )
   }
@@ -90,6 +119,7 @@ async function getMpesaToken() {
     const consumerSecret = Deno.env.get('MPESA_CONSUMER_SECRET')
     
     if (!consumerKey || !consumerSecret) {
+      console.error('M-Pesa credentials not found in environment')
       throw new Error('M-Pesa credentials not configured')
     }
 
@@ -98,16 +128,19 @@ async function getMpesaToken() {
     const response = await fetch('https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials', {
       method: 'GET',
       headers: {
-        'Authorization': `Basic ${auth}`
+        'Authorization': `Basic ${auth}`,
+        'Content-Type': 'application/json'
       }
     })
 
     const data = await response.json()
+    console.log('Token response status:', response.status)
     
-    if (data.access_token) {
+    if (response.ok && data.access_token) {
       return { success: true, access_token: data.access_token }
     } else {
-      return { success: false, error: 'Failed to get access token' }
+      console.error('Token generation failed:', data)
+      return { success: false, error: data.error_description || 'Failed to get access token' }
     }
   } catch (error) {
     console.error('Token generation error:', error)
@@ -123,10 +156,14 @@ async function initiateStkPush(accessToken: string, phoneNumber: string, amount:
     const Timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, -3)
     const Password = btoa(`${BusinessShortCode}${Passkey}${Timestamp}`)
     
-    // Format phone number (ensure it starts with 254)
-    let formattedPhone = phoneNumber.replace(/^\+/, '').replace(/^0/, '254')
+    // Ensure phone number is in correct format
+    let formattedPhone = phoneNumber.toString().replace(/^\+/, '')
     if (!formattedPhone.startsWith('254')) {
-      formattedPhone = '254' + formattedPhone
+      if (formattedPhone.startsWith('0')) {
+        formattedPhone = '254' + formattedPhone.substring(1)
+      } else {
+        formattedPhone = '254' + formattedPhone
+      }
     }
 
     const stkPushPayload = {
@@ -143,7 +180,7 @@ async function initiateStkPush(accessToken: string, phoneNumber: string, amount:
       TransactionDesc: `Payment for Order ${orderId}`
     }
 
-    console.log('STK Push payload:', stkPushPayload)
+    console.log('STK Push payload:', { ...stkPushPayload, Password: '[HIDDEN]' })
 
     const response = await fetch('https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest', {
       method: 'POST',
@@ -157,20 +194,21 @@ async function initiateStkPush(accessToken: string, phoneNumber: string, amount:
     const data = await response.json()
     console.log('STK Push response:', data)
 
-    if (data.ResponseCode === '0') {
+    if (response.ok && data.ResponseCode === '0') {
       return {
         success: true,
         CheckoutRequestID: data.CheckoutRequestID,
         MerchantRequestID: data.MerchantRequestID
       }
     } else {
+      const errorMessage = data.ResponseDescription || data.errorMessage || `HTTP ${response.status}: STK Push failed`
       return {
         success: false,
-        errorMessage: data.ResponseDescription || data.errorMessage || 'STK Push failed'
+        errorMessage: errorMessage
       }
     }
   } catch (error) {
     console.error('STK Push error:', error)
-    return { success: false, errorMessage: error.message }
+    return { success: false, errorMessage: `Network error: ${error.message}` }
   }
 }

@@ -1,146 +1,68 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom"; // BrowserRouter import
-import { AuthProvider } from "./contexts/AuthContext";
-import { CartProvider } from "./contexts/CartContext";
-import ErrorBoundary from "./components/ErrorBoundary";
-import PerformanceMonitor from "./components/PerformanceMonitor";
-
-// Import pages
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import Profile from "./pages/Profile";
-import Products from "./pages/Products";
-import Shop from "./pages/Shop";
-import Cart from "./pages/Cart";
-import Checkout from "./pages/Checkout";
-import RealEstate from "./pages/RealEstate";
-import PropertyDetail from "./pages/PropertyDetail";
-import Services from "./pages/Services";
-import Rides from "./pages/Rides";
-import FoodDelivery from "./pages/FoodDelivery";
-import Insurance from "./pages/Insurance";
-import Medical from "./pages/Medical";
-import Jobs from "./pages/Jobs";
-import JobDetail from "./pages/JobDetail";
-import Events from "./pages/Events";
-import ChatForums from "./pages/ChatForums";
-import Wishlist from "./pages/Wishlist";
-import NotFound from "./pages/NotFound";
-import EmailConfirmation from "./pages/EmailConfirmation";
-
-// Admin pages
+import ResetPassword from "./pages/ResetPassword";
 import AdminLogin from "./pages/AdminLogin";
-import AdminDashboard from "./pages/AdminDashboard";
-import NewAdminDashboard from "./pages/NewAdminDashboard";
-import AdminApp from "./pages/AdminApp";
+import Rides from "./pages/Rides";
+import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
+import ModernAdminLayout from "./components/ModernAdminLayout";
 
-// Service provider pages
-import ServiceHub from "./pages/ServiceHub";
-import ServiceHubUnified from "./pages/ServiceHubUnified";
-import ServiceProviderHub from "./pages/ServiceProviderHub";
-import ServiceProviderRegistrationPage from "./pages/ServiceProviderRegistrationPage";
+const queryClient = new QueryClient();
 
-// App-specific pages
-import VendorApp from "./pages/VendorApp";
-import VendorDashboard from "./pages/VendorDashboard";
-import VendorAnalyticsPage from "./pages/VendorAnalyticsPage";
-import DriverApp from "./pages/DriverApp";
-import PropertyOwnerApp from "./pages/PropertyOwnerApp";
-import ServicesApp from "./pages/ServicesApp";
-import ServicesDashboard from "./pages/ServicesDashboard";
-
-// Create a query client with better error handling
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: (failureCount, error: any) => {
-        // Don't retry on auth errors or 4xx errors
-        if (error?.status >= 400 && error?.status < 500) {
-          return false;
-        }
-        return failureCount < 2;
-      },
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    },
-  },
-});
-
-function App() {
-  return (
-    <ErrorBoundary>
-      <BrowserRouter
-        future={{
-          v7_startTransition: true,
-          v7_relativeSplatPath: true,
-          // You can add other future flags here as needed, based on React Router documentation
-        }}
-      > {/* Added future prop here */}
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <CartProvider>
-              <TooltipProvider>
-                <div className="min-h-screen bg-background font-sans antialiased">
-                  <Routes>
-                    {/* Main routes */}
-                    <Route path="/" element={<Index />} />
-                    <Route path="/auth" element={<Auth />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/products" element={<Products />} />
-                    <Route path="/shop" element={<Shop />} />
-                    <Route path="/cart" element={<Cart />} />
-                    <Route path="/checkout" element={<Checkout />} />
-                    <Route path="/real-estate" element={<RealEstate />} />
-                    <Route path="/property/:id" element={<PropertyDetail />} />
-                    <Route path="/services" element={<Services />} />
-                    <Route path="/rides" element={<Rides />} />
-                    <Route path="/food-delivery" element={<FoodDelivery />} />
-                    <Route path="/food" element={<FoodDelivery />} />
-                    <Route path="/insurance" element={<Insurance />} />
-                    <Route path="/medical" element={<Medical />} />
-                    <Route path="/jobs" element={<Jobs />} />
-                    <Route path="/job/:id" element={<JobDetail />} />
-                    <Route path="/events" element={<Events />} />
-                    <Route path="/chat-forums" element={<ChatForums />} />
-                    <Route path="/wishlist" element={<Wishlist />} />
-                    <Route path="/email-confirmation" element={<EmailConfirmation />} />
-
-                    {/* Admin routes - Fixed routing */}
-                    <Route path="/admin-login" element={<AdminLogin />} />
-                    <Route path="/admin/*" element={<AdminApp />} />
-                    <Route path="/new-admin/*" element={<NewAdminDashboard />} />
-
-                    {/* Service provider routes */}
-                    <Route path="/service-hub" element={<ServiceHub />} />
-                    <Route path="/service-hub-unified" element={<ServiceHubUnified />} />
-                    <Route path="/service-provider-hub" element={<ServiceProviderHub />} />
-                    <Route path="/service-provider-registration" element={<ServiceProviderRegistrationPage />} />
-
-                    {/* App routes */}
-                    <Route path="/vendor/*" element={<VendorApp />} />
-                    <Route path="/vendor-dashboard" element={<VendorDashboard />} />
-                    <Route path="/vendor-analytics" element={<VendorAnalyticsPage />} />
-                    <Route path="/driver-app/*" element={<DriverApp />} />
-                    <Route path="/property-owner/*" element={<PropertyOwnerApp />} />
-                    <Route path="/services-app/*" element={<ServicesApp />} />
-                    <Route path="/services-dashboard" element={<ServicesDashboard />} />
-
-                    {/* Catch all route */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </div>
-                <Toaster />
-                <Sonner />
-                <PerformanceMonitor />
-              </TooltipProvider>
-            </CartProvider>
-          </AuthProvider>
-        </QueryClientProvider>
-      </BrowserRouter>
-    </ErrorBoundary>
-  );
-}
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/admin-login" element={<AdminLogin />} />
+            <Route path="/rides" element={<Rides />} />
+            <Route 
+              path="/admin" 
+              element={
+                <ProtectedAdminRoute>
+                  <ModernAdminLayout>
+                    <div className="p-6">
+                      <h1 className="text-3xl font-bold text-gray-900 mb-6">Admin Dashboard</h1>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="bg-white rounded-xl shadow-sm border p-6">
+                          <h3 className="text-lg font-semibold text-gray-900">Total Users</h3>
+                          <p className="text-3xl font-bold text-orange-600 mt-2">1,234</p>
+                        </div>
+                        <div className="bg-white rounded-xl shadow-sm border p-6">
+                          <h3 className="text-lg font-semibold text-gray-900">Active Orders</h3>
+                          <p className="text-3xl font-bold text-orange-600 mt-2">89</p>
+                        </div>
+                        <div className="bg-white rounded-xl shadow-sm border p-6">
+                          <h3 className="text-lg font-semibold text-gray-900">Total Revenue</h3>
+                          <p className="text-3xl font-bold text-orange-600 mt-2">KSh 45,678</p>
+                        </div>
+                        <div className="bg-white rounded-xl shadow-sm border p-6">
+                          <h3 className="text-lg font-semibold text-gray-900">Active Drivers</h3>
+                          <p className="text-3xl font-bold text-orange-600 mt-2">23</p>
+                        </div>
+                      </div>
+                    </div>
+                  </ModernAdminLayout>
+                </ProtectedAdminRoute>
+              } 
+            />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
+  </QueryClientProvider>
+);
 
 export default App;
