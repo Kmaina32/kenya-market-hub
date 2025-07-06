@@ -28,16 +28,17 @@ const SORT_OPTIONS = [
 const FoodDelivery: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [sortBy, setSortBy] = useState('relevance');
+  const [sortBy, setSortBy] = useState('relevance'); 
   const [deliveryFeeRange, setDeliveryFeeRange] = useState<[number, number]>([0, 1000]);
   const [minDeliveryTime, setMinDeliveryTime] = useState<number>(0);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  
+  // FIX: Declare debouncedSearchTerm using useState before any useEffect uses it
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(''); 
 
   const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
 
-  // Debounced search term for better performance
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  // Debounced search term for better performance 
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
@@ -46,9 +47,9 @@ const FoodDelivery: React.FC = () => {
   }, [searchTerm]);
 
   const { data: restaurants = [], isLoading, isFetching, refetch } = useRestaurants({
-    searchTerm: debouncedSearchTerm,
+    searchTerm: debouncedSearchTerm, // Now correctly defined
     category: selectedCategory,
-    sortBy: sortBy,
+    sortBy: sortBy, 
     deliveryFeeRange: deliveryFeeRange,
     minDeliveryTime: minDeliveryTime,
   });
@@ -71,13 +72,13 @@ const FoodDelivery: React.FC = () => {
 
   const handleOrderNow = useCallback((restaurant: Restaurant) => {
     toast.success(`Starting order from ${restaurant.name}`);
-    // This would typically redirect to cart/order page or open a different modal
+    // This would typically redirect to cart/order page or open a different modal 
   }, []);
 
   const handleClearFilters = useCallback(() => {
     setSearchTerm('');
     setSelectedCategory('All');
-    setSortBy('relevance');
+    setSortBy('relevance'); 
     setDeliveryFeeRange([0, 1000]);
     setMinDeliveryTime(0);
     refetch();
@@ -95,13 +96,14 @@ const FoodDelivery: React.FC = () => {
 
     return (
       <Card 
-        className={`cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-2 ${ 
+        // Adjusted card class for list view styling
+        className={`flex flex-col sm:flex-row cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-2 ${ 
           isOpen ? 'hover:border-orange-300' : 'opacity-70 border-gray-200 cursor-not-allowed' 
         } bg-white rounded-2xl overflow-hidden group`} 
         onClick={() => isOpen && handleRestaurantClick(restaurant)} 
         aria-disabled={!isOpen} 
       >
-        <div className="aspect-video bg-gray-200 relative overflow-hidden">
+        <div className="relative flex-shrink-0 w-full sm:w-48 h-48 sm:h-auto overflow-hidden"> {/* Adjusted image container */}
           <img 
             src={restaurant.image_url || defaultBanner} 
             alt={restaurant.name} 
@@ -120,41 +122,44 @@ const FoodDelivery: React.FC = () => {
           )}
         </div>
 
-        <CardHeader className="pb-3 pt-4 px-4">
-          <CardTitle className="text-xl text-gray-900 line-clamp-1 font-bold group-hover:text-orange-600 transition-colors">
-            {restaurant.name}
-          </CardTitle>
-          {restaurant.cuisine_type && (
-            <Badge variant="secondary" className="text-xs text-gray-700 w-fit">{restaurant.cuisine_type}</Badge>
-          )}
-          <div className="flex items-center gap-1 text-sm text-gray-600 mt-1">
-            <MapPin className="h-4 w-4 text-orange-500" />
-            <span className="truncate font-medium">{restaurant.address || 'Kenya'}</span>
-          </div>
-        </CardHeader>
+        <div className="flex flex-col flex-grow p-4"> {/* Container for text content */}
+          <CardHeader className="pb-2 pt-0 px-0"> {/* Adjusted padding */}
+            <CardTitle className="text-xl text-gray-900 line-clamp-1 font-bold group-hover:text-orange-600 transition-colors"> 
+              {restaurant.name} 
+            </CardTitle>
+            {restaurant.cuisine_type && (
+              <Badge variant="secondary" className="text-xs text-gray-700 w-fit mt-1">{restaurant.cuisine_type}</Badge> 
+            )}
+            {/* Added margin top */}
+            <div className="flex items-center gap-1 text-sm text-gray-600 mt-2"> {/* Adjusted margin top */}
+              <MapPin className="h-4 w-4 text-orange-500" />
+              <span className="truncate font-medium">{restaurant.address || 'Kenya'}</span>
+            </div>
+          </CardHeader>
 
-        <CardContent className="space-y-3 pt-0 px-4 pb-4">
-          <p className="text-sm text-gray-700 line-clamp-2">
-            {restaurant.description || 'Delicious food delivered to your doorstep.'}
-          </p>
+          <CardContent className="space-y-3 pt-0 px-0 pb-2 flex-grow"> {/* Adjusted padding */}
+            <p className="text-sm text-gray-700 line-clamp-2"> 
+              {restaurant.description || 'Delicious food delivered to your doorstep.'} 
+            </p>
 
-          <div className="flex items-center justify-between text-sm text-gray-700">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1">
-                <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                <span className="font-semibold">{displayRating}</span>
+            <div className="flex items-center justify-between text-sm text-gray-700 mt-auto pt-2"> {/* Added mt-auto and pt-2 */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
+                  <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                  <span className="font-semibold">{displayRating}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Clock className="h-4 w-4 text-gray-500" />
+                  <span className="font-medium">{displayDeliveryTime}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                <Clock className="h-4 w-4 text-gray-500" />
-                <span className="font-medium">{displayDeliveryTime}</span>
+              <div className="font-bold text-orange-600">
+                {displayDeliveryFee}
               </div>
             </div>
-            <div className="font-bold text-orange-600">
-              {displayDeliveryFee}
-            </div>
-          </div>
+          </CardContent>
 
-          <div className="flex gap-2 pt-2">
+          <div className="flex gap-2 pt-2 flex-shrink-0"> {/* Added flex-shrink-0 to button container */}
             <Button 
               size="sm" 
               variant="outline" 
@@ -166,19 +171,19 @@ const FoodDelivery: React.FC = () => {
               disabled={!restaurant.phone} 
             >
               <Phone className="h-4 w-4 mr-1" />
-              Call 
+              Call
             </Button>
             <Button 
               size="sm" 
               onClick={() => handleRestaurantClick(restaurant)} 
-              className="flex-1 text-sm bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-md whitespace-nowrap overflow-hidden text-ellipsis" // Added text handling classes
+              className="flex-1 text-sm bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-md" 
               disabled={!isOpen} 
             >
               <ShoppingCart className="h-4 w-4 mr-1" />
               {isOpen ? 'View Menu' : 'Closed'}
             </Button>
           </div>
-        </CardContent>
+        </div>
       </Card>
     );
   });
@@ -239,7 +244,7 @@ const FoodDelivery: React.FC = () => {
                 {/* Sort By (Desktop) */}
                 <div className="hidden sm:block">
                   <label htmlFor="sort-select" className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
-                  <Select value={sortBy} onValueChange={setSortBy}>
+                  <Select value={sortBy} onValueChange={setSortBy}> 
                     <SelectTrigger id="sort-select" className="w-full">
                       <SelectValue placeholder="Sort by" />
                     </SelectTrigger>
@@ -249,14 +254,9 @@ const FoodDelivery: React.FC = () => {
                   </Select>
                 </div>
 
-                {/* View Mode Buttons */}
+                {/* View Mode Buttons (Removed entirely as per previous request) */}
                 <div className="flex gap-2 justify-end sm:justify-start">
-                  <Button variant={viewMode === 'grid' ? 'default' : 'outline'} className="shadow-sm" onClick={() => setViewMode('grid')} aria-label="Grid View">
-                    <Grid className="h-5 w-5" />
-                  </Button>
-                  <Button variant={viewMode === 'list' ? 'default' : 'outline'} className="shadow-sm" onClick={() => setViewMode('list')} aria-label="List View">
-                    <List className="h-5 w-5" />
-                  </Button>
+                  {/* No view mode buttons */}
                 </div>
 
                 {/* Mobile Filter Sheet */}
@@ -294,7 +294,7 @@ const FoodDelivery: React.FC = () => {
                           <label htmlFor="mobile-sort-select" className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                             <List className="h-4 w-4" /> Sort By 
                           </label>
-                          <Select value={sortBy} onValueChange={setSortBy}>
+                          <Select value={sortBy} onValueChange={setSortBy}> 
                             <SelectTrigger id="mobile-sort-select" className="w-full">
                               <SelectValue placeholder="Sort by" />
                             </SelectTrigger>
@@ -397,7 +397,7 @@ const FoodDelivery: React.FC = () => {
               </Button>
             </div>
           ) : (
-            <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4' : 'grid-cols-1'}`}>
+            <div className={`grid gap-6 grid-cols-1`}> {/* Always use a single column grid for list view */}
               {restaurants && restaurants.map((restaurant) => (
                 <RestaurantCard key={restaurant.id} restaurant={restaurant} />
               ))}
