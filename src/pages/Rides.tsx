@@ -1,3 +1,4 @@
+
 // src/pages/Rides.tsx
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -5,8 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Car, MapPin, Navigation, Clock, Star, Phone, User, Wallet } from 'lucide-react'; 
-import MainLayout from '@/components/MainLayout'; 
+import { Car, MapPin, Navigation, Clock, Star, Phone, User, Wallet, Locate } from 'lucide-react'; 
+import FrontendLayout from '@/components/layouts/FrontendLayout';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner'; 
@@ -14,7 +15,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 
 import { geocodeAddress, getRouteDetails, loadGoogleMapsScript } from '@/integrations/googlemaps/googleMapsLoader'; 
 import MapBox from '@/components/MapBox'; 
-// FIX: Import SEOManager
 import SEOManager from '@/components/seo/SEOManager'; 
 
 interface Driver {
@@ -39,19 +39,27 @@ interface Driver {
 interface VehicleType {
   id: 'taxi' | 'motorbike'; 
   name: string;
-  icon: string;
+  icon: React.ComponentType<{ className?: string; size?: number }>;
   pricePerKm: number; 
   description: string;
 }
 
 const VEHICLE_TYPES: VehicleType[] = [
-  { id: 'taxi', name: 'Taxi', icon: '🚗', pricePerKm: 80, description: '4 seats, Standard comfort' },
-  { id: 'motorbike', name: 'Boda Boda', icon: '🏍️', pricePerKm: 50, description: 'Quick & affordable' }
+  { id: 'taxi', name: 'Taxi/Car', icon: Car, pricePerKm: 80, description: '4 seats, Air conditioning, Comfortable ride' },
+  { id: 'motorbike', name: 'Boda Boda', icon: ({ className, size }) => (
+    <svg className={className} width={size || 24} height={size || 24} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2l3.09 6.26L22 9l-5 4.9 1.18 6.88L12 17.27l-6.18 3.51L7 14.9 2 9l6.91-.74L12 2z"/>
+      <circle cx="6" cy="18" r="3"/>
+      <circle cx="18" cy="18" r="3"/>
+      <path d="M8 18h8"/>
+    </svg>
+  ), pricePerKm: 50, description: 'Quick & affordable, Navigate traffic easily' }
 ];
 
 const Rides: React.FC = () => {
   const [pickup, setPickup] = useState(''); 
   const [destination, setDestination] = useState(''); 
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   
   // State for geocoded coordinates and route path
   const [pickupLocation, setPickupLocation] = useState<{ name: string; lat: number; lng: number } | null>(null);
@@ -90,12 +98,66 @@ const Rides: React.FC = () => {
     staleTime: 20 * 1000, 
   });
 
+  // GPS Location Handler
+  const handleGetCurrentLocation = () => {
+    setIsLoadingLocation(true);
+    
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by this browser.');
+      setIsLoadingLocation(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const googleMaps = await loadGoogleMapsScript();
+          if (!googleMaps) {
+            throw new Error('Google Maps not available');
+          }
+
+          const geocoder = new google.maps.Geocoder();
+          const latLng = { lat: position.coords.latitude, lng: position.coords.longitude };
+          
+          geocoder.geocode({ location: latLng }, (results, status) => {
+            if (status === 'OK' && results && results[0]) {
+              const address = results[0].formatted_address;
+              setPickup(address);
+              setPickupLocation({
+                name: address,
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+              });
+              toast.success('Current location detected!');
+            } else {
+              toast.error('Could not determine your address');
+            }
+            setIsLoadingLocation(false);
+          });
+        } catch (error) {
+          console.error('Error getting location:', error);
+          toast.error('Error getting your location');
+          setIsLoadingLocation(false);
+        }
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        toast.error('Unable to access your location. Please check permissions.');
+        setIsLoadingLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000
+      }
+    );
+  };
+
   useEffect(() => {
     const calculateFareAndRoute = async () => {
       const googleMaps = await loadGoogleMapsScript();
       if (!googleMaps) {
         console.error('Google Maps API not available for geocoding.');
-        toast.error('Mapping services could not load. Please check your internet connection and API key.');
         return; 
       }
 
@@ -125,7 +187,6 @@ const Rides: React.FC = () => {
               setEstimatedFare(null);
               setTripDetails(null);
               setRoutePath(null);
-              toast.error("Could not calculate route details. Please check locations again.");
             }
           } else {
             setEstimatedFare(null);
@@ -133,7 +194,6 @@ const Rides: React.FC = () => {
             setRoutePath(null);
             setPickupLocation(null);
             setDestinationLocation(null);
-            toast.error("Could not find coordinates for one or both locations. Please be more specific.");
           }
         } catch (error) {
           console.error('Error calculating fare or geocoding:', error);
@@ -142,10 +202,8 @@ const Rides: React.FC = () => {
           setRoutePath(null);
           setPickupLocation(null);
           setDestinationLocation(null);
-          toast.error("An error occurred during location lookup or fare calculation.");
         }
       } else {
-        // When inputs are empty, clear previous route and locations
         setEstimatedFare(null);
         setTripDetails(null);
         setRoutePath(null);
@@ -183,6 +241,28 @@ const Rides: React.FC = () => {
     }
   }, [pickupLocation, destinationLocation, estimatedFare]);
 
+  const defaultMapCenter = useMemo(() => {
+    return { lat: -1.286389, lng: 36.817223 }; 
+  }, []);
+
+  const mapMarkers = useMemo(() => {
+    const markers = [];
+    if (pickupLocation) {
+      markers.push({ id: 'pickup', position: pickupLocation, title: pickupLocation.name, color: '#10b981' });
+    }
+    if (destinationLocation) {
+      markers.push({ id: 'destination', position: destinationLocation, title: destinationLocation.name, color: '#ef4444' });
+    }
+    return markers;
+  }, [pickupLocation, destinationLocation]);
+
+  const mapRoute = useMemo(() => {
+    if (routePath && pickupLocation && destinationLocation) {
+      return { start: pickupLocation, end: destinationLocation, path: routePath };
+    }
+    return undefined;
+  }, [routePath, pickupLocation, destinationLocation]);
+
   const MemoizedDriverList = useMemo(() => {
     if (isLoading) {
       return (
@@ -197,7 +277,7 @@ const Rides: React.FC = () => {
       return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {drivers.map((driver) => (
-            <Card key={driver.id} className="hover:shadow-lg transition-shadow border border-gray-100">
+            <Card key={driver.id} className="hover:shadow-xl transition-all duration-300 border border-gray-100 rounded-2xl overflow-hidden">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div>
@@ -210,22 +290,22 @@ const Rides: React.FC = () => {
                   </div>
                   <Badge
                     variant={driver.status === 'available' ? 'default' : 'secondary'}
-                    className={`${driver.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'} px-3 py-1 text-xs`}
+                    className={`${driver.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'} px-3 py-1 text-xs rounded-full`}
                   >
                     {driver.status === 'available' ? 'Available' : 'Busy'}
                   </Badge>
                 </div>
 
-                <div className="space-y-2 mb-4">
+                <div className="space-y-3 mb-6">
                   <div className="flex items-center gap-2 text-sm text-gray-700">
                     <Car className="h-4 w-4 text-orange-500" />
                     <span>{driver.vehicle_make} {driver.vehicle_model} ({driver.vehicle_year})</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
-                    <Badge variant="outline" className="text-xs font-medium bg-gray-50 text-gray-700">
+                    <Badge variant="outline" className="text-xs font-medium bg-gray-50 text-gray-700 rounded-lg">
                       {driver.license_plate}
                     </Badge>
-                    <Badge variant="outline" className="text-xs capitalize font-medium bg-orange-50 text-orange-700">
+                    <Badge variant="outline" className="text-xs capitalize font-medium bg-orange-50 text-orange-700 rounded-lg">
                       {driver.vehicle_type}
                     </Badge>
                   </div>
@@ -239,13 +319,13 @@ const Rides: React.FC = () => {
                   <Dialog open={isBookingDialogOpen} onOpenChange={setIsBookingDialogOpen}>
                     <DialogTrigger asChild>
                       <Button
-                        className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                        className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 rounded-xl"
                         disabled={!pickupLocation || !destinationLocation || estimatedFare === null} 
                       >
                         Book Ride
                       </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="rounded-2xl">
                       <DialogHeader>
                         <DialogTitle>Confirm Your Ride</DialogTitle>
                         <DialogDescription>
@@ -301,7 +381,7 @@ const Rides: React.FC = () => {
                       </div>
                     </DialogContent>
                   </Dialog>
-                  <Button variant="outline" size="sm" className="border-orange-200 text-orange-600 hover:bg-orange-50">
+                  <Button variant="outline" size="sm" className="border-orange-200 text-orange-600 hover:bg-orange-50 rounded-xl">
                     <Phone className="h-4 w-4 mr-2" /> Call
                   </Button>
                 </div>
@@ -319,7 +399,7 @@ const Rides: React.FC = () => {
         <p className="text-gray-600 mb-6">
           Please try a different vehicle type or refresh to check for new drivers.
         </p>
-        <Button onClick={() => refetch()} disabled={isRefetching} variant="outline" className="flex items-center gap-2">
+        <Button onClick={() => refetch()} disabled={isRefetching} variant="outline" className="flex items-center gap-2 rounded-xl">
           {isRefetching ? (
             <span className="animate-spin text-lg">⚙️</span>
           ) : (
@@ -330,66 +410,31 @@ const Rides: React.FC = () => {
     );
   }, [isLoading, drivers, selectedVehicleType, pickup, destination, estimatedFare, tripDetails, handleBookRide, isBookingDialogOpen, isRefetching, refetch, pickupLocation, destinationLocation]);
 
-  const defaultMapCenter = useMemo(() => {
-    // You can set a default center for the map, e.g., center of Nairobi
-    return { lat: -1.286389, lng: 36.817223 }; 
-  }, []);
-
-  // Determine markers based on geocoded locations
-  const mapMarkers = useMemo(() => {
-    const markers = [];
-    if (pickupLocation) {
-      markers.push({ id: 'pickup', position: pickupLocation, title: pickupLocation.name, color: '#3b82f6' });
-    }
-    if (destinationLocation) {
-      markers.push({ id: 'destination', position: destinationLocation, title: destinationLocation.name, color: '#ef4444' });
-    }
-    return markers;
-  }, [pickupLocation, destinationLocation]);
-
-  // Determine route to display
-  const mapRoute = useMemo(() => {
-    if (routePath && pickupLocation && destinationLocation) {
-      return { start: pickupLocation, end: destinationLocation, path: routePath };
-    }
-    return undefined; // No route if not all data is available
-  }, [routePath, pickupLocation, destinationLocation]);
-
-
   return (
-    <MainLayout> 
-      {/* FIX: Add SEOManager component here */}
+    <FrontendLayout>
       <SEOManager
         title="Book Taxi & Cab in Kenya | Affordable Transport | Sokko Sasa Rides"
         description="Find and book reliable taxis, cabs, and transport services across Kenya, including Nairobi. Quick, safe, and affordable rideshare options on Sokko Sasa."
         keywords="taxi Kenya, cab Kenya, transport Kenya, rideshare Kenya, book a ride Nairobi, cheap taxi Nairobi, Sokko Sasa, ride booking app"
-        url={`${window.location.origin}/rides`} // Dynamically generate URL based on current origin
+        url={`${window.location.origin}/rides`}
         type="website"
-        // Consider adding specific structuredData for RideService if applicable
-        // structuredData={{
-        //   "@context": "https://schema.org",
-        //   "@type": "RideHailingService",
-        //   "name": "Sokko Sasa Rides",
-        //   "description": "On-demand taxi and transport service in Kenya",
-        //   "url": `${window.location.origin}/rides`,
-        //   // ... more specific properties
-        // }}
       />
 
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
         {/* Hero Section */}
-        <div
-          className="relative h-64 overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4 shadow-xl"
-          style={{
-            backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1449824913935-59a10b8d2000?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }}
-        >
+        <div className="relative h-64 overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-6 shadow-xl">
+          <div 
+            className="absolute inset-0 bg-cover bg-center opacity-30"
+            style={{
+              backgroundImage: `url('https://images.unsplash.com/photo-1449824913935-59a10b8d2000?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')`
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/30" />
+          
           <div className="relative z-10 flex items-center justify-center h-full px-6 sm:px-8 lg:px-12">
             <div className="text-center text-white max-w-3xl mx-auto">
-              <Car className="h-16 w-16 mx-auto mb-4 text-blue-100" />
-              <h1 className="text-3xl md:text-4xl font-bold mb-3 drop-shadow-lg">Book Your Ride</h1>
+              <Navigation className="h-16 w-16 mx-auto mb-4 text-blue-100" />
+              <h1 className="text-3xl md:text-5xl font-bold mb-3 drop-shadow-lg">Book Your Ride</h1>
               <p className="text-lg text-blue-100 font-light leading-relaxed">
                 Safe, reliable, and convenient transportation across Kenya.
               </p>
@@ -397,42 +442,55 @@ const Rides: React.FC = () => {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Booking Form */}
-          <Card className="mb-8 p-6 shadow-lg border border-gray-100">
-            <CardHeader className="p-0 pb-4">
+          <Card className="mb-8 p-6 shadow-xl border border-gray-100 rounded-3xl">
+            <CardHeader className="p-0 pb-6">
               <CardTitle className="flex items-center gap-3 text-2xl font-bold text-gray-800">
-                <Navigation className="h-6 w-6 text-orange-500" />
+                <MapPin className="h-6 w-6 text-orange-500" />
                 Plan Your Journey
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-0 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
+            <CardContent className="p-0 space-y-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-2">
                   <label htmlFor="pickup-location" className="block text-sm font-medium text-gray-700 mb-2">Pickup Location</label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <Input
-                      id="pickup-location"
-                      placeholder="e.g., Moi Avenue, Nairobi"
-                      value={pickup}
-                      onChange={(e) => setPickup(e.target.value)}
-                      className="pl-10 pr-4 py-2 border rounded-md focus:ring-orange-500 focus:border-orange-500"
-                      aria-label="Pickup Location"
-                    />
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <Input
+                        id="pickup-location"
+                        placeholder="Enter pickup address or use GPS"
+                        value={pickup}
+                        onChange={(e) => setPickup(e.target.value)}
+                        className="pl-10 pr-4 py-3 border rounded-xl focus:ring-orange-500 focus:border-orange-500"
+                      />
+                    </div>
+                    <Button
+                      onClick={handleGetCurrentLocation}
+                      disabled={isLoadingLocation}
+                      variant="outline"
+                      size="sm"
+                      className="px-3 py-3 border-orange-200 text-orange-600 hover:bg-orange-50 rounded-xl"
+                    >
+                      {isLoadingLocation ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600" />
+                      ) : (
+                        <Locate className="h-4 w-4" />
+                      )}
+                    </Button>
                   </div>
                 </div>
-                <div>
+                <div className="space-y-2">
                   <label htmlFor="destination-location" className="block text-sm font-medium text-gray-700 mb-2">Destination</label>
                   <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Navigation className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                     <Input
                       id="destination-location"
-                      placeholder="e.g., Jomo Kenyatta International Airport"
+                      placeholder="Where are you going?"
                       value={destination}
                       onChange={(e) => setDestination(e.target.value)}
-                      className="pl-10 pr-4 py-2 border rounded-md focus:ring-orange-500 focus:border-orange-500"
-                      aria-label="Destination Location"
+                      className="pl-10 pr-4 py-3 border rounded-xl focus:ring-orange-500 focus:border-orange-500"
                     />
                   </div>
                 </div>
@@ -440,81 +498,72 @@ const Rides: React.FC = () => {
 
               {/* Vehicle Type Selection */}
               <div>
-                <label className="block text-base font-medium text-gray-800 mb-3">Select Vehicle Type</label>
-                <div className="grid grid-cols-2 gap-4">
+                <label className="block text-base font-medium text-gray-800 mb-4">Select Vehicle Type</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {VEHICLE_TYPES.map((vehicle) => (
                     <div
                       key={vehicle.id}
-                      className={`p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 ease-in-out flex flex-col items-center justify-between text-center min-h-[120px] ${
+                      className={`p-6 border-2 rounded-2xl cursor-pointer transition-all duration-200 ease-in-out flex items-center gap-4 min-h-[120px] ${
                         selectedVehicleType === vehicle.id
-                          ? 'border-orange-500 bg-orange-50 shadow-md'
-                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                          ? 'border-orange-500 bg-orange-50 shadow-lg scale-105'
+                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-md'
                       }`}
                       onClick={() => setSelectedVehicleType(vehicle.id)}
-                      role="radio"
-                      aria-checked={selectedVehicleType === vehicle.id}
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          setSelectedVehicleType(vehicle.id);
-                        }
-                      }}
                     >
-                      <div className="text-3xl mb-2">{vehicle.icon}</div>
-                      <h3 className="font-semibold text-sm sm:text-base text-gray-800">{vehicle.name}</h3>
-                      <p className="text-xs text-gray-600 mb-1 leading-tight">{vehicle.description}</p>
-                      <p className="text-sm font-bold text-orange-600 mt-auto">KSh {vehicle.pricePerKm}/km</p>
+                      <div className={`p-4 rounded-2xl ${selectedVehicleType === vehicle.id ? 'bg-orange-100' : 'bg-gray-100'}`}>
+                        <vehicle.icon className={`h-8 w-8 ${selectedVehicleType === vehicle.id ? 'text-orange-600' : 'text-gray-600'}`} />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg text-gray-800 mb-1">{vehicle.name}</h3>
+                        <p className="text-sm text-gray-600 mb-2 leading-relaxed">{vehicle.description}</p>
+                        <p className="text-base font-bold text-orange-600">KSh {vehicle.pricePerKm}/km</p>
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Estimated Fare Display */}
+              {/* Fare and Trip Details */}
               {estimatedFare !== null && (
-                <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <Wallet className="h-6 w-6 text-blue-600" />
-                    <p className="text-lg font-bold text-blue-800">Estimated Fare:</p>
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-6 shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <Wallet className="h-6 w-6 text-blue-600" />
+                      <p className="text-lg font-bold text-blue-800">Estimated Fare:</p>
+                    </div>
+                    <p className="text-3xl font-extrabold text-blue-800">
+                      KSh {estimatedFare.toFixed(2)}
+                    </p>
                   </div>
-                  <p className="text-2xl font-extrabold text-blue-800">
-                    KSh {estimatedFare.toFixed(2)}
-                  </p>
+                  {tripDetails && (
+                    <div className="flex justify-between items-center text-sm text-blue-700 pt-2 border-t border-blue-200">
+                      <p className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {tripDetails.distance.toFixed(1)} km</p>
+                      <p className="flex items-center gap-2"><Clock className="h-4 w-4" /> {tripDetails.eta} mins</p>
+                    </div>
+                  )}
                 </div>
               )}
-               {tripDetails && (
-                <div className="flex justify-between items-center text-sm text-gray-600 px-2">
-                    <p className="flex items-center gap-1"><MapPin className="h-4 w-4 text-gray-500" /> {tripDetails.distance.toFixed(1)} km</p>
-                    <p className="flex items-center gap-1"><Clock className="h-4 w-4 text-gray-500" /> {tripDetails.eta} mins</p>
-                </div>
-              )}
-
-              <Button
-                className="w-full h-12 text-lg bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-md transition-all duration-200"
-                disabled={!pickup || !destination || isLoading || estimatedFare === null}
-                onClick={() => { /* No direct action here, useEffect handles it */ }}
-              >
-                {isLoading ? 'Searching...' : 'Find Drivers & Estimate Fare'}
-              </Button>
             </CardContent>
           </Card>
 
-          {/* Map Display Section - Now always visible */}
-          <div className="mt-8">
+          {/* Map Display */}
+          <div className="mb-8">
             <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
               <MapPin className="h-6 w-6 text-orange-500" /> {mapRoute ? 'Your Route' : 'Explore Area'}
             </h2>
-            <MapBox
-              center={mapMarkers.length > 0 ? mapMarkers[0].position : defaultMapCenter} // Center on first marker or default
-              zoom={mapRoute ? 12 : 12} // Adjust zoom level dynamically if needed
-              markers={mapMarkers} // Pass dynamically updated markers
-              showRoute={mapRoute} // Pass dynamically updated route
-              className="rounded-lg shadow-md border-2 border-gray-100"
-              style={{ width: '100%', height: '400px', border: '2px solid red' }} // Keep for testing initial visibility
-            />
+            <div className="rounded-2xl overflow-hidden shadow-xl border-2 border-gray-100">
+              <MapBox
+                center={mapMarkers.length > 0 ? mapMarkers[0].position : defaultMapCenter}
+                zoom={mapRoute ? 12 : 12}
+                markers={mapMarkers}
+                showRoute={mapRoute}
+                className="w-full h-96"
+              />
+            </div>
           </div>
 
-          {/* Available Drivers Section */}
-          <div className="space-y-6 pt-4">
+          {/* Available Drivers */}
+          <div className="space-y-6">
             <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
               <Car className="h-7 w-7 text-orange-500" /> Available Drivers
             </h2>
@@ -524,7 +573,7 @@ const Rides: React.FC = () => {
           </div>
         </div>
       </div>
-    </MainLayout> 
+    </FrontendLayout>
   );
 };
 
