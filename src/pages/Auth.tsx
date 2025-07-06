@@ -10,6 +10,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import MainLayout from '@/components/MainLayout';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const signInSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -19,7 +20,10 @@ const signInSchema = z.object({
 const signUpSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  fullName: z.string().min(2, 'Full name must be at least 2 characters')
+  fullName: z.string().min(2, 'Full name must be at least 2 characters'),
+  termsAccepted: z.boolean().refine((val) => val === true, {
+    message: 'You must accept the Terms and Conditions'
+  })
 });
 
 const Auth = () => {
@@ -29,10 +33,7 @@ const Auth = () => {
 
   const signInForm = useForm<z.infer<typeof signInSchema>>({
     resolver: zodResolver(signInSchema),
-    defaultValues: {
-      email: '',
-      password: ''
-    }
+    defaultValues: { email: '', password: '' }
   });
 
   const signUpForm = useForm<z.infer<typeof signUpSchema>>({
@@ -40,7 +41,8 @@ const Auth = () => {
     defaultValues: {
       email: '',
       password: '',
-      fullName: ''
+      fullName: '',
+      termsAccepted: false
     }
   });
 
@@ -54,10 +56,7 @@ const Auth = () => {
     setIsSubmitting(true);
     const { error } = await signIn(values.email, values.password);
     setIsSubmitting(false);
-    
-    if (!error) {
-      navigate('/');
-    }
+    if (!error) navigate('/');
   };
 
   const onSignUp = async (values: z.infer<typeof signUpSchema>) => {
@@ -78,20 +77,19 @@ const Auth = () => {
 
   return (
     <MainLayout>
-      {/* Outer div to contain the background image and center the content */}
+      {/* Full-screen background image container */}
       <div 
         className="relative min-h-screen flex items-center justify-center bg-cover bg-center"
         style={{ 
-          // FIX: Replace this with the actual path to your image asset.
+          // FIX: Replace 'YOUR_BACKGROUND_IMAGE_URL.jpg' with the actual path to your image
           // Example: backgroundImage: `url('/images/auth-background.jpg')`
-          backgroundImage: `url('/images/auth-bg.jpg')` // Placeholder: Update this path!
+          backgroundImage: `url('/LOGO/h.svg')` 
         }}
       >
-        {/* Semi-transparent overlay for readability of content */}
-        <div className="absolute inset-0 bg-black opacity-50"></div> 
+        {/* Overlay for readability */}
+        <div className="absolute inset-0 bg-black opacity-50"></div> {/* Adjust opacity as needed */}
 
         {/* Content wrapper (logo, tabs, forms) - positioned relative to appear above overlay */}
-        {/* It maintains its original size, spacing, and the Card components inside it retain their white background */}
         <div className="relative z-10 max-w-md mx-auto p-4 sm:p-0"> 
           {/* Logo container */}
           <div className="flex flex-col items-center justify-center mb-6">
@@ -102,26 +100,26 @@ const Auth = () => {
                 className="w-full h-full object-contain"
               />
             </div>
-            {/* Adjusted text colors for visibility against a background image */}
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mt-3 drop-shadow-md">Sokko Sasa</h2> 
-            <p className="text-sm text-gray-200 mt-1 drop-shadow-sm">Kenya's Smart Marketplace</p> 
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mt-3 drop-shadow-md">Sokko Sasa</h2> {/* Changed text color to white for contrast */}
+            <p className="text-sm text-gray-200 mt-1 drop-shadow-sm">Kenya's Smart Marketplace</p> {/* Changed text color to light gray */}
           </div>
           
           <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-2 mb-4">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
-            
+
+            {/* Sign In */}
             <TabsContent value="signin">
-              <Card> {/* This Card component will retain its default white background */}
+              <Card>
                 <CardHeader>
                   <CardTitle>Sign In</CardTitle>
                   <CardDescription>Welcome back to Sokko Sasa</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Form {...signInForm}>
-                    <form onSubmit={signInForm.handleSubmit(onSignIn)} className="space-y-4"> {/* Maintains button spacing */}
+                    <form onSubmit={signInForm.handleSubmit(onSignIn)} className="space-y-4">
                       <FormField
                         control={signInForm.control}
                         name="email"
@@ -148,7 +146,19 @@ const Auth = () => {
                           </FormItem>
                         )}
                       />
-                      <Button type="submit" className="w-full" disabled={isSubmitting}>
+                      {/* Forgot Password Button - updated navigation link */}
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="w-auto p-0 h-auto text-sm text-orange-600 hover:text-orange-700 justify-end ml-auto block"
+                        onClick={() => {
+                          navigate('/reset-password'); // Changed to /reset-password
+                          console.log('Forgot password clicked');
+                        }}
+                      >
+                        Forgot Password?
+                      </Button>
+                      <Button type="submit" className="w-full mt-2" disabled={isSubmitting}>
                         {isSubmitting ? 'Signing in...' : 'Sign In'}
                       </Button>
                     </form>
@@ -156,16 +166,17 @@ const Auth = () => {
                 </CardContent>
               </Card>
             </TabsContent>
-            
+
+            {/* Sign Up */}
             <TabsContent value="signup">
-              <Card> {/* This Card component will retain its default white background */}
+              <Card>
                 <CardHeader>
                   <CardTitle>Sign Up</CardTitle>
                   <CardDescription>Create your Sokko Sasa account</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Form {...signUpForm}>
-                    <form onSubmit={signUpForm.handleSubmit(onSignUp)} className="space-y-4"> {/* Maintains button spacing */}
+                    <form onSubmit={signUpForm.handleSubmit(onSignUp)} className="space-y-4">
                       <FormField
                         control={signUpForm.control}
                         name="fullName"
@@ -205,7 +216,35 @@ const Auth = () => {
                           </FormItem>
                         )}
                       />
-                      <Button type="submit" className="w-full" disabled={isSubmitting}>
+                      <FormField
+                        control={signUpForm.control}
+                        name="termsAccepted"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 rounded-md border p-4 shadow-sm">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>
+                                I accept the{' '}
+                                <a
+                                  href="/terms-and-conditions"
+                                  className="text-blue-600 hover:underline"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  Terms and Conditions
+                                </a>
+                              </FormLabel>
+                              <FormMessage />
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                      <Button type="submit" className="w-full mt-2" disabled={isSubmitting}>
                         {isSubmitting ? 'Creating account...' : 'Sign Up'}
                       </Button>
                     </form>

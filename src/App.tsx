@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom"; // BrowserRouter import
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { CartProvider } from "./contexts/CartContext";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -30,6 +30,7 @@ import ChatForums from "./pages/ChatForums";
 import Wishlist from "./pages/Wishlist";
 import NotFound from "./pages/NotFound";
 import EmailConfirmation from "./pages/EmailConfirmation";
+import ResetPassword from "./pages/ResetPassword";
 
 // Admin pages
 import AdminLogin from "./pages/AdminLogin";
@@ -56,10 +57,21 @@ import ServicesDashboard from "./pages/ServicesDashboard";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: (failureCount, error) => {
-        // Don't retry on auth errors or 4xx errors
-        if (error?.status >= 400 && error?.status < 500) {
-          return false;
+      retry: (failureCount, error: unknown) => { // Type 'error' as unknown
+        // Safely check if error is an object and has a 'response' with a 'status'
+        if (
+          typeof error === 'object' &&
+          error !== null &&
+          'response' in error &&
+          typeof (error as { response: unknown }).response === 'object' &&
+          (error as { response: { status?: number } }).response !== null &&
+          'status' in (error as { response: { status: number } }).response
+        ) {
+          const status = (error as { response: { status: number } }).response.status;
+          // Don't retry on auth errors or 4xx errors
+          if (status >= 400 && status < 500) {
+            return false;
+          }
         }
         return failureCount < 2;
       },
@@ -75,17 +87,14 @@ function App() {
         <AuthProvider>
           <CartProvider>
             <TooltipProvider>
-              {/* FIX: Moved BrowserRouter inside all providers */}
               <BrowserRouter
                 future={{
                   v7_startTransition: true,
                   v7_relativeSplatPath: true,
-                  // You can add other future flags here as needed, based on React Router documentation
                 }}
               >
                 <div className="min-h-screen bg-background font-sans antialiased">
                   <Routes>
-                    {/* Main routes */}
                     <Route path="/" element={<Index />} />
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/profile" element={<Profile />} />
@@ -107,19 +116,17 @@ function App() {
                     <Route path="/chat-forums" element={<ChatForums />} />
                     <Route path="/wishlist" element={<Wishlist />} />
                     <Route path="/email-confirmation" element={<EmailConfirmation />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
 
-                    {/* Admin routes - Fixed routing */}
                     <Route path="/admin-login" element={<AdminLogin />} />
                     <Route path="/admin/*" element={<AdminApp />} />
                     <Route path="/new-admin/*" element={<NewAdminDashboard />} />
 
-                    {/* Service provider routes */}
                     <Route path="/service-hub" element={<ServiceHub />} />
                     <Route path="/service-hub-unified" element={<ServiceHubUnified />} />
                     <Route path="/service-provider-hub" element={<ServiceProviderHub />} />
                     <Route path="/service-provider-registration" element={<ServiceProviderRegistrationPage />} />
 
-                    {/* App routes */}
                     <Route path="/vendor/*" element={<VendorApp />} />
                     <Route path="/vendor-dashboard" element={<VendorDashboard />} />
                     <Route path="/vendor-analytics" element={<VendorAnalyticsPage />} />
@@ -128,7 +135,6 @@ function App() {
                     <Route path="/services-app/*" element={<ServicesApp />} />
                     <Route path="/services-dashboard" element={<ServicesDashboard />} />
 
-                    {/* Catch all route */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </div>
