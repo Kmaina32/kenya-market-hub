@@ -1,4 +1,4 @@
-
+import React from 'react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { WifiOff, ShoppingCart } from 'lucide-react';
@@ -41,7 +41,10 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                   />
                 </div>
                 <div>
-                  <h1 className="text-sm sm:text-lg font-bold text-gray-900">Sokko Sasa</h1>
+                  <h1 className="text-sm sm:text-lg font-bold"> {/* Applied text size and bold here */}
+                    <span className="text-gray-900">Sokko</span>{' '} {/* Sokko in black */}
+                    <span className="text-orange-600">Sasa</span> {/* Sasa in orange */}
+                  </h1>
                   <p className="text-xs text-gray-600 hidden sm:block">Africas's Marketplace</p>
                 </div>
               </div>

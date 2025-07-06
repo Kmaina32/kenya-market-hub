@@ -75,7 +75,8 @@ const AppSidebar = () => {
             />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-gray-900">Sokko Sasa</h1>
+            <span className="text-gray-900">Sokko</span>{' '} {/* Sokko in black */}
+            <span className="text-orange-600">Sasa</span> {/* Sasa in orange */}
             <p className="text-sm text-gray-600">Africas's Marketplace</p>
           </div>
         </div>
