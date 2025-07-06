@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { UtensilsCrossed, Star, Clock, MapPin, Phone, ShoppingCart, Search, Filter, Loader2, DollarSign, List, Grid } from 'lucide-react';
 import FrontendLayout from '@/components/layouts/FrontendLayout';
@@ -88,26 +87,26 @@ const FoodDelivery: React.FC = () => {
   // --- Restaurant Card Component (Memoized for performance) ---
   const RestaurantCard = React.memo(({ restaurant }: { restaurant: Restaurant }) => {
     const defaultBanner = 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop';
-    
+     
     const displayRating = restaurant.rating ? restaurant.rating.toFixed(1) : 'N/A';
     const displayDeliveryTime = restaurant.delivery_time_minutes ? `${restaurant.delivery_time_minutes} min` : '30-45 min';
     const displayDeliveryFee = restaurant.delivery_fee === 0 ? 'Free' : `KSh ${restaurant.delivery_fee?.toFixed(0) || 'XX'}`;
     const isOpen = restaurant.is_active ?? true;
 
     return (
-      <Card
-        className={`cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-2 ${
-          isOpen ? 'hover:border-orange-300' : 'opacity-70 border-gray-200 cursor-not-allowed'
-        } bg-white rounded-2xl overflow-hidden group`}
-        onClick={() => isOpen && handleRestaurantClick(restaurant)}
-        aria-disabled={!isOpen}
+      <Card 
+        className={`cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-2 ${ 
+          isOpen ? 'hover:border-orange-300' : 'opacity-70 border-gray-200 cursor-not-allowed' 
+        } bg-white rounded-2xl overflow-hidden group`} 
+        onClick={() => isOpen && handleRestaurantClick(restaurant)} 
+        aria-disabled={!isOpen} 
       >
         <div className="aspect-video bg-gray-200 relative overflow-hidden">
-          <img
-            src={restaurant.image_url || defaultBanner}
-            alt={restaurant.name}
-            className={`w-full h-full object-cover transition-transform duration-300 ${isOpen ? 'group-hover:scale-105' : ''}`}
-            loading="lazy"
+          <img 
+            src={restaurant.image_url || defaultBanner} 
+            alt={restaurant.name} 
+            className={`w-full h-full object-cover transition-transform duration-300 ${isOpen ? 'group-hover:scale-105' : ''}`} 
+            loading="lazy" 
           />
           {!isOpen && (
             <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
@@ -156,24 +155,24 @@ const FoodDelivery: React.FC = () => {
           </div>
 
           <div className="flex gap-2 pt-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleCallRestaurant(restaurant);
-              }}
-              className="flex-1 text-sm bg-white border-orange-200 text-orange-600 hover:bg-orange-50 shadow-sm"
-              disabled={!restaurant.phone}
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                handleCallRestaurant(restaurant); 
+              }} 
+              className="flex-1 text-sm bg-white border-orange-200 text-orange-600 hover:bg-orange-50 shadow-sm" 
+              disabled={!restaurant.phone} 
             >
               <Phone className="h-4 w-4 mr-1" />
-              Call
+              Call 
             </Button>
-            <Button
-              size="sm"
-              onClick={() => handleRestaurantClick(restaurant)}
-              className="flex-1 text-sm bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-md"
-              disabled={!isOpen}
+            <Button 
+              size="sm" 
+              onClick={() => handleRestaurantClick(restaurant)} 
+              className="flex-1 text-sm bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-md whitespace-nowrap overflow-hidden text-ellipsis" // Added text handling classes
+              disabled={!isOpen} 
             >
               <ShoppingCart className="h-4 w-4 mr-1" />
               {isOpen ? 'View Menu' : 'Closed'}
@@ -188,8 +187,8 @@ const FoodDelivery: React.FC = () => {
     <FrontendLayout>
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
         {/* Hero Section */}
-        <div
-          className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-600 to-red-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4 px-4 sm:px-6 lg:px-8 shadow-xl"
+        <div 
+          className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-600 to-red-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4 px-4 sm:px-6 lg:px-8 shadow-xl" 
           style={{
             backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')`,
             backgroundSize: 'cover',
@@ -265,20 +264,20 @@ const FoodDelivery: React.FC = () => {
                   <Sheet>
                     <SheetTrigger asChild>
                       <Button variant="outline" className="w-full flex items-center gap-2 shadow-sm">
-                        <Filter className="h-5 w-5" /> More Filters
+                        <Filter className="h-5 w-5" /> More Filters 
                       </Button>
                     </SheetTrigger>
                     <SheetContent side="right">
                       <SheetHeader>
                         <SheetTitle className="flex items-center gap-2">
-                          <Filter /> Filters
+                          <Filter /> Filters 
                         </SheetTitle>
                       </SheetHeader>
                       <div className="py-6 space-y-6">
                         {/* Mobile Category Filter */}
                         <div>
                           <label htmlFor="mobile-category-select" className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                            <UtensilsCrossed className="h-4 w-4" /> Cuisine
+                            <UtensilsCrossed className="h-4 w-4" /> Cuisine 
                           </label>
                           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                             <SelectTrigger id="mobile-category-select" className="w-full">
@@ -293,7 +292,7 @@ const FoodDelivery: React.FC = () => {
                         {/* Mobile Sort By */}
                         <div>
                           <label htmlFor="mobile-sort-select" className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                            <List className="h-4 w-4" /> Sort By
+                            <List className="h-4 w-4" /> Sort By 
                           </label>
                           <Select value={sortBy} onValueChange={setSortBy}>
                             <SelectTrigger id="mobile-sort-select" className="w-full">
@@ -389,8 +388,8 @@ const FoodDelivery: React.FC = () => {
               <UtensilsCrossed className="h-20 w-20 text-gray-400 mx-auto mb-6" />
               <h3 className="text-2xl font-bold text-gray-900 mb-3">No Restaurants Found</h3>
               <p className="text-md text-gray-600 mb-8">
-                {searchTerm || selectedCategory !== 'All' || deliveryFeeRange[1] !== 1000 || minDeliveryTime !== 0
-                  ? 'No restaurants match your current search and filter criteria. Try adjusting them!'
+                {searchTerm || selectedCategory !== 'All' || deliveryFeeRange[1] !== 1000 || minDeliveryTime !== 0 
+                  ? 'No restaurants match your current search and filter criteria. Try adjusting them!' 
                   : 'It looks a bit empty here! Restaurants will be added soon. Check back later!'}
               </p>
               <Button onClick={handleClearFilters} className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-md flex items-center gap-2">
@@ -406,10 +405,10 @@ const FoodDelivery: React.FC = () => {
           )}
         </div>
 
-        <RestaurantMenuModal
-          open={isMenuModalOpen}
-          onOpenChange={setIsMenuModalOpen}
-          restaurant={selectedRestaurant}
+        <RestaurantMenuModal 
+          open={isMenuModalOpen} 
+          onOpenChange={setIsMenuModalOpen} 
+          restaurant={selectedRestaurant} 
         />
       </div>
     </FrontendLayout>
