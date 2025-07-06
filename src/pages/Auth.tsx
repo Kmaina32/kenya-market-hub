@@ -77,33 +77,27 @@ const Auth = () => {
 
   return (
     <MainLayout>
-      {/* Full-screen background image container */}
-      <div 
-        className="relative min-h-screen flex items-center justify-center bg-cover bg-center"
-        style={{ 
-          // FIX: Replace 'YOUR_BACKGROUND_IMAGE_URL.jpg' with the actual path to your image
-          // Example: backgroundImage: `url('/images/auth-background.jpg')`
-          backgroundImage: `url('/LOGO/h.svg')` 
-        }}
+      <div
+        className="relative min-h-screen flex flex-col items-center justify-center bg-cover bg-center bg-fixed"
+        style={{ backgroundImage: `url('/LOGO/h.svg')` }}
       >
-        {/* Overlay for readability */}
-        <div className="absolute inset-0 bg-black opacity-50"></div> {/* Adjust opacity as needed */}
+        <div className="absolute inset-0 bg-black opacity-50"></div>
 
-        {/* Content wrapper (logo, tabs, forms) - positioned relative to appear above overlay */}
-        <div className="relative z-10 max-w-md mx-auto p-4 sm:p-0"> 
-          {/* Logo container */}
-          <div className="flex flex-col items-center justify-center mb-6">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center shadow-lg overflow-hidden bg-white p-2">
-              <img
-                alt="Sokko Sasa Logo"
-                src="/LOGO/Sokko.svg" // Path to your logo
-                className="w-full h-full object-contain"
-              />
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mt-3 drop-shadow-md">Sokko Sasa</h2> {/* Changed text color to white for contrast */}
-            <p className="text-sm text-gray-200 mt-1 drop-shadow-sm">Kenya's Smart Marketplace</p> {/* Changed text color to light gray */}
+        {/* Detached Logo */}
+        <div className="relative z-10 text-center mb-6">
+          <div className="w-24 h-24 mx-auto rounded-full flex items-center justify-center shadow-lg overflow-hidden bg-white p-2">
+            <img
+              alt="Sokko Sasa Logo"
+              src="/LOGO/Sokko.svg"
+              className="w-full h-full object-contain"
+            />
           </div>
-          
+          <h2 className="text-3xl font-bold text-white mt-3 drop-shadow-md">Sokko Sasa</h2>
+          <p className="text-sm text-gray-200 mt-1 drop-shadow-sm">Kenya's Smart Marketplace</p>
+        </div>
+
+        {/* Auth Container - Reduced size and added padding */}
+        <div className="relative z-10 max-w-[95%] sm:max-w-md w-full mx-auto px-4 pb-6 pt-6 sm:px-8 sm:pb-8 sm:pt-8 bg-white/90 rounded-lg shadow-lg backdrop-blur-md">
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-4">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
@@ -112,14 +106,14 @@ const Auth = () => {
 
             {/* Sign In */}
             <TabsContent value="signin">
-              <Card>
+              <Card className="w-full shadow-none">
                 <CardHeader>
                   <CardTitle>Sign In</CardTitle>
                   <CardDescription>Welcome back to Sokko Sasa</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Form {...signInForm}>
-                    <form onSubmit={signInForm.handleSubmit(onSignIn)} className="space-y-4">
+                    <form onSubmit={signInForm.handleSubmit(onSignIn)} className="space-y-6">
                       <FormField
                         control={signInForm.control}
                         name="email"
@@ -169,14 +163,14 @@ const Auth = () => {
 
             {/* Sign Up */}
             <TabsContent value="signup">
-              <Card>
+              <Card className="w-full shadow-none">
                 <CardHeader>
                   <CardTitle>Sign Up</CardTitle>
                   <CardDescription>Create your Sokko Sasa account</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Form {...signUpForm}>
-                    <form onSubmit={signUpForm.handleSubmit(onSignUp)} className="space-y-4">
+                    <form onSubmit={signUpForm.handleSubmit(onSignUp)} className="space-y-6">
                       <FormField
                         control={signUpForm.control}
                         name="fullName"
@@ -208,7 +202,7 @@ const Auth = () => {
                         name="password"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Password</Label>
+                            <FormLabel>Password</FormLabel>
                             <FormControl>
                               <Input type="password" placeholder="Choose a password" {...field} />
                             </FormControl>
