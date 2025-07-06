@@ -42,7 +42,7 @@ const FrontendLayout = ({ children }: FrontendLayoutProps) => {
                 </div>
                 <div>
                   <h1 className="text-sm sm:text-lg font-bold text-gray-900">Sokko Sasa</h1>
-                  <p className="text-xs text-gray-600 hidden sm:block">Kenya's Smart Marketplace</p>
+                  <p className="text-xs text-gray-600 hidden sm:block">Africa's Smart Marketplace</p>
                 </div>
               </div>
 

@@ -36,13 +36,13 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg overflow-hidden flex-shrink-0">
                   <img 
                     alt="Sokko Sasa Logo" 
-                    src="/lovable-uploads/563ee6fb-f94f-43f3-a4f3-a61873a1b491.png" 
+                    src="/LOGO/Sokko.svg" // Path to your logo
                     className="w-full h-full object-contain" 
                   />
                 </div>
                 <div>
                   <h1 className="text-sm sm:text-lg font-bold text-gray-900">Sokko Sasa</h1>
-                  <p className="text-xs text-gray-600 hidden sm:block">Kenya's Marketplace</p>
+                  <p className="text-xs text-gray-600 hidden sm:block">Africas's Marketplace</p>
                 </div>
               </div>
               

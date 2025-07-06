@@ -66,18 +66,18 @@ const AppSidebar = () => {
 
   return (
     <Sidebar variant="inset" className="border-r border-orange-200">
-      <SidebarHeader className="border-b border-orange-200 p-4">
+      <SidebarHeader className="border-b border-white-200 p-4">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-orange-500 to-red-500 flex items-center justify-center shadow-lg overflow-hidden flex-shrink-0">
             <img 
               alt="Sokko Sasa Logo" 
-              src="/lovable-uploads/563ee6fb-f94f-43f3-a4f3-a61873a1b491.png" 
+              src="/LOGO/Sokko.svg" // Path to your logo
               className="w-full h-full object-contain" 
             />
           </div>
           <div>
             <h1 className="text-lg font-bold text-gray-900">Sokko Sasa</h1>
-            <p className="text-sm text-gray-600">Kenya's Marketplace</p>
+            <p className="text-sm text-gray-600">Africas's Marketplace</p>
           </div>
         </div>
       </SidebarHeader>
