@@ -41,7 +41,7 @@ const FrontendLayout = ({ children }: FrontendLayoutProps) => {
                   />
                 </div>
                 <div>
-                  <h1 className="text-sm sm:text-lg font-bold"> {/* Applied text size and bold here */}
+                  <h1 className="text-sm sm:text-lg font-"> {/* Applied text size and bold here */}
                     <span className="text-gray-900">Sokko</span>{' '} {/* Sokko in black */}
                     <span className="text-orange-600">Sasa</span> {/* Sasa in orange */}
                   </h1>
