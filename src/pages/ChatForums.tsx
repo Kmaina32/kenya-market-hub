@@ -1,4 +1,5 @@
-import React, { useState, lazy, Suspense, useEffect } from 'react';
+
+import React, { useState, lazy, Suspense, useEffect, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { MessageCircle, Users, Globe, ArrowLeftCircle } from 'lucide-react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';

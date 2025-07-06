@@ -6,9 +6,9 @@ import { WifiOff, Bell, Search, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import ModernAdminSidebar from './ModernAdminSidebar';
-import UserNav from '../UserNav';
-import NotificationDropdown from '../NotificationDropdown';
+import ModernAdminSidebar from '@/components/admin/ModernAdminSidebar';
+import UserNav from '@/components/UserNav';
+import NotificationDropdown from '@/components/NotificationDropdown';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
 interface ModernAdminLayoutProps {

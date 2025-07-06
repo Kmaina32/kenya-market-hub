@@ -39,7 +39,7 @@ interface Driver {
 interface VehicleType {
   id: 'taxi' | 'motorbike'; 
   name: string;
-  icon: React.ComponentType<{ className?: string; size?: number }>;
+  icon: React.ComponentType<any>; // Changed from specific props to any to fix Lucide compatibility
   pricePerKm: number; 
   description: string;
 }
@@ -48,10 +48,10 @@ const VEHICLE_TYPES: VehicleType[] = [
   { id: 'taxi', name: 'Taxi/Car', icon: Car, pricePerKm: 80, description: '4 seats, Air conditioning, Comfortable ride' },
   { id: 'motorbike', name: 'Boda Boda', icon: ({ className, size }) => (
     <svg className={className} width={size || 24} height={size || 24} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2l3.09 6.26L22 9l-5 4.9 1.18 6.88L12 17.27l-6.18 3.51L7 14.9 2 9l6.91-.74L12 2z"/>
-      <circle cx="6" cy="18" r="3"/>
-      <circle cx="18" cy="18" r="3"/>
-      <path d="M8 18h8"/>
+      <path d="M12 4l1.5 3h4l-1 2h-2.5l2 4h3v2h-3.5l-2-4H9.5l-2 4H4v-2h3l2-4H6.5l-1-2h4L12 4z"/>
+      <circle cx="6" cy="17" r="2"/>
+      <circle cx="18" cy="17" r="2"/>
+      <path d="M8 17h8"/>
     </svg>
   ), pricePerKm: 50, description: 'Quick & affordable, Navigate traffic easily' }
 ];
