@@ -84,7 +84,7 @@ const Auth = () => {
         style={{ 
           // FIX: Replace 'YOUR_BACKGROUND_IMAGE_URL.jpg' with the actual path to your image
           // Example: backgroundImage: `url('/images/auth-background.jpg')`
-          backgroundImage: `url('/images/auth-background.jpg')` 
+          backgroundImage: `url('/LOGO/h.svg')` 
         }}
       >
         {/* Overlay for readability */}
