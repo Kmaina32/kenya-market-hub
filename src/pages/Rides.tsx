@@ -1,6 +1,3 @@
-
-// src/pages/Rides.tsx
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -421,21 +418,21 @@ const Rides: React.FC = () => {
       />
 
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        {/* Hero Section */}
-        <div className="relative h-64 overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-6 shadow-xl">
+        {/* Hero Section - Updated with orange-red theme */}
+        <div className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-500 to-red-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-6 shadow-xl">
           <div 
             className="absolute inset-0 bg-cover bg-center opacity-30"
             style={{
-              backgroundImage: `url('https://images.unsplash.com/photo-1449824913935-59a10b8d2000?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')`
+              backgroundImage: `url('https://images.unsplash.com/photo-1487887235947-a955ef187fcc?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')`
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/30" />
+          <div className="absolute inset-0 bg-gradient-to-r from-orange-600/80 to-red-600/60" />
           
           <div className="relative z-10 flex items-center justify-center h-full px-6 sm:px-8 lg:px-12">
             <div className="text-center text-white max-w-3xl mx-auto">
-              <Navigation className="h-16 w-16 mx-auto mb-4 text-blue-100" />
+              <Navigation className="h-16 w-16 mx-auto mb-4 text-orange-100" />
               <h1 className="text-3xl md:text-5xl font-bold mb-3 drop-shadow-lg">Book Your Ride</h1>
-              <p className="text-lg text-blue-100 font-light leading-relaxed">
+              <p className="text-lg text-orange-100 font-light leading-relaxed">
                 Safe, reliable, and convenient transportation across Kenya.
               </p>
             </div>

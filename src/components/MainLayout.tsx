@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -36,16 +37,16 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg overflow-hidden flex-shrink-0">
                   <img 
                     alt="Sokko Sasa Logo" 
-                    src="/LOGO/Sokko.svg" // Path to your logo
+                    src="/LOGO/Sokko.svg"
                     className="w-full h-full object-contain" 
                   />
                 </div>
                 <div>
-                  <h1 className="text-sm sm:text-lg font-bold"> {/* Applied text size and bold here */}
-                    <span className="text-gray-900">Sokko</span>{' '} {/* Sokko in black */}
-                    <span className="text-orange-600">Sasa</span> {/* Sasa in orange */}
+                  <h1 className="text-sm sm:text-lg font-normal">
+                    <span className="text-gray-900">Sokko</span>{' '}
+                    <span className="text-orange-600">Sasa</span>
                   </h1>
-                  <p className="text-xs text-gray-600 hidden sm:block">Africas's Marketplace</p>
+                  <p className="text-xs text-gray-600 hidden sm:block">Africa's Smart Marketplace</p>
                 </div>
               </div>
               

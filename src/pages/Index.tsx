@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -259,10 +260,10 @@ const Index = () => {
           {/* Hero Content */}
           <div className="relative z-10 flex items-center justify-center h-full px-6 sm:px-8 lg:px-12">
             <div className="text-center text-white max-w-4xl mx-auto">
-              {/* Brand Name - Fixed size and bold */}
-              <h1 className="text-3xl md:text-7xl font- mb-4 animate-fade-in drop-shadow-lg"> {/* Increased size and bold, added drop-shadow */}
-                <span className="text-gray-900">Sokko</span>{' '}
-                <span className="text-orange-500">Sasa</span> {/* Used orange-500 for consistency with other orange elements */}
+              {/* Brand Name - Fixed size and normal weight */}
+              <h1 className="text-3xl md:text-7xl font-normal mb-4 animate-fade-in drop-shadow-lg">
+                <span className="text-white">Sokko</span>{' '}
+                <span className="text-orange-500">Sasa</span>
               </h1>
 
               {/* Slide Content */}

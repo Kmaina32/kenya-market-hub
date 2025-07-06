@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -8,7 +9,7 @@ import UserNav from '@/components/UserNav';
 import GlobalSearch from '@/components/GlobalSearch';
 import Footer from '@/components/Footer';
 import CartQuantityBadge from '@/components/CartQuantityBadge';
-import NotificationDropdown from '@/components/NotificationDropdown'; // <--- ADD THIS IMPORT
+import NotificationDropdown from '@/components/NotificationDropdown';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useNavigate } from 'react-router-dom';
 
@@ -41,9 +42,9 @@ const FrontendLayout = ({ children }: FrontendLayoutProps) => {
                   />
                 </div>
                 <div>
-                  <h1 className="text-sm sm:text-lg font-"> {/* Applied text size and bold here */}
-                    <span className="text-gray-900">Sokko</span>{' '} {/* Sokko in black */}
-                    <span className="text-orange-600">Sasa</span> {/* Sasa in orange */}
+                  <h1 className="text-sm sm:text-lg font-normal"> 
+                    <span className="text-gray-900">Sokko</span>{' '}
+                    <span className="text-orange-600">Sasa</span>
                   </h1>
                   <p className="text-xs text-gray-600 hidden sm:block">Africa's Smart Marketplace</p>
                 </div>
@@ -67,8 +68,7 @@ const FrontendLayout = ({ children }: FrontendLayoutProps) => {
                 <CartQuantityBadge />
               </Button>
 
-              {/* ADD NOTIFICATION DROPDOWN HERE */}
-              <NotificationDropdown /> {/* <--- ADD THIS LINE */}
+              <NotificationDropdown />
 
               <UserNav />
             </div>

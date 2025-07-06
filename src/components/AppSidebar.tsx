@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import {
@@ -67,17 +68,19 @@ const AppSidebar = () => {
     <Sidebar variant="inset" className="border-r border-orange-200">
       <SidebarHeader className="border-b border-white-200 p-4">
         <div className="flex items-center space-x-3">
-          <div className="w-14 h-14 rounded-lg bg-gradient-to-r from-white-500 to-red-500 flex items-center justify-center shadow-lg overflow-hidden flex-shrink-0"> {/* Increased size to w-14 h-14 */}
+          <div className="w-14 h-14 rounded-lg bg-gradient-to-r from-white-500 to-red-500 flex items-center justify-center shadow-lg overflow-hidden flex-shrink-0">
             <img 
               alt="Sokko Sasa Logo" 
-              src="/LOGO/Sokko.svg" // Path to your logo
+              src="/LOGO/Sokko.svg"
               className="w-full h-full object-contain" 
             />
           </div>
           <div>
-            <span className="text-gray-900">Sokko</span>{' '} {/* Sokko in black */}
-            <span className="text-orange-600">Sasa</span> {/* Sasa in orange */}
-            <p className="text-sm text-gray-600">Africas's Marketplace</p>
+            <h1 className="font-normal">
+              <span className="text-gray-900">Sokko</span>{' '}
+              <span className="text-orange-600">Sasa</span>
+            </h1>
+            <p className="text-sm text-gray-600">Africa's Smart Marketplace</p>
           </div>
         </div>
       </SidebarHeader>
