@@ -1,11 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,7 +23,6 @@ const resetPasswordSchema = z.object({
 const ResetPassword = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [searchParams] = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isValidSession, setIsValidSession] = useState(false);
 
@@ -39,15 +37,20 @@ const ResetPassword = () => {
   useEffect(() => {
     // Check if we have a valid session for password reset
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setIsValidSession(true);
-      } else {
-        toast({
-          title: "Invalid or expired link",
-          description: "Please request a new password reset link.",
-          variant: "destructive"
-        });
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          setIsValidSession(true);
+        } else {
+          toast({
+            title: "Invalid or expired link",
+            description: "Please request a new password reset link.",
+            variant: "destructive"
+          });
+          navigate('/auth');
+        }
+      } catch (error) {
+        console.error('Session check error:', error);
         navigate('/auth');
       }
     };
@@ -77,6 +80,7 @@ const ResetPassword = () => {
         navigate('/auth');
       }
     } catch (error) {
+      console.error('Password update error:', error);
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",

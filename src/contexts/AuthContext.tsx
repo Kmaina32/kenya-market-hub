@@ -36,16 +36,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error && error.code !== 'PGRST116') {
         console.error('Error checking admin status:', error);
-        setIsAdmin(false);
-        return;
+        return false;
       }
       
       const isUserAdmin = !!adminCheck;
       console.log('Admin status result:', isUserAdmin);
-      setIsAdmin(isUserAdmin);
+      return isUserAdmin;
     } catch (error) {
       console.error('Error checking admin status:', error);
-      setIsAdmin(false);
+      return false;
     }
   };
 
@@ -62,41 +61,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
         
         // Check admin status if user exists
-        if (session?.user) {
-          setTimeout(() => {
-            if (mounted) {
-              checkAdminStatus(session.user.id);
-            }
-          }, 0);
+        if (session?.user && mounted) {
+          const adminStatus = await checkAdminStatus(session.user.id);
+          if (mounted) {
+            setIsAdmin(adminStatus);
+          }
         } else {
           setIsAdmin(false);
         }
         
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!mounted) return;
-      
-      console.log('🔄 Initial session check:', session?.user?.email);
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      // Check admin status if user exists
-      if (session?.user) {
-        setTimeout(() => {
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
           if (mounted) {
-            checkAdminStatus(session.user.id);
+            setLoading(false);
           }
-        }, 0);
-      } else {
-        setIsAdmin(false);
+          return;
+        }
+        
+        if (!mounted) return;
+        
+        console.log('🔄 Initial session check:', session?.user?.email);
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        // Check admin status if user exists
+        if (session?.user && mounted) {
+          const adminStatus = await checkAdminStatus(session.user.id);
+          if (mounted) {
+            setIsAdmin(adminStatus);
+          }
+        } else {
+          setIsAdmin(false);
+        }
+        
+        if (mounted) {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+        if (mounted) {
+          setLoading(false);
+        }
       }
-      
-      setLoading(false);
-    });
+    };
+
+    initializeAuth();
 
     return () => {
       mounted = false;
