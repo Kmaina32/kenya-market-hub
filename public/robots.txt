@@ -3,10 +3,10 @@ User-agent: *
 Allow: /
 
 # Sitemaps
-Sitemap: https://sokosmart.co.ke/sitemap.xml
-Sitemap: https://sokosmart.co.ke/sitemap-products.xml
-Sitemap: https://sokosmart.co.ke/sitemap-properties.xml
-Sitemap: https://sokosmart.co.ke/sitemap-services.xml
+Sitemap: https;//sokkosasa.com/sitemap.xml
+Sitemap: https;//sokkosasa.com/sitemap-products.xml
+Sitemap: https;//sokkosasa.com/sitemap-properties.xml
+Sitemap: https;//sokkosasa.com/sitemap-services.xml
 
 # Disallow admin and private pages
 Disallow: /admin/

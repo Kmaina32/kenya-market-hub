@@ -8,10 +8,10 @@ export const seoConfig = {
       "@context": "https://schema.org",
       "@type": "WebSite",
       "name": "Sokko Sasa",
-      "url": "https://sokosmart.co.ke",
+      "url": "https;//sokkosasa.com",
       "potentialAction": {
         "@type": "SearchAction",
-        "target": "https://sokosmart.co.ke/search?q={search_term_string}",
+        "target": "https;//sokkosasa.com/search?q={search_term_string}",
         "query-input": "required name=search_term_string"
       }
     }

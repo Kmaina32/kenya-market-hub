@@ -1,9 +1,8 @@
-import React, { useState, lazy, Suspense } from 'react';
+import React, { useState, lazy, Suspense, useEffect } from 'react';
 import MainLayout from '@/components/MainLayout';
-import { MessageCircle, Users, Globe } from 'lucide-react';
+import { MessageCircle, Users, Globe, Wrench, ServerCrash } from 'lucide-react'; // Added Wrench and ServerCrash icons
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { Button } from '@/components/ui/button';
-// Added missing imports for Card components
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 
 // Define a simple interface for ChatInterface props to resolve the type error
@@ -14,7 +13,6 @@ interface ChatInterfaceProps {
 // Lazy load components for performance
 const ImprovedForumsList = lazy(() => import('@/components/chat/ImprovedForumsList'));
 const ChatInterface = lazy(() => import('@/components/chat/ChatInterface')) as React.LazyExoticComponent<React.FC<ChatInterfaceProps>>;
-
 
 // ---
 // Business Directory Data (consider moving to a global state or API)
@@ -47,7 +45,6 @@ interface BusinessCardProps {
 }
 
 const BusinessCard: React.FC<BusinessCardProps> = React.memo(({ business, onStartChat, onViewDetails }) => (
-  // Fixed: Card, CardContent, CardTitle are now imported
   <Card className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 hover:shadow-md transition-shadow duration-200 ease-in-out">
     <CardContent className="flex-1 min-w-0 mb-2 sm:mb-0 p-0">
       <div className="flex items-center gap-2 mb-1">
@@ -92,6 +89,53 @@ const BusinessCard: React.FC<BusinessCardProps> = React.memo(({ business, onStar
 // ChatForums Main Component
 // ---
 const ChatForums: React.FC = () => {
+  // --- Maintenance Mode Configuration ---
+  // Set this to `true` to activate maintenance mode and disable the page.
+  const [isUnderMaintenance, setIsUnderMaintenance] = useState(true); 
+  // In a real application, you might fetch this from an API or environment variable.
+  // Example: useEffect(() => { fetch('/api/maintenance-status').then(res => res.json()).then(data => setIsUnderMaintenance(data.maintenanceMode)); }, []);
+
+  // If under maintenance, display a simple message and nothing else from the component.
+  if (isUnderMaintenance) {
+    return (
+      <MainLayout>
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 text-gray-800 p-4 text-center">
+          {/* Maintenance Image */}
+          https://www.canva.com/design/DAGsXhL8NqQ/DksI22WloWvnN03ceu2roQ/edit?utm_content=DAGsXhL8NqQ&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton
+          
+          {/* Optional: Add a CSS animation for an icon if you don't have a GIF/Lottie */}
+          {/* You might define a custom keyframe animation in your CSS file (e.g., global.css)
+              @keyframes pulse-grow {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.1); }
+              }
+              .animate-pulse-grow {
+                animation: pulse-grow 2s infinite ease-in-out;
+              }
+          */}
+          <Wrench size={64} className="text-orange-500 mb-4 animate-bounce" />
+          {/* Or a ServerCrash icon */}
+          {/* <ServerCrash size={64} className="text-red-500 mb-4 animate-pulse-grow" /> */}
+
+          <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-3 drop-shadow-lg">
+            Under Maintenance
+          </h1>
+          <p className="text-lg md:text-xl text-gray-700 mb-6 max-w-2xl leading-relaxed">
+            We're currently performing essential updates to improve your experience. 
+            The Community Hub mini-app will be back online shortly. Thank you for your patience!
+          </p>
+          <Button 
+            onClick={() => window.location.reload()} 
+            className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-6 py-3 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105"
+          >
+            Refresh Page
+          </Button>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  // --- Normal component logic starts here if not under maintenance ---
   const [selectedTab, setSelectedTab] = useState<'forums' | 'chat' | 'directory'>('forums');
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -155,7 +199,6 @@ const ChatForums: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b border-gray-200">
             <div>
               <h1 className="text-3xl font-extrabold text-gray-900 mb-1">Messages & Community</h1> {/* Changed title */}
-              {/* Removed: <p className="text-md text-gray-600">Connect, chat, and discover in real-time.</p> */}
             </div>
             <div className="flex items-center gap-2 mt-4 sm:mt-0 bg-white p-2 rounded-lg shadow-sm">
               <div className={`w-3 h-3 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'} animate-pulse`} />
@@ -174,7 +217,6 @@ const ChatForums: React.FC = () => {
                 <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
                   <MessageCircle size={24} /> Community Forums
                 </h2>
-                {/* Removed: <p className="text-gray-600">Engage in discussions, ask questions, and share insights with the community.</p> */}
                 <ImprovedForumsList />
               </section>
             )}
@@ -184,7 +226,6 @@ const ChatForums: React.FC = () => {
                 <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
                   <Users size={24} /> Direct Chat
                 </h2>
-                {/* Removed: <p className="text-gray-600">Connect directly with other users or businesses.</p> */}
                 <ChatInterface selectedConversationId={selectedConversationId} />
               </section>
             )}
@@ -194,11 +235,10 @@ const ChatForums: React.FC = () => {
                 <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
                   <Globe size={24} /> Business Directory
                 </h2>
-                {/* Removed: <p className="text-gray-600">Description for Business Directory.</p> (Assuming there was one for consistency) */}
                 <input
                   type="text"
                   placeholder="Search businesses by name or category..."
-                  className="w-full p-2 border rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500" // <--- UPDATED
+                  className="w-full p-2 border rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   aria-label="Search business directory"

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -79,7 +78,20 @@ const Auth = () => {
 
   return (
     <MainLayout>
-      <div className="max-w-md mx-auto mt-8">
+      <div className="max-w-md mx-auto mt-8 p-4 sm:p-0"> {/* Added padding for small screens */}
+        {/* Logo container added here */}
+        <div className="flex flex-col items-center justify-center mb-6">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center shadow-lg overflow-hidden bg-white p-2">
+            <img
+              alt="Sokko Sasa Logo"
+              src="/LOGO/Sokko.svg" // Path to your logo
+              className="w-full h-full object-contain"
+            />
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-3">Sokko Sasa</h2>
+          <p className="text-sm text-gray-600 mt-1">Kenya's Smart Marketplace</p>
+        </div>
+        
         <Tabs defaultValue="signin" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="signin">Sign In</TabsTrigger>

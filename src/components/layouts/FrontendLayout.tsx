@@ -36,7 +36,7 @@ const FrontendLayout = ({ children }: FrontendLayoutProps) => {
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg overflow-hidden flex-shrink-0">
                   <img
                     alt="Sokko Sasa Logo"
-                    src="/lovable-uploads/563ee6fb-f94f-43f3-a4f3-a61873a1b491.png"
+                    src="/LOGO/Sokko.svg"
                     className="w-full h-full object-contain"
                   />
                 </div>
