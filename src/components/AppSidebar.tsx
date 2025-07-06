@@ -60,7 +60,7 @@ const AppSidebar = () => {
   const userItems = [
     { icon: Heart, label: 'Wishlist', path: '/wishlist' },
     { icon: User, label: 'Profile', path: '/profile' },
-    { icon: Settings, label: 'Service Hub', path: '/service-hub' }
+    
   ];
 
   return (

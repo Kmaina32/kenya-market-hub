@@ -127,7 +127,7 @@ const ChatForums: React.FC = () => {
           />
           
           <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-3 drop-shadow-lg">
-            Community Hub Under Maintenance
+            Chats & Forums  Under Maintenance
           </h1>
           <p className="text-lg md:text-xl text-gray-700 mb-6 max-w-2xl leading-relaxed">
             We're actively working to enhance our messaging and community features.
