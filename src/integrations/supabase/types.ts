@@ -33,6 +33,48 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_logs: {
+        Row: {
+          backup_name: string
+          backup_type: string
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          file_path: string | null
+          file_size: number | null
+          id: string
+          metadata: Json | null
+          status: string | null
+          tables_count: number | null
+        }
+        Insert: {
+          backup_name: string
+          backup_type: string
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          id?: string
+          metadata?: Json | null
+          status?: string | null
+          tables_count?: number | null
+        }
+        Update: {
+          backup_name?: string
+          backup_type?: string
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          id?: string
+          metadata?: Json | null
+          status?: string | null
+          tables_count?: number | null
+        }
+        Relationships: []
+      }
       cart_items: {
         Row: {
           created_at: string
@@ -2984,6 +3026,20 @@ export type Database = {
       increment_post_views: {
         Args: { post_id: string }
         Returns: undefined
+      }
+      list_backups: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          backup_name: string
+          backup_type: string
+          created_at: string
+          created_by: string
+          file_path: string
+          tables_count: number
+          status: string
+          file_size_mb: number
+        }[]
       }
       place_order_with_stock_update: {
         Args: {

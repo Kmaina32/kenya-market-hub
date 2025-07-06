@@ -15,6 +15,8 @@ interface OrderWithProfile {
   updated_at: string;
   coupon_id: string;
   discount_amount: number;
+  contact_email: string;
+  contact_phone: string;
   order_items: Array<{
     quantity: number;
     unit_price: number;
@@ -44,28 +46,14 @@ export const useAdminOrders = () => {
             unit_price,
             total_price,
             products(name, image_url)
-          )
+          ),
+          profiles(id, full_name, email)
         `)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
       
-      // Fetch user profiles separately to avoid relation issues
-      if (data && data.length > 0) {
-        const userIds = [...new Set(data.map(order => order.user_id))];
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, full_name, email')
-          .in('id', userIds);
-        
-        // Add profile data to orders
-        return data.map(order => ({
-          ...order,
-          profiles: profiles?.find(p => p.id === order.user_id) || null
-        })) as OrderWithProfile[];
-      }
-      
-      return data as OrderWithProfile[] || [];
+      return (data as OrderWithProfile[]) || [];
     }
   });
 };
