@@ -92,7 +92,10 @@ const Auth = () => {
               className="w-full h-full object-contain"
             />
           </div>
-          <h2 className="text-3xl font-bold text-white mt-3 drop-shadow-md">Sokko Sasa</h2>
+          <h2 className="text-4xl text-white mt-3 drop-shadow-md"> {/* font-bold removed from h2 */}
+           <span className="text-black">Sokko</span> {/* Sokko in black */}
+           <span className="text-orange-600"> Sasa</span> {/* Sasa in orange */}
+          </h2>
           <p className="text-sm text-gray-200 mt-1 drop-shadow-sm">Kenya's Smart Marketplace</p>
         </div>
 
