@@ -50,21 +50,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     let mounted = true;
+    let adminCheckPromise: Promise<boolean> | null = null;
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
         
         console.log('🔄 Auth state changed:', event, session?.user?.email);
+        
+        // Cancel any pending admin check
+        adminCheckPromise = null;
+        
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Check admin status if user exists
         if (session?.user && mounted) {
-          const adminStatus = await checkAdminStatus(session.user.id);
-          if (mounted) {
-            setIsAdmin(adminStatus);
+          adminCheckPromise = checkAdminStatus(session.user.id);
+          try {
+            const adminStatus = await adminCheckPromise;
+            if (mounted && adminCheckPromise) {
+              setIsAdmin(adminStatus);
+            }
+          } catch (error) {
+            console.error('Admin status check failed:', error);
+            if (mounted) {
+              setIsAdmin(false);
+            }
           }
         } else {
           setIsAdmin(false);
@@ -76,7 +87,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // Check for existing session
     const initializeAuth = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -95,11 +105,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Check admin status if user exists
         if (session?.user && mounted) {
-          const adminStatus = await checkAdminStatus(session.user.id);
-          if (mounted) {
-            setIsAdmin(adminStatus);
+          adminCheckPromise = checkAdminStatus(session.user.id);
+          try {
+            const adminStatus = await adminCheckPromise;
+            if (mounted && adminCheckPromise) {
+              setIsAdmin(adminStatus);
+            }
+          } catch (error) {
+            console.error('Initial admin status check failed:', error);
+            if (mounted) {
+              setIsAdmin(false);
+            }
           }
         } else {
           setIsAdmin(false);
@@ -120,6 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       mounted = false;
+      adminCheckPromise = null;
       subscription.unsubscribe();
     };
   }, []);

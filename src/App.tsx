@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -31,6 +32,7 @@ import Wishlist from "./pages/Wishlist";
 import NotFound from "./pages/NotFound";
 import EmailConfirmation from "./pages/EmailConfirmation";
 import ResetPassword from "./pages/ResetPassword";
+import TermsAndConditions from "./pages/TermsAndConditions";
 
 // Admin pages
 import AdminLogin from "./pages/AdminLogin";
@@ -57,8 +59,7 @@ import ServicesDashboard from "./pages/ServicesDashboard";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: (failureCount, error: unknown) => { // Type 'error' as unknown
-        // Safely check if error is an object and has a 'response' with a 'status'
+      retry: (failureCount, error: unknown) => {
         if (
           typeof error === 'object' &&
           error !== null &&
@@ -68,14 +69,13 @@ const queryClient = new QueryClient({
           'status' in (error as { response: { status: number } }).response
         ) {
           const status = (error as { response: { status: number } }).response.status;
-          // Don't retry on auth errors or 4xx errors
           if (status >= 400 && status < 500) {
             return false;
           }
         }
         return failureCount < 2;
       },
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 5 * 60 * 1000,
     },
   },
 });
@@ -117,6 +117,7 @@ function App() {
                     <Route path="/wishlist" element={<Wishlist />} />
                     <Route path="/email-confirmation" element={<EmailConfirmation />} />
                     <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
 
                     <Route path="/admin-login" element={<AdminLogin />} />
                     <Route path="/admin/*" element={<AdminApp />} />
