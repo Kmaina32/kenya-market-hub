@@ -1822,7 +1822,7 @@ export type Database = {
           description: string | null
           features: string[] | null
           id: string
-          images: string[] | null
+          images: Json | null
           is_featured: boolean | null
           listing_type: Database["public"]["Enums"]["listing_type"]
           location_address: string
@@ -1851,7 +1851,7 @@ export type Database = {
           description?: string | null
           features?: string[] | null
           id?: string
-          images?: string[] | null
+          images?: Json | null
           is_featured?: boolean | null
           listing_type: Database["public"]["Enums"]["listing_type"]
           location_address: string
@@ -1880,7 +1880,7 @@ export type Database = {
           description?: string | null
           features?: string[] | null
           id?: string
-          images?: string[] | null
+          images?: Json | null
           is_featured?: boolean | null
           listing_type?: Database["public"]["Enums"]["listing_type"]
           location_address?: string
@@ -3030,6 +3030,10 @@ export type Database = {
       }
       increment_post_views: {
         Args: { post_id: string }
+        Returns: undefined
+      }
+      increment_property_views: {
+        Args: { property_id_param: string }
         Returns: undefined
       }
       list_backups: {

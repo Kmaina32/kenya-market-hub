@@ -3,35 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-
-export interface ForumPost {
-  id: string;
-  title: string;
-  content: string;
-  author_id: string;
-  category_id: string;
-  created_at: string;
-  updated_at: string;
-  view_count: number;
-  like_count: number;
-  reply_count: number;
-  is_pinned: boolean;
-  is_locked: boolean;
-  author_profile?: {
-    full_name: string;
-    avatar_url?: string;
-  };
-  category?: {
-    name: string;
-  };
-}
-
-export interface UserSearchResult {
-  id: string;
-  full_name: string;
-  avatar_url?: string;
-  email: string;
-}
+import { ForumPost, ForumCategory, UserSearchResult } from '@/types/chat';
 
 // Get forum categories
 export const useForumCategories = () => {
@@ -44,7 +16,7 @@ export const useForumCategories = () => {
         .order('name');
 
       if (error) throw error;
-      return data || [];
+      return data as ForumCategory[] || [];
     },
   });
 };
@@ -61,7 +33,7 @@ export const useForumPosts = () => {
         .select(`
           *,
           author_profile:profiles!author_id(full_name, avatar_url),
-          category:forum_categories!category_id(name)
+          category:forum_categories!category_id(name, color)
         `)
         .order('created_at', { ascending: false });
 
@@ -78,9 +50,6 @@ export const useForumPosts = () => {
     },
   });
 };
-
-// Alias for backward compatibility
-export const useChatForums = useForumCategories;
 
 // Create a new forum post
 export const useCreateForumPost = () => {
@@ -157,3 +126,6 @@ export const useUserSearch = (searchTerm: string) => {
     enabled: !!searchTerm.trim(),
   });
 };
+
+// Alias for backward compatibility
+export const useChatForums = useForumCategories;

@@ -1,33 +1,31 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge'; // Keep Badge if used for online status etc.
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'; // Keep Dialog for the new chat *modal* if still triggered
-import { Send, Search, MessageCircle, Plus, User, Users, ArrowLeft } from 'lucide-react'; // Added ArrowLeft
-import { useConversations, useCreateConversation } from '@/hooks/useChat'; // Keep these if conversations are fetched here for current data
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Send, Search, MessageCircle, Plus, User, Users, ArrowLeft, Loader2 } from 'lucide-react';
+import { useConversations, useCreateConversation } from '@/hooks/useChat';
 import { useChatMessages, useSendMessage } from '@/hooks/useChatMessages';
-import { useUserSearch } from '@/hooks/useChatForums'; // Keep if used for new chat modal
+import { useUserSearch } from '@/hooks/useChatForums';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatDistanceToNow } from 'date-fns';
 
-// Define the interface for ChatInterface props (now receiving selectedConversationId)
 interface ChatInterfaceProps {
   selectedConversationId: string | null;
-  onBack?: () => void; // Optional prop for mobile back navigation
+  onBack?: () => void;
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedConversationId, onBack }) => {
   const [newMessage, setNewMessage] = useState('');
-  const [isNewChatOpen, setIsNewChatOpen] = useState(false); // Still needed if "Start New Chat" button is here
-  const [userSearchTerm, setUserSearchTerm] = useState(''); // Still needed for new chat modal search
+  const [isNewChatOpen, setIsNewChatOpen] = useState(false);
+  const [userSearchTerm, setUserSearchTerm] = useState('');
 
   const { user } = useAuth();
-  // Fetch all conversations to find data for selectedConversationId
   const { data: conversations, isLoading: conversationsLoading } = useConversations();
-  const { data: messages, isLoading: messagesLoading } = useChatMessages(selectedConversationId || ''); // Fetch messages for selected conversation
-  const { data: searchedUsers } = useUserSearch(userSearchTerm); // For searching users in new chat modal
+  const { data: messages, isLoading: messagesLoading } = useChatMessages(selectedConversationId || '');
+  const { data: searchedUsers } = useUserSearch(userSearchTerm);
   const sendMessage = useSendMessage();
   const createConversation = useCreateConversation();
 
@@ -38,16 +36,17 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedConversationId, o
      selectedConversationData.participant2 :
      selectedConversationData.participant1) : null;
 
-  const handleSendMessage = () => {
-    if (newMessage.trim() && selectedConversationId) {
-      sendMessage.mutate({
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !selectedConversationId) return;
+
+    try {
+      await sendMessage.mutateAsync({
         conversationId: selectedConversationId,
         content: newMessage
-      }, {
-        onSuccess: () => {
-          setNewMessage('');
-        }
       });
+      setNewMessage('');
+    } catch (error) {
+      console.error('Failed to send message:', error);
     }
   };
 
@@ -60,11 +59,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedConversationId, o
 
   const handleStartNewChat = async (targetUserId: string) => {
     try {
-      const result = await createConversation.mutateAsync(targetUserId);
-      // After creating a new chat, update the selected conversation in the parent component
-      // This assumes ChatForums will handle switching selectedConversationId
-      // For now, let's just close the modal and rely on parent to update.
-      // In a real app, you might want to call setSelectedConversationId(result.id) here if this component controls it.
+      await createConversation.mutateAsync(targetUserId);
       setIsNewChatOpen(false);
       setUserSearchTerm('');
     } catch (error) {
@@ -73,20 +68,19 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedConversationId, o
   };
 
   return (
-    // This div now only manages the layout of the chat interface itself (header, messages, input)
     <Card className="h-full flex flex-col shadow-lg border-0 rounded-lg overflow-hidden">
       {selectedConversationId && selectedConversationData ? (
         <>
           {/* Chat Header */}
           <CardHeader className="flex flex-row items-center justify-between p-4 border-b bg-gradient-to-r from-orange-500 to-red-600 text-white">
             <div className="flex items-center gap-3">
-              {onBack && ( // Show back button on mobile
+              {onBack && (
                 <Button variant="ghost" size="icon" onClick={onBack} className="md:hidden text-white hover:bg-white/20">
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
               )}
               <Avatar className="h-10 w-10">
-                <AvatarImage src={otherParticipant?.avatar_url || '/placeholder-avatar.png'} /> {/* Placeholder image */}
+                <AvatarImage src={otherParticipant?.avatar_url} />
                 <AvatarFallback className="bg-white text-orange-600">
                   <User className="h-5 w-5" />
                 </AvatarFallback>
@@ -95,16 +89,18 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedConversationId, o
                 <CardTitle className="text-lg text-white">
                   {otherParticipant?.full_name || 'Chat'}
                 </CardTitle>
-                <p className="text-sm text-orange-100">Online</p> {/* Dynamic online status might be needed */}
+                <p className="text-sm text-orange-100">Online</p>
               </div>
             </div>
-            {/* You can add more actions here (e.g., call, video call, info) */}
           </CardHeader>
 
           {/* Chat Messages Area */}
-          <CardContent className="flex-1 p-4 overflow-y-auto space-y-4 bg-gray-50"> {/* Light background for messages */}
+          <CardContent className="flex-1 p-4 overflow-y-auto space-y-4 bg-gray-50">
             {messagesLoading ? (
-              <div className="text-center text-gray-500">Loading messages...</div>
+              <div className="flex justify-center items-center h-32">
+                <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
+                <span className="ml-2 text-gray-500">Loading messages...</span>
+              </div>
             ) : messages?.length === 0 ? (
               <div className="text-center text-gray-500 py-8">
                 <MessageCircle className="h-12 w-12 mx-auto mb-4 text-gray-400" />
@@ -139,14 +135,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedConversationId, o
           </CardContent>
 
           {/* Message Input Area */}
-          <div className="p-4 border-t bg-white"> {/* White background for input area */}
+          <div className="p-4 border-t bg-white">
             <div className="flex gap-2">
               <Input
                 placeholder="Type a message..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="flex-1 border-gray-200 focus:ring-orange-500 focus:border-orange-500" // Consistent focus styles
+                className="flex-1 border-gray-200 focus:ring-orange-500 focus:border-orange-500"
               />
               <Button
                 onClick={handleSendMessage}
@@ -154,7 +150,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedConversationId, o
                 className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-4 shadow-md"
                 disabled={sendMessage.isPending || !newMessage.trim()}
               >
-                <Send className="h-4 w-4" />
+                {sendMessage.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </div>
@@ -166,12 +166,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedConversationId, o
             <MessageCircle className="h-16 w-16 mx-auto mb-4 text-gray-400" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">Select a conversation</h3>
             <p className="text-gray-600 mb-4">Choose a conversation from the left to start chatting</p>
-            {/* New Chat Modal (only shown when no chat is selected) */}
+            
             <Dialog open={isNewChatOpen} onOpenChange={setIsNewChatOpen}>
               <DialogTrigger asChild>
-                <Button
-                  className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white shadow-md"
-                >
+                <Button className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white shadow-md">
                   <Plus className="h-4 w-4 mr-2" />
                   Start New Chat
                 </Button>
@@ -187,7 +185,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedConversationId, o
                       placeholder="Search users..."
                       value={userSearchTerm}
                       onChange={(e) => setUserSearchTerm(e.target.value)}
-                      className="pl-10 focus:ring-orange-500 focus:border-orange-500" // Consistent focus styles
+                      className="pl-10 focus:ring-orange-500 focus:border-orange-500"
                     />
                   </div>
 
@@ -199,7 +197,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedConversationId, o
                         className="flex items-center gap-3 p-3 rounded-lg hover:bg-orange-50 cursor-pointer transition-colors"
                       >
                         <Avatar className="h-8 w-8 border border-gray-200">
-                          <AvatarImage src={searchUser.avatar_url || '/placeholder-avatar.png'} />
+                          <AvatarImage src={searchUser.avatar_url} />
                           <AvatarFallback className="bg-gray-200 text-gray-700">
                             <User className="h-4 w-4" />
                           </AvatarFallback>

@@ -3,28 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-
-export interface ForumPost {
-  id: string;
-  title: string;
-  content: string;
-  category_id: string;
-  author_id: string;
-  like_count: number;
-  reply_count: number;
-  view_count: number;
-  created_at: string;
-  updated_at: string;
-  has_liked?: boolean;
-  author_profile?: {
-    full_name: string;
-    avatar_url?: string;
-  };
-  category?: {
-    name: string;
-    color?: string;
-  };
-}
+import { ForumPost } from '@/types/chat';
 
 export const useForumPosts = (categoryId?: string) => {
   const { user } = useAuth();

@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCreateForumPost, useForumCategories } from '@/hooks/useChatForums';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
 
 interface CreatePostModalProps {
   isOpen: boolean;
@@ -23,21 +23,27 @@ const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
   const { data: categories } = useForumCategories();
   const createPost = useCreateForumPost();
 
-  const handleSubmit = () => {
-    if (title.trim() && content.trim() && categoryId && user) {
-      createPost.mutate({
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!title.trim() || !content.trim() || !categoryId || !user) {
+      return;
+    }
+
+    try {
+      await createPost.mutateAsync({
         title,
         content,
         category_id: categoryId,
         author_id: user.id
-      }, {
-        onSuccess: () => {
-          setTitle('');
-          setContent('');
-          setCategoryId('');
-          onClose();
-        }
       });
+      
+      setTitle('');
+      setContent('');
+      setCategoryId('');
+      onClose();
+    } catch (error) {
+      console.error('Failed to create post:', error);
     }
   };
 
@@ -53,7 +59,8 @@ const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
             Share your thoughts and start a discussion with the community.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-2">Category</label>
             <Select value={categoryId} onValueChange={setCategoryId}>
@@ -62,7 +69,7 @@ const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
               </SelectTrigger>
               <SelectContent>
                 {categories?.map((category) => (
-                  <SelectItem key={category.id} value={category.id || `category-${category.name}`}>
+                  <SelectItem key={category.id} value={category.id}>
                     {category.name}
                   </SelectItem>
                 ))}
@@ -76,6 +83,7 @@ const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
               placeholder="Enter post title..."
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              required
             />
           </div>
           
@@ -86,22 +94,30 @@ const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={6}
+              required
             />
           </div>
           
           <div className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
             <Button 
-              onClick={handleSubmit}
+              type="submit"
               disabled={!title.trim() || !content.trim() || !categoryId || !user || createPost.isPending}
               className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white"
             >
-              {createPost.isPending ? 'Creating...' : 'Create Post'}
+              {createPost.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'Create Post'
+              )}
             </Button>
           </div>
-        </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

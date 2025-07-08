@@ -3,18 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-
-export interface ChatMessage {
-  id: string;
-  conversation_id: string;
-  sender_id: string;
-  content: string;
-  message_type?: string;
-  created_at: string;
-  edited_at?: string;
-  is_read: boolean;
-  reply_to_message_id?: string;
-}
+import { ChatMessage } from '@/types/chat';
 
 export const useChatMessages = (conversationId: string) => {
   return useQuery({
