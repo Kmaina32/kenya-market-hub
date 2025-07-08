@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -8,13 +7,12 @@ import { User, LogOut, Settings, Menu, UserPlus, LogIn, Home, Shield } from 'luc
 import { Link, useNavigate } from 'react-router-dom';
 
 const UserNav = () => {
-  let user, signOut, isAdmin;
+  let user, signOut;
   
   try {
     const auth = useAuth();
     user = auth.user;
     signOut = auth.signOut;
-    isAdmin = auth.isAdmin;
   } catch (error) {
     // If auth context is not available, show guest menu
     return (
@@ -120,9 +118,9 @@ const UserNav = () => {
           </Link>
         </DropdownMenuItem>
         {/* Admin panel access for authorized users */}
-        {isAdmin && (
+        {(user.email === 'gmaina424@gmail.com' || user.user_metadata?.role === 'admin') && (
           <DropdownMenuItem asChild className="hover:bg-gradient-to-r hover:from-orange-50 hover:to-red-50">
-            <Link to="/admin/dashboard" className="flex items-center">
+            <Link to="/admin" className="flex items-center">
               <Shield className="mr-2 h-4 w-4" />
               Admin Panel
             </Link>
