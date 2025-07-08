@@ -1,353 +1,331 @@
-
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import MainLayout from '@/components/MainLayout';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-
-const signInSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters')
-});
-
-const signUpSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  fullName: z.string().min(2, 'Full name must be at least 2 characters'),
-  termsAccepted: z.boolean().refine((val) => val === true, {
-    message: 'You must accept the Terms and Conditions'
-  })
-});
-
-const forgotPasswordSchema = z.object({
-  email: z.string().email('Invalid email address')
-});
+import { useAuth } from '@/contexts/AuthContext';
+import { Eye, EyeOff, ArrowLeft, Mail, Lock, User, Loader2 } from 'lucide-react';
 
 const Auth = () => {
-  const { user, signIn, signUp, loading } = useAuth();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  const signInForm = useForm<z.infer<typeof signInSchema>>({
-    resolver: zodResolver(signInSchema),
-    defaultValues: { email: '', password: '' }
-  });
+  const { signIn, signUp, resetPassword, user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const signUpForm = useForm<z.infer<typeof signUpSchema>>({
-    resolver: zodResolver(signUpSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-      fullName: '',
-      termsAccepted: false
-    }
-  });
-
-  const forgotPasswordForm = useForm<z.infer<typeof forgotPasswordSchema>>({
-    resolver: zodResolver(forgotPasswordSchema),
-    defaultValues: { email: '' }
-  });
+  const from = location.state?.from?.pathname || '/';
 
   useEffect(() => {
-    if (user && !loading) {
-      navigate('/');
+    if (user) {
+      navigate(from, { replace: true });
     }
-  }, [user, loading, navigate]);
+  }, [user, navigate, from]);
 
-  const onSignIn = async (values: z.infer<typeof signInSchema>) => {
-    setIsSubmitting(true);
-    try {
-      const { error } = await signIn(values.email, values.password);
-      if (!error) {
-        navigate('/');
-      }
-    } catch (error) {
-      console.error('Sign in error:', error);
-    } finally {
-      setIsSubmitting(false);
+  const validateForm = () => {
+    const newErrors: { [key: string]: string } = {};
+
+    if (!email) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = 'Email is invalid';
     }
+
+    if (!showForgotPassword) {
+      if (!password) {
+        newErrors.password = 'Password is required';
+      } else if (password.length < 6) {
+        newErrors.password = 'Password must be at least 6 characters';
+      }
+
+      if (!isLogin) {
+        if (!fullName.trim()) {
+          newErrors.fullName = 'Full name is required';
+        }
+        if (!acceptTerms) {
+          newErrors.terms = 'You must accept the terms and conditions';
+        }
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  const onSignUp = async (values: z.infer<typeof signUpSchema>) => {
-    setIsSubmitting(true);
-    try {
-      const { error } = await signUp(values.email, values.password, values.fullName);
-      if (!error) {
-        toast({
-          title: "Account created successfully!",
-          description: "Please check your email for verification link.",
-        });
-      }
-    } catch (error) {
-      console.error('Sign up error:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) return;
 
-  const onForgotPassword = async (values: z.infer<typeof forgotPasswordSchema>) => {
-    setIsSubmitting(true);
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
-        redirectTo: `${window.location.origin}/reset-password`
-      });
+    setLoading(true);
 
-      if (error) {
-        toast({
-          title: "Error",
-          description: error.message,
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Password reset email sent",
-          description: "Please check your email for password reset instructions.",
-        });
+    try {
+      if (showForgotPassword) {
+        await resetPassword(email);
         setShowForgotPassword(false);
+        setEmail('');
+      } else if (isLogin) {
+        const { error } = await signIn(email, password);
+        if (!error) {
+          navigate(from, { replace: true });
+        }
+      } else {
+        const { error } = await signUp(email, password, fullName);
+        if (!error) {
+          // Keep user on auth page to show success message
+          setEmail('');
+          setPassword('');
+          setFullName('');
+          setAcceptTerms(false);
+        }
       }
     } catch (error) {
-      console.error('Password reset error:', error);
+      console.error('Auth error:', error);
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <MainLayout>
-        <div className="flex items-center justify-center min-h-96">
-          <div className="text-center">Loading...</div>
-        </div>
-      </MainLayout>
-    );
-  }
+  const handleModeToggle = () => {
+    setIsLogin(!isLogin);
+    setShowForgotPassword(false);
+    setErrors({});
+    setPassword('');
+    if (isLogin) {
+      setFullName('');
+      setAcceptTerms(false);
+    }
+  };
 
   return (
-    <MainLayout>
-      <div
-        className="relative min-h-screen flex flex-col items-center justify-center bg-cover bg-center bg-fixed"
-        style={{ backgroundImage: `url('/LOGO/h.svg')` }}
-      >
-        <div className="absolute inset-0 bg-black opacity-50"></div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-red-50 to-orange-100 p-4">
+      <div className="w-full max-w-md">
+        <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
+          <CardHeader className="space-y-4 text-center">
+            <div className="flex items-center justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-r from-orange-500 to-red-500 flex items-center justify-center shadow-lg">
+                <img
+                  alt="Sokko Sasa Logo"
+                  src="/LOGO/Sokko.svg"
+                  className="w-10 h-10 object-contain"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    target.parentElement!.innerHTML = `
+                      <span class="text-white font-bold text-xl">SS</span>
+                    `;
+                  }}
+                />
+              </div>
+            </div>
+            <div>
+              <CardTitle className="text-2xl font-bold">
+                <span className="text-gray-900">Sokko</span>{' '}
+                <span className="text-orange-600">Sasa</span>
+              </CardTitle>
+              <CardDescription className="text-gray-600 mt-2">
+                {showForgotPassword 
+                  ? 'Reset your password'
+                  : isLogin 
+                    ? 'Welcome back to Kenya\'s Smart Marketplace' 
+                    : 'Join Kenya\'s Smart Marketplace'
+                }
+              </CardDescription>
+            </div>
+          </CardHeader>
 
-        {/* Logo */}
-        <div className="relative z-10 text-center mb-6">
-          <div className="w-24 h-24 mx-auto rounded-full flex items-center justify-center shadow-lg overflow-hidden bg-white p-2">
-            <img
-              alt="Sokko Sasa Logo"
-              src="/LOGO/Sokko.svg"
-              className="w-full h-full object-contain"
-            />
-          </div>
-          <h2 className="text-4xl text-white mt-3 drop-shadow-md">
-           <span className="text-black">Sokko</span>
-           <span className="text-orange-600"> Sasa</span>
-          </h2>
-          <p className="text-sm text-gray-200 mt-1 drop-shadow-sm">Kenya's Smart Marketplace</p>
-        </div>
+          <CardContent className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Email Field */}
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                  Email Address
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className={`pl-10 ${errors.email ? 'border-red-500' : 'border-gray-200'} focus:border-orange-500 focus:ring-orange-500`}
+                  />
+                </div>
+                {errors.email && <p className="text-red-500 text-xs">{errors.email}</p>}
+              </div>
 
-        {/* Auth Container */}
-        <div className="relative z-10 max-w-[95%] sm:max-w-md w-full mx-auto px-4 pb-6 pt-6 sm:px-8 sm:pb-8 sm:pt-8 bg-white/90 rounded-lg shadow-lg backdrop-blur-md">
-          {showForgotPassword ? (
-            <Card className="w-full shadow-none">
-              <CardHeader>
-                <CardTitle>Reset Password</CardTitle>
-                <CardDescription>Enter your email to receive reset instructions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Form {...forgotPasswordForm}>
-                  <form onSubmit={forgotPasswordForm.handleSubmit(onForgotPassword)} className="space-y-6">
-                    <FormField
-                      control={forgotPasswordForm.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter your email" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+              {/* Full Name Field (Sign Up Only) */}
+              {!isLogin && !showForgotPassword && (
+                <div className="space-y-2">
+                  <Label htmlFor="fullName" className="text-sm font-medium text-gray-700">
+                    Full Name
+                  </Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="fullName"
+                      type="text"
+                      placeholder="Enter your full name"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className={`pl-10 ${errors.fullName ? 'border-red-500' : 'border-gray-200'} focus:border-orange-500 focus:ring-orange-500`}
                     />
-                    <div className="flex space-x-2">
-                      <Button type="submit" className="flex-1" disabled={isSubmitting}>
-                        {isSubmitting ? 'Sending...' : 'Send Reset Email'}
-                      </Button>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        onClick={() => setShowForgotPassword(false)}
-                        disabled={isSubmitting}
+                  </div>
+                  {errors.fullName && <p className="text-red-500 text-xs">{errors.fullName}</p>}
+                </div>
+              )}
+
+              {/* Password Field */}
+              {!showForgotPassword && (
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                    Password
+                  </Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className={`pl-10 pr-10 ${errors.password ? 'border-red-500' : 'border-gray-200'} focus:border-orange-500 focus:ring-orange-500`}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-gray-100"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                  {errors.password && <p className="text-red-500 text-xs">{errors.password}</p>}
+                </div>
+              )}
+
+              {/* Terms and Conditions (Sign Up Only) */}
+              {!isLogin && !showForgotPassword && (
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="terms"
+                      checked={acceptTerms}
+                      onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
+                    />
+                    <Label htmlFor="terms" className="text-sm text-gray-600">
+                      I agree to the{' '}
+                      <Link 
+                        to="/terms-and-conditions" 
+                        className="text-orange-600 hover:text-orange-700 underline"
+                        target="_blank"
                       >
-                        Back
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
-              </CardContent>
-            </Card>
-          ) : (
-            <Tabs defaultValue="signin" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-4">
-                <TabsTrigger value="signin">Sign In</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
-              </TabsList>
+                        Terms and Conditions
+                      </Link>
+                    </Label>
+                  </div>
+                  {errors.terms && <p className="text-red-500 text-xs">{errors.terms}</p>}
+                </div>
+              )}
 
-              {/* Sign In */}
-              <TabsContent value="signin">
-                <Card className="w-full shadow-none">
-                  <CardHeader>
-                    <CardTitle>Sign In</CardTitle>
-                    <CardDescription>Welcome back to Sokko Sasa</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Form {...signInForm}>
-                      <form onSubmit={signInForm.handleSubmit(onSignIn)} className="space-y-6">
-                        <FormField
-                          control={signInForm.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Email</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Enter your email" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={signInForm.control}
-                          name="password"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Password</FormLabel>
-                              <FormControl>
-                                <Input type="password" placeholder="Enter your password" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <Button
-                          type="button"
-                          variant="link"
-                          className="w-auto p-0 h-auto text-sm text-orange-600 hover:text-orange-700 justify-end ml-auto block"
-                          onClick={() => setShowForgotPassword(true)}
-                        >
-                          Forgot Password?
-                        </Button>
-                        <Button type="submit" className="w-full mt-2" disabled={isSubmitting}>
-                          {isSubmitting ? 'Signing in...' : 'Sign In'}
-                        </Button>
-                      </form>
-                    </Form>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-medium py-2.5 transition-all duration-200 shadow-md hover:shadow-lg"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {showForgotPassword ? 'Sending...' : isLogin ? 'Signing In...' : 'Creating Account...'}
+                  </>
+                ) : (
+                  showForgotPassword ? 'Send Reset Link' : isLogin ? 'Sign In' : 'Create Account'
+                )}
+              </Button>
+            </form>
 
-              {/* Sign Up */}
-              <TabsContent value="signup">
-                <Card className="w-full shadow-none">
-                  <CardHeader>
-                    <CardTitle>Sign Up</CardTitle>
-                    <CardDescription>Create your Sokko Sasa account</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Form {...signUpForm}>
-                      <form onSubmit={signUpForm.handleSubmit(onSignUp)} className="space-y-6">
-                        <FormField
-                          control={signUpForm.control}
-                          name="fullName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Full Name</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Enter your full name" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={signUpForm.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Email</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Enter your email" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={signUpForm.control}
-                          name="password"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Password</FormLabel>
-                              <FormControl>
-                                <Input type="password" placeholder="Choose a password" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={signUpForm.control}
-                          name="termsAccepted"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 rounded-md border p-4 shadow-sm">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                              <div className="space-y-1 leading-none">
-                                <FormLabel>
-                                  I accept the{' '}
-                                  <button
-                                    type="button"
-                                    onClick={() => navigate('/terms-and-conditions')}
-                                    className="text-blue-600 hover:underline"
-                                  >
-                                    Terms and Conditions
-                                  </button>
-                                </FormLabel>
-                                <FormMessage />
-                              </div>
-                            </FormItem>
-                          )}
-                        />
-                        <Button type="submit" className="w-full mt-2" disabled={isSubmitting}>
-                          {isSubmitting ? 'Creating account...' : 'Sign Up'}
-                        </Button>
-                      </form>
-                    </Form>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          )}
-        </div>
+            {/* Forgot Password Link */}
+            {isLogin && !showForgotPassword && (
+              <div className="text-center">
+                <Button
+                  type="button"
+                  variant="link"
+                  className="text-orange-600 hover:text-orange-700"
+                  onClick={() => setShowForgotPassword(true)}
+                >
+                  Forgot your password?
+                </Button>
+              </div>
+            )}
+
+            {/* Back to Sign In */}
+            {showForgotPassword && (
+              <div className="text-center">
+                <Button
+                  type="button"
+                  variant="link"
+                  className="text-orange-600 hover:text-orange-700"
+                  onClick={() => {
+                    setShowForgotPassword(false);
+                    setErrors({});
+                  }}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Sign In
+                </Button>
+              </div>
+            )}
+
+            {/* Toggle Between Sign In/Sign Up */}
+            {!showForgotPassword && (
+              <>
+                <Separator className="bg-gray-200" />
+                <div className="text-center">
+                  <p className="text-sm text-gray-600">
+                    {isLogin ? "Don't have an account?" : "Already have an account?"}
+                  </p>
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="text-orange-600 hover:text-orange-700 font-medium"
+                    onClick={handleModeToggle}
+                  >
+                    {isLogin ? 'Create Account' : 'Sign In'}
+                  </Button>
+                </div>
+              </>
+            )}
+
+            {/* Back to Home */}
+            <div className="text-center pt-4 border-t border-gray-100">
+              <Button
+                variant="ghost"
+                asChild
+                className="text-gray-600 hover:text-gray-800"
+              >
+                <Link to="/">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Home
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-    </MainLayout>
+    </div>
   );
 };
 

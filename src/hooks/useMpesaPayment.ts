@@ -27,8 +27,6 @@ export const useMpesaPayment = () => {
     // Handle different formats
     if (cleaned.startsWith('0')) {
       cleaned = '254' + cleaned.substring(1);
-    } else if (cleaned.startsWith('254')) {
-      // Already in correct format
     } else if (cleaned.startsWith('+254')) {
       cleaned = cleaned.substring(1);
     } else if (cleaned.length === 9) {
@@ -39,29 +37,42 @@ export const useMpesaPayment = () => {
     return cleaned;
   };
 
+  const validatePhoneNumber = (phone: string): boolean => {
+    const formatted = formatPhoneNumber(phone);
+    // Kenyan phone numbers should be 12 digits starting with 254
+    return formatted.startsWith('254') && formatted.length === 12;
+  };
+
   const initiatePayment = async ({ phoneNumber, amount, orderId }: MpesaPaymentParams): Promise<MpesaPaymentResult> => {
     setIsProcessing(true);
     
     try {
-      // Format phone number
-      const formattedPhone = formatPhoneNumber(phoneNumber);
-      
       // Validate phone number
-      if (!formattedPhone.startsWith('254') || formattedPhone.length !== 12) {
+      if (!validatePhoneNumber(phoneNumber)) {
         throw new Error('Invalid phone number format. Please use format: 0712345678 or 254712345678');
       }
 
+      // Format phone number
+      const formattedPhone = formatPhoneNumber(phoneNumber);
+      
       // Validate amount
       if (amount < 1) {
         throw new Error('Amount must be at least KSh 1');
       }
 
-      console.log('Initiating M-Pesa payment:', { formattedPhone, amount, orderId });
+      // Round amount to avoid decimal issues
+      const roundedAmount = Math.round(amount);
+
+      console.log('Initiating M-Pesa payment:', { 
+        phone: formattedPhone, 
+        amount: roundedAmount, 
+        orderId 
+      });
 
       const { data, error } = await supabase.functions.invoke('mpesa-payment', {
         body: {
           phoneNumber: formattedPhone,
-          amount: Math.round(amount), // Ensure amount is an integer
+          amount: roundedAmount,
           orderId: orderId
         }
       });
@@ -77,6 +88,7 @@ export const useMpesaPayment = () => {
         toast({
           title: "Payment Request Sent",
           description: "Please check your phone and enter your M-Pesa PIN to complete the payment.",
+          duration: 5000,
         });
 
         return {
@@ -85,7 +97,7 @@ export const useMpesaPayment = () => {
           merchantRequestId: data.merchantRequestId
         };
       } else {
-        const errorMessage = data?.error || 'Payment failed';
+        const errorMessage = data?.error || data?.message || 'Payment failed';
         console.error('M-Pesa payment failed:', errorMessage);
         throw new Error(errorMessage);
       }
@@ -101,7 +113,8 @@ export const useMpesaPayment = () => {
       toast({
         title: "Payment Failed",
         description: errorMessage,
-        variant: "destructive"
+        variant: "destructive",
+        duration: 5000,
       });
 
       return {
@@ -119,29 +132,37 @@ export const useMpesaPayment = () => {
       
       const { data, error } = await supabase
         .from('transactions')
-        .select('status, payment_data')
+        .select('status, payment_data, updated_at')
         .eq('transaction_id', checkoutRequestId)
         .single();
 
-      if (error) {
+      if (error && error.code !== 'PGRST116') {
         console.error('Error checking payment status:', error);
-        return { status: 'unknown' };
+        return { status: 'unknown', error: error.message };
+      }
+
+      if (!data) {
+        console.log('No transaction found for:', checkoutRequestId);
+        return { status: 'pending' };
       }
 
       console.log('Payment status:', data);
       return { 
         status: data.status,
-        paymentData: data.payment_data 
+        paymentData: data.payment_data,
+        lastUpdated: data.updated_at
       };
     } catch (error) {
       console.error('Payment status check failed:', error);
-      return { status: 'unknown' };
+      return { status: 'unknown', error: 'Failed to check payment status' };
     }
   };
 
   return {
     initiatePayment,
     checkPaymentStatus,
-    isProcessing
+    isProcessing,
+    formatPhoneNumber,
+    validatePhoneNumber
   };
 };

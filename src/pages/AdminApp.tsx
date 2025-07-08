@@ -1,9 +1,8 @@
 
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import ModernAdminLayout from '@/components/admin/ModernAdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
 import ProtectedAdminRoute from '@/components/ProtectedAdminRoute';
 import AdminModernDashboard from '@/pages/admin/AdminModernDashboard';
 
@@ -52,7 +51,8 @@ const AdminApp = () => {
     <ProtectedAdminRoute>
       <ModernAdminLayout>
         <Routes>
-          <Route index element={<Navigate to="/admin/dashboard" replace />} />
+          {/* Default route redirects to dashboard */}
+          <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<AdminModernDashboard />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="products" element={<AdminProducts />} />
@@ -75,7 +75,8 @@ const AdminApp = () => {
           <Route path="reports" element={<AdminReports />} />
           <Route path="notifications" element={<AdminNotifications />} />
           <Route path="settings" element={<AdminSettings />} />
-          <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+          {/* Catch all other routes and redirect to dashboard */}
+          <Route path="*" element={<Navigate to="dashboard" replace />} />
         </Routes>
       </ModernAdminLayout>
     </ProtectedAdminRoute>
