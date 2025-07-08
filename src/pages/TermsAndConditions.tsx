@@ -139,8 +139,8 @@ const TermsAndConditions = () => {
               <div className="bg-gray-50 p-4 rounded-lg mt-2">
                 <p className="text-gray-700">
                   <strong>Sokko Sasa</strong><br />
-                  Email: info@sokkosasa.com<br />
-                  Phone: +254 707 590 734<br />
+                  Email: legal@sokkosasa.com<br />
+                  Phone: +254 700 000 000<br />
                   Address: Nairobi, Kenya
                 </p>
               </div>
