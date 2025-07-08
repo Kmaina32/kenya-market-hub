@@ -52,7 +52,7 @@ const AdminApp = () => {
     <ProtectedAdminRoute>
       <ModernAdminLayout>
         <Routes>
-          <Route index element={<Navigate to="/admin/dashboard" replace />} />
+          <Route index element={<AdminModernDashboard />} />
           <Route path="dashboard" element={<AdminModernDashboard />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="products" element={<AdminProducts />} />
