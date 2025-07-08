@@ -1,383 +1,576 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
-  ShoppingBag, 
-  Building, 
-  Car, 
-  Wrench, 
-  Stethoscope, 
-  Shield, 
-  UtensilsCrossed, 
-  Calendar, 
-  Briefcase, 
-  MessageCircle,
-  ArrowRight,
-  ChevronLeft,
-  ChevronRight,
-  Play,
-  Pause
-} from 'lucide-react';
+import { Car, MapPin, Navigation, Clock, Star, Phone, User, Wallet, Locate } from 'lucide-react';
 import FrontendLayout from '@/components/layouts/FrontendLayout';
-import Footer from '@/components/Footer';
-import { useNavigate } from 'react-router-dom';
-import { useHomeStats } from '@/hooks/useHomeStats';
-import LoadingSpinner from '@/components/LoadingSpinner';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
-const Index = () => {
-  const navigate = useNavigate();
-  const { data: stats, isLoading: statsLoading } = useHomeStats();
+import { geocodeAddress, getRouteDetails, loadGoogleMapsScript } from '@/integrations/googlemaps/googleMapsLoader';
+import MapBox from '@/components/MapBox';
+import SEOManager from '@/components/seo/SEOManager';
 
-  // Slideshow state
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
+interface Driver {
+  id: string;
+  user_id: string;
+  vehicle_make?: string;
+  vehicle_model?: string;
+  vehicle_year?: number;
+  license_plate: string;
+  vehicle_type: 'taxi' | 'motorbike';
+  rating?: number;
+  total_rides?: number;
+  status: 'available' | 'on_trip' | 'offline';
+  phone_number: string;
+  is_active: boolean;
+  is_verified: boolean;
+  created_at?: string;
+  updated_at?: string;
+  eta_minutes?: number;
+}
 
-  const heroSlides = [
-    {
-      id: 1,
-      title: "Kenya's Complete Digital Marketplace",
-      subtitle: "Everything you need in one place",
-      description: "From shopping to services, we connect you to the best Kenya has to offer",
-      image: "photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80",
-      cta: "Start Shopping",
-      ctaAction: () => navigate('/shop')
+interface VehicleType {
+  id: 'taxi' | 'motorbike';
+  name: string;
+  icon: React.ComponentType<any>;
+  pricePerKm: number;
+  description: string;
+}
+
+const VEHICLE_TYPES: VehicleType[] = [
+  { id: 'taxi', name: 'Taxi/Car', icon: Car, pricePerKm: 80, description: '4 seats, Air conditioning, Comfortable ride' },
+  { id: 'motorbike', name: 'Boda Boda', icon: ({ className, size }) => (
+    <svg className={className} width={size || 24} height={size || 24} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 4l1.5 3h4l-1 2h-2.5l2 4h3v2h-3.5l-2-4H9.5l-2 4H4v-2h3l2-4H6.5l-1-2h4L12 4z"/>
+      <circle cx="6" cy="17" r="2"/>
+      <circle cx="18" cy="17" r="2"/>
+      <path d="M8 17h8"/>
+    </svg>
+  ), pricePerKm: 50, description: 'Quick & affordable, Navigate traffic easily' }
+];
+
+const Rides: React.FC = () => {
+  const [pickup, setPickup] = useState('');
+  const [destination, setDestination] = useState('');
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+
+  const [pickupLocation, setPickupLocation] = useState<{ name: string; lat: number; lng: number } | null>(null);
+  const [destinationLocation, setDestinationLocation] = useState<{ name: string; lat: number; lng: number } | null>(null);
+  const [routePath, setRoutePath] = useState<google.maps.LatLng[] | null>(null);
+
+  const [selectedVehicleType, setSelectedVehicleType] = useState<VehicleType['id']>('taxi');
+  const [estimatedFare, setEstimatedFare] = useState<number | null>(null);
+  const [tripDetails, setTripDetails] = useState<{ distance: number; eta: number; } | null>(null);
+  const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
+
+  const { data: drivers, isLoading, refetch, isRefetching } = useQuery<Driver[]>({
+    queryKey: ['available-drivers', selectedVehicleType],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('drivers')
+        .select('*')
+        .eq('is_active', true)
+        .eq('is_verified', true)
+        .eq('status', 'available')
+        .eq('vehicle_type', selectedVehicleType)
+        .limit(10);
+
+      if (error) {
+        console.error('Error fetching drivers:', error.message);
+        toast.error('Failed to fetch drivers. Please try again.');
+        throw error;
+      }
+
+      return (data || []).map(driver => ({
+        ...driver,
+        eta_minutes: Math.floor(Math.random() * 15) + 5
+      })) as Driver[];
     },
-    {
-      id: 2,
-      title: "Find Your Dream Property",
-      subtitle: "Real Estate Made Simple",
-      description: "Discover homes and commercial properties across Kenya's prime locations",
-      image: "photo-1483058712412-4245e9b90334?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80",
-      cta: "Browse Properties",
-      ctaAction: () => navigate('/real-estate')
-    },
-    {
-      id: 3,
-      title: "Professional Services at Your Fingertips",
-      subtitle: "Trusted Service Providers",
-      description: "Connect with verified professionals for all your service needs",
-      image: "photo-1473091534298-04dcbce3278c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80",
-      cta: "Book Services",
-      ctaAction: () => navigate('/services')
-    },
-    {
-      id: 4,
-      title: "Ride & Delivery Solutions",
-      subtitle: "Get Moving with Ease",
-      description: "Safe, reliable transportation and delivery services across Kenya",
-      image: "photo-1487887235947-a955ef187fcc?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80",
-      cta: "Book a Ride",
-      ctaAction: () => navigate('/rides')
-    },
-    {
-      id: 5,
-      title: "Join Our Growing Community",
-      subtitle: "Become a Partner",
-      description: "Grow your business with thousands of customers across Kenya",
-      image: "photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80",
-      cta: "Become a Partner",
-      ctaAction: () => navigate('/service-hub')
+    refetchInterval: 30 * 1000,
+    staleTime: 20 * 1000,
+  });
+
+  // GPS Location Handler
+  const handleGetCurrentLocation = () => {
+    setIsLoadingLocation(true);
+
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by this browser.');
+      setIsLoadingLocation(false);
+      return;
     }
-  ];
 
-  // Auto-advance slideshow
-  useEffect(() => {
-    if (!isPlaying) return;
-    
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
-    }, 5000);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const googleMaps = await loadGoogleMapsScript();
+          if (!googleMaps) {
+            throw new Error('Google Maps not available');
+          }
 
-    return () => clearInterval(interval);
-  }, [isPlaying, heroSlides.length]);
+          const geocoder = new google.maps.Geocoder();
+          const latLng = { lat: position.coords.latitude, lng: position.coords.longitude };
 
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
-  };
-
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
-  };
-
-  const goToSlide = (index: number) => {
-    setCurrentSlide(index);
-  };
-
-  const currentSlideData = heroSlides[currentSlide];
-
-  const miniApps = [
-    {
-      id: 'ecommerce',
-      title: 'E-commerce',
-      description: 'Buy and sell products online',
-      icon: ShoppingBag,
-      color: 'from-orange-500 to-red-500',
-      route: '/shop',
-      image: 'photo-1649972904349-6e44c42644a7',
-      stats: `${stats?.products || 0}+ Products`
-    },
-    {
-      id: 'real-estate',
-      title: 'Real Estate',
-      description: 'Find your dream home or property',
-      icon: Building,
-      color: 'from-orange-500 to-red-500',
-      route: '/real-estate',
-      image: 'photo-1483058712412-4245e9b90334',
-      stats: `${stats?.properties || 0}+ Properties`
-    },
-    {
-      id: 'transportation',
-      title: 'Transportation',
-      description: 'Book rides and delivery services',
-      icon: Car,
-      color: 'from-orange-500 to-red-500',
-      route: '/rides',
-      image: 'photo-1487887235947-a955ef187fcc',
-      stats: `${stats?.rides || 0}+ Rides`
-    },
-    {
-      id: 'services',
-      title: 'Services',
-      description: 'Book professional services and experts',
-      icon: Wrench,
-      color: 'from-orange-500 to-red-500',
-      route: '/services',
-      image: 'photo-1473091534298-04dcbce3278c',
-      stats: `${stats?.vendors || 0}+ Providers`
-    },
-    {
-      id: 'medical',
-      title: 'Medical',
-      description: 'Access health services and appointments',
-      icon: Stethoscope,
-      color: 'from-orange-500 to-red-500',
-      route: '/medical',
-      image: 'photo-1581090464777-f3220bbe1b8b',
-      stats: '0+ Doctors'
-    },
-    {
-      id: 'insurance',
-      title: 'Insurance',
-      description: 'Compare and subscribe to insurance plans',
-      icon: Shield,
-      color: 'from-orange-500 to-red-500',
-      route: '/insurance',
-      image: 'photo-1524230572899-a752b3835840',
-      stats: '0+ Plans'
-    },
-    {
-      id: 'food',
-      title: 'Food Delivery',
-      description: 'Order from restaurants',
-      icon: UtensilsCrossed,
-      color: 'from-orange-500 to-red-500',
-      route: '/food',
-      image: 'photo-1721322800607-8c38375eef04',
-      stats: `${stats?.vendors || 0}+ Restaurants`
-    },
-    {
-      id: 'events',
-      title: 'Events',
-      description: 'Book and discover events',
-      icon: Calendar,
-      color: 'from-orange-500 to-red-500',
-      route: '/events',
-      image: 'photo-1605810230434-7631ac76ec81',
-      stats: '0+ Events'
-    },
-    {
-      id: 'jobs',
-      title: 'Job Board',
-      description: 'Apply for jobs and hire talent',
-      icon: Briefcase,
-      color: 'from-orange-500 to-red-500',
-      route: '/jobs',
-      image: 'photo-1486312338219-ce68d2c6f44d',
-      stats: '0+ Jobs'
-    },
-    {
-      id: 'chat',
-      title: 'Chat & Forums',
-      description: 'Chat privately or post in community groups',
-      icon: MessageCircle,
-      color: 'from-orange-500 to-red-500',
-      route: '/chat-forums',
-      image: 'photo-1460925895917-afdab827c52f',
-      stats: `${stats?.users || 0}+ Members`
-    }
-  ];
-
-  if (statsLoading) {
-    return (
-      <FrontendLayout>
-        <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50 flex items-center justify-center">
-          <LoadingSpinner />
-        </div>
-      </FrontendLayout>
+          geocoder.geocode({ location: latLng }, (results, status) => {
+            if (status === 'OK' && results && results[0]) {
+              const address = results[0].formatted_address;
+              setPickup(address);
+              setPickupLocation({
+                name: address,
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+              });
+              toast.success('Current location detected!');
+            } else {
+              toast.error('Could not determine your address');
+            }
+            setIsLoadingLocation(false);
+          });
+        } catch (error) {
+          console.error('Error getting location:', error);
+          toast.error('Error getting your location');
+          setIsLoadingLocation(false);
+        }
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        toast.error('Unable to access your location. Please check permissions.');
+        setIsLoadingLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000
+      }
     );
-  }
+  };
+
+  useEffect(() => {
+    const calculateFareAndRoute = async () => {
+      const googleMaps = await loadGoogleMapsScript();
+      if (!googleMaps) {
+        console.error('Google Maps API not available for geocoding.');
+        return;
+      }
+
+      if (pickup && destination) {
+        try {
+          const selectedVehicle = VEHICLE_TYPES.find(v => v.id === selectedVehicleType);
+          if (!selectedVehicle) return;
+
+          const pickupCoords = await geocodeAddress(pickup);
+          const destinationCoords = await geocodeAddress(destination);
+
+          if (pickupCoords && destinationCoords) {
+            setPickupLocation({ name: pickupCoords.formattedAddress, lat: pickupCoords.lat, lng: pickupCoords.lng });
+            setDestinationLocation({ name: destinationCoords.formattedAddress, lat: destinationCoords.lat, lng: destinationCoords.lng });
+
+            const routeDetails = await getRouteDetails(
+              { lat: pickupCoords.lat, lng: pickupCoords.lng },
+              { lat: destinationCoords.lat, lng: destinationCoords.lng }
+            );
+
+            if (routeDetails) {
+              const fare = routeDetails.distanceKm * selectedVehicle.pricePerKm;
+              setEstimatedFare(fare);
+              setTripDetails({ distance: routeDetails.distanceKm, eta: routeDetails.etaMinutes });
+              setRoutePath(routeDetails.path);
+            } else {
+              setEstimatedFare(null);
+              setTripDetails(null);
+              setRoutePath(null);
+            }
+          } else {
+            setEstimatedFare(null);
+            setTripDetails(null);
+            setRoutePath(null);
+            setPickupLocation(null);
+            setDestinationLocation(null);
+          }
+        } catch (error) {
+          console.error('Error calculating fare or geocoding:', error);
+          setEstimatedFare(null);
+          setTripDetails(null);
+          setRoutePath(null);
+          setPickupLocation(null);
+          setDestinationLocation(null);
+        }
+      } else {
+        setEstimatedFare(null);
+        setTripDetails(null);
+        setRoutePath(null);
+        setPickupLocation(null);
+        setDestinationLocation(null);
+      }
+    };
+
+    const debounceCalculate = setTimeout(() => {
+      calculateFareAndRoute();
+    }, 800);
+
+    return () => clearTimeout(debounceCalculate);
+  }, [pickup, destination, selectedVehicleType]);
+
+  const handleBookRide = useCallback(async (driverId: string) => {
+    if (!pickupLocation || !destinationLocation) {
+      toast.error("Please ensure both pickup and destination locations are valid.");
+      return;
+    }
+    if (estimatedFare === null) {
+      toast.error("Fare not calculated. Please ensure valid locations.");
+      return;
+    }
+
+    try {
+      toast.info(`Booking ride with driver ${driverId}...`);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      toast.success('Ride booked successfully! Driver is on their way.');
+      setIsBookingDialogOpen(false);
+    } catch (error) {
+      console.error("Booking failed:", error);
+      toast.error("Failed to book ride. Please try again.");
+    }
+  }, [pickupLocation, destinationLocation, estimatedFare]);
+
+  const defaultMapCenter = useMemo(() => {
+    return { lat: -1.286389, lng: 36.817223 };
+  }, []);
+
+  const mapMarkers = useMemo(() => {
+    const markers = [];
+    if (pickupLocation) {
+      markers.push({ id: 'pickup', position: pickupLocation, title: pickupLocation.name, color: '#10b981' });
+    }
+    if (destinationLocation) {
+      markers.push({ id: 'destination', position: destinationLocation, title: destinationLocation.name, color: '#ef4444' });
+    }
+    return markers;
+  }, [pickupLocation, destinationLocation]);
+
+  const mapRoute = useMemo(() => {
+    if (routePath && pickupLocation && destinationLocation) {
+      return { start: pickupLocation, end: destinationLocation, path: routePath };
+    }
+    return undefined;
+  }, [routePath, pickupLocation, destinationLocation]);
+
+  const MemoizedDriverList = useMemo(() => {
+    if (isLoading) {
+      return (
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Finding available drivers for {selectedVehicleType}...</p>
+        </div>
+      );
+    }
+
+    if (drivers && drivers.length > 0) {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {drivers.map((driver) => (
+            <Card key={driver.id} className="hover:shadow-xl transition-all duration-300 border border-gray-100 rounded-2xl overflow-hidden">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <h3 className="font-semibold text-lg text-gray-900">Driver #{driver.id.slice(0, 6)}</h3>
+                    <div className="flex items-center gap-1 mt-1">
+                      <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                      <span className="text-sm font-medium text-gray-700">{(driver.rating || 0).toFixed(1)}</span>
+                      <span className="text-sm text-gray-500">({driver.total_rides || 0} rides)</span>
+                    </div>
+                  </div>
+                  <Badge
+                    variant={driver.status === 'available' ? 'default' : 'secondary'}
+                    className={`${driver.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'} px-3 py-1 text-xs rounded-full`}
+                  >
+                    {driver.status === 'available' ? 'Available' : 'Busy'}
+                  </Badge>
+                </div>
+
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-center gap-2 text-sm text-gray-700">
+                    <Car className="h-4 w-4 text-orange-500" />
+                    <span>{driver.vehicle_make} {driver.vehicle_model} ({driver.vehicle_year})</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Badge variant="outline" className="text-xs font-medium bg-gray-50 text-gray-700 rounded-lg">
+                      {driver.license_plate}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs capitalize font-medium bg-orange-50 text-orange-700 rounded-lg">
+                      {driver.vehicle_type}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Clock className="h-4 w-4 text-orange-500" />
+                    <span>{driver.eta_minutes ? `~${driver.eta_minutes} mins away` : 'Calculating ETA...'}</span>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Dialog open={isBookingDialogOpen} onOpenChange={setIsBookingDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button
+                        className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 rounded-xl"
+                        disabled={!pickupLocation || !destinationLocation || estimatedFare === null}
+                      >
+                        Book Ride
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="rounded-2xl">
+                      <DialogHeader>
+                        <DialogTitle>Confirm Your Ride</DialogTitle>
+                        <DialogDescription>
+                          Please review the details before confirming your booking.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="flex items-center gap-3">
+                          <MapPin className="h-5 w-5 text-gray-500" />
+                          <p className="text-base font-medium">From: <span className="font-semibold">{pickupLocation?.name || pickup}</span></p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Navigation className="h-5 w-5 text-gray-500" />
+                          <p className="text-base font-medium">To: <span className="font-semibold">{destinationLocation?.name || destination}</span></p>
+                        </div>
+                        {tripDetails && (
+                          <>
+                            <div className="flex items-center gap-3">
+                              <Car className="h-5 w-5 text-gray-500" />
+                              <p className="text-base font-medium">Vehicle: <span className="font-semibold capitalize">{selectedVehicleType}</span></p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <Clock className="h-5 w-5 text-gray-500" />
+                              <p className="text-base font-medium">Est. Duration: <span className="font-semibold">{tripDetails.eta} mins</span></p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <MapPin className="h-5 w-5 text-gray-500" />
+                              <p className="text-base font-medium">Est. Distance: <span className="font-semibold">{tripDetails.distance.toFixed(1)} km</span></p>
+                            </div>
+                          </>
+                        )}
+                        {estimatedFare !== null && (
+                          <div className="flex items-center gap-3 border-t pt-4 mt-4">
+                            <Wallet className="h-6 w-6 text-orange-600" />
+                            <p className="text-lg font-bold text-orange-600">Estimated Fare: <span className="text-2xl">KSh {estimatedFare.toFixed(2)}</span></p>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-3">
+                           <User className="h-5 w-5 text-gray-500" />
+                           <p className="text-base font-medium">Driver: <span className="font-semibold">Driver #{driver.id.slice(0, 6)}</span></p>
+                        </div>
+                      </div>
+                      <div className="flex justify-end gap-2 mt-4">
+                        <Button variant="outline" onClick={() => setIsBookingDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={() => handleBookRide(driver.id)}
+                          className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                        >
+                          Confirm Booking
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                  <Button variant="outline" size="sm" className="border-orange-200 text-orange-600 hover:bg-orange-50 rounded-xl">
+                    <Phone className="h-4 w-4 mr-2" /> Call
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <div className="text-center py-12">
+        <Car className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">No Drivers Available for {selectedVehicleType}</h3>
+        <p className="text-gray-600 mb-6">
+          Please try a different vehicle type or refresh to check for new drivers.
+        </p>
+        <Button onClick={() => refetch()} disabled={isRefetching} variant="outline" className="flex items-center gap-2 rounded-xl">
+          {isRefetching ? (
+            <span className="animate-spin text-lg">⚙️</span>
+          ) : (
+            'Refresh'
+          )}
+        </Button>
+      </div>
+    );
+  }, [isLoading, drivers, selectedVehicleType, pickup, destination, estimatedFare, tripDetails, handleBookRide, isBookingDialogOpen, isRefetching, refetch, pickupLocation, destinationLocation]);
 
   return (
     <FrontendLayout>
+      <SEOManager
+        title="Book Taxi & Cab in Kenya | Affordable Transport | Sokko Sasa Rides"
+        description="Find and book reliable taxis, cabs, and transport services across Kenya, including Nairobi. Quick, safe, and affordable rideshare options on Sokko Sasa."
+        keywords="taxi Kenya, cab Kenya, transport Kenya, rideshare Kenya, book a ride Nairobi, cheap taxi Nairobi, Sokko Sasa, ride booking app"
+        url={`${window.location.origin}/rides`}
+        type="website"
+      />
+
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        {/* Hero Section with Slideshow - Added proper padding */}
-        <div className="relative h-[70vh] min-h-[500px] overflow-hidden mx-4 sm:mx-6 lg:mx-8 mt-4 px-4 sm:px-6 lg:px-8 rounded-3xl">
-          {/* Background Image with Overlay */}
-          <div 
-            className="absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out rounded-3xl"
-            style={{ 
-              backgroundImage: `url(https://images.unsplash.com/${currentSlideData.image})`,
+        {/* Hero Section - Removed orange-red gradients */}
+        <div className="relative h-64 overflow-hidden rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-6 shadow-xl">
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-80" /* Increased opacity for better contrast */
+            style={{
+              backgroundImage: `url('https://images.unsplash.com/photo-1487887235947-a955ef187fcc?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')`
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent rounded-3xl" />
+          {/* Removed the second overlay div entirely as it was for the gradient */}
           
-          {/* Navigation Controls */}
-          <button
-            onClick={prevSlide}
-            className="absolute left-6 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-all duration-200"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          
-          <button
-            onClick={nextSlide}
-            className="absolute right-6 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-all duration-200"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-
-          {/* Play/Pause Button */}
-          <button
-            onClick={() => setIsPlaying(!isPlaying)}
-            className="absolute top-6 right-6 z-20 p-2 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-all duration-200"
-          >
-            {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-          </button>
-
-          {/* Hero Content */}
           <div className="relative z-10 flex items-center justify-center h-full px-6 sm:px-8 lg:px-12">
-            <div className="text-center text-white max-w-4xl mx-auto">
-              {/* Brand Name - Fixed size and bold */}
-              <h1 className="text-5xl md:text-7xl font-extrabold mb-4 animate-fade-in drop-shadow-lg"> {/* Increased size to text-5xl md:text-7xl and applied font-extrabold */}
-                <span className="text-gray-900">Sokko</span>{' '}
-                <span className="text-orange-500">Sasa</span> 
-              </h1>
+            <div className="text-center text-white max-w-3xl mx-auto">
+              <Navigation className="h-16 w-16 mx-auto mb-4 text-white" /> {/* Changed icon color to white */}
+              <h1 className="text-3xl md:text-5xl font-bold mb-3 drop-shadow-lg">Book Your Ride</h1>
+              <p className="text-lg text-white font-light leading-relaxed"> {/* Changed text color to white */}
+                Safe, reliable, and convenient transportation across Kenya.
+              </p>
+            </div>
+          </div>
+        </div>
 
-              {/* Slide Content */}
-              <div className="animate-fade-in" key={currentSlide}>
-                <p className="text-orange-200 text-sm font-medium mb-2">
-                  {currentSlideData.subtitle}
-                </p>
-                <h2 className="text-xl md:text-3xl font-bold mb-3">
-                  {currentSlideData.title}
-                </h2>
-                <p className="text-base md:text-lg text-orange-100 mb-6 max-w-3xl mx-auto">
-                  {currentSlideData.description}
-                </p>
-                
-                <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-                  <Button
-                    size="sm"
-                    onClick={currentSlideData.ctaAction}
-                    className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-6 py-2 text-sm rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200"
-                  >
-                    {currentSlideData.cta}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => navigate('/service-hub')}
-                    className="border-2 border-white text-white hover:bg-white hover:text-orange-600 px-6 py-2 text-sm rounded-xl backdrop-blur-sm bg-white/10"
-                  >
-                    Become a Partner
-                  </Button>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Booking Form */}
+          <Card className="mb-8 p-6 shadow-xl border border-gray-100 rounded-3xl">
+            <CardHeader className="p-0 pb-6">
+              <CardTitle className="flex items-center gap-3 text-2xl font-bold text-gray-800">
+                <MapPin className="h-6 w-6 text-orange-500" />
+                Plan Your Journey
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 space-y-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label htmlFor="pickup-location" className="block text-sm font-medium text-gray-700 mb-2">Pickup Location</label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <Input
+                        id="pickup-location"
+                        placeholder="Enter pickup address or use GPS"
+                        value={pickup}
+                        onChange={(e) => setPickup(e.target.value)}
+                        className="pl-10 pr-4 py-3 border rounded-xl focus:ring-orange-500 focus:border-orange-500"
+                      />
+                    </div>
+                    <Button
+                      onClick={handleGetCurrentLocation}
+                      disabled={isLoadingLocation}
+                      variant="outline"
+                      size="sm"
+                      className="px-3 py-3 border-orange-200 text-orange-600 hover:bg-orange-50 rounded-xl"
+                    >
+                      {isLoadingLocation ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600" />
+                      ) : (
+                        <Locate className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="destination-location" className="block text-sm font-medium text-gray-700 mb-2">Destination</label>
+                  <div className="relative">
+                    <Navigation className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Input
+                      id="destination-location"
+                      placeholder="Where are you going?"
+                      value={destination}
+                      onChange={(e) => setDestination(e.target.value)}
+                      className="pl-10 pr-4 py-3 border rounded-xl focus:ring-orange-500 focus:border-orange-500"
+                    />
+                  </div>
                 </div>
               </div>
+
+              {/* Vehicle Type Selection */}
+              <div>
+                <label className="block text-base font-medium text-gray-800 mb-4">Select Vehicle Type</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {VEHICLE_TYPES.map((vehicle) => (
+                    <div
+                      key={vehicle.id}
+                      className={`p-6 border-2 rounded-2xl cursor-pointer transition-all duration-200 ease-in-out flex items-center gap-4 min-h-[120px] ${
+                        selectedVehicleType === vehicle.id
+                          ? 'border-orange-500 bg-orange-50 shadow-lg scale-105'
+                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-md'
+                      }`}
+                      onClick={() => setSelectedVehicleType(vehicle.id)}
+                    >
+                      <div className={`p-4 rounded-2xl ${selectedVehicleType === vehicle.id ? 'bg-orange-100' : 'bg-gray-100'}`}>
+                        <vehicle.icon className={`h-8 w-8 ${selectedVehicleType === vehicle.id ? 'text-orange-600' : 'text-gray-600'}`} />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg text-gray-800 mb-1">{vehicle.name}</h3>
+                        <p className="text-sm text-gray-600 mb-2 leading-relaxed">{vehicle.description}</p>
+                        <p className="text-base font-bold text-orange-600">KSh {vehicle.pricePerKm}/km</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Fare and Trip Details */}
+              {estimatedFare !== null && (
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-6 shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <Wallet className="h-6 w-6 text-blue-600" />
+                      <p className="text-lg font-bold text-blue-800">Estimated Fare:</p>
+                    </div>
+                    <p className="text-3xl font-extrabold text-blue-800">
+                      KSh {estimatedFare.toFixed(2)}
+                    </p>
+                  </div>
+                  {tripDetails && (
+                    <div className="flex justify-between items-center text-sm text-blue-700 pt-2 border-t border-blue-200">
+                      <p className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {tripDetails.distance.toFixed(1)} km</p>
+                      <p className="flex items-center gap-2"><Clock className="h-4 w-4" /> {tripDetails.eta} mins</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Map Display */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <MapPin className="h-6 w-6 text-orange-500" /> {mapRoute ? 'Your Route' : 'Explore Area'}
+            </h2>
+            <div className="rounded-2xl overflow-hidden shadow-xl border-2 border-gray-100">
+              <MapBox
+                center={mapMarkers.length > 0 ? mapMarkers[0].position : defaultMapCenter}
+                zoom={mapRoute ? 12 : 12}
+                markers={mapMarkers}
+                showRoute={mapRoute}
+                className="w-full h-96"
+              />
             </div>
           </div>
 
-          {/* Slide Indicators */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex space-x-2">
-            {heroSlides.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => goToSlide(index)}
-                className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                  index === currentSlide 
-                    ? 'bg-white shadow-lg scale-125' 
-                    : 'bg-white/50 hover:bg-white/75'
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div className="max-w-6xl mx-auto px-4 py-8">
-          {/* Mini Apps Grid */}
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              All Services in One Platform
+          {/* Available Drivers */}
+          <div className="space-y-6">
+            <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <Car className="h-7 w-7 text-orange-500" /> Available Drivers
             </h2>
-            <p className="text-sm text-gray-600 max-w-2xl mx-auto">
-              From shopping to services, we've got everything you need to live, work, and thrive in Kenya
-            </p>
-          </div>
+            <p className="text-gray-600 mb-6">These drivers are available near your pickup location for the selected vehicle type.</p>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {miniApps.map((app) => (
-              <Card 
-                key={app.id} 
-                className="group hover:shadow-lg transition-all duration-300 border hover:border-orange-200 cursor-pointer rounded-2xl overflow-hidden transform hover:scale-105"
-                onClick={() => navigate(app.route)}
-              >
-                <div className="relative overflow-hidden aspect-square">
-                  <div 
-                    className="h-full bg-cover bg-center"
-                    style={{ 
-                      backgroundImage: `url(https://images.unsplash.com/${app.image})`,
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  <div className="absolute top-2 right-2">
-                    <Badge className="bg-white/90 text-gray-800 text-xs rounded-lg">
-                      {app.stats}
-                    </Badge>
-                  </div>
-                  <div className="absolute bottom-2 left-2">
-                    <div className={`p-2 rounded-xl bg-gradient-to-r ${app.color} text-white`}>
-                      <app.icon className="h-4 w-4" />
-                    </div>
-                  </div>
-                </div>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm group-hover:text-orange-600 transition-colors">
-                    {app.title}
-                  </CardTitle>
-                  <CardDescription className="text-xs">
-                    {app.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button 
-                    size="sm"
-                    className={`w-full bg-gradient-to-r ${app.color} hover:opacity-90 text-white text-xs rounded-xl`}
-                  >
-                    Explore
-                    <ArrowRight className="ml-1 h-3 w-3" />
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+            {MemoizedDriverList}
           </div>
         </div>
       </div>
-      
-      <Footer />
     </FrontendLayout>
   );
 };
 
-export default Index;
+export default Rides;

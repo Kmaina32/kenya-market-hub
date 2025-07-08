@@ -421,7 +421,7 @@ const Rides: React.FC = () => {
         {/* Hero Section - Updated with orange-red theme */}
         <div className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-500 to-red-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-6 shadow-xl">
           <div 
-            className="absolute inset-0 bg-cover bg-center opacity-30"
+            className="absolute inset-0 bg-cover bg-center opacity-50"
             style={{
               backgroundImage: `url('https://images.unsplash.com/photo-1487887235947-a955ef187fcc?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')`
             }}
