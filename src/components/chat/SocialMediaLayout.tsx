@@ -25,21 +25,32 @@ interface SocialMediaLayoutProps {
 const SocialMediaLayout: React.FC<SocialMediaLayoutProps> = ({ activeTab = 'fyp' }) => {
   const [currentTab, setCurrentTab] = useState(activeTab);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
-  const [unreadNotifications] = useState(3); // Mock notification count
+  // Note: unreadNotifications here is a mock. In a real app, this would come from a global state
+  // or context, likely updated by the NotificationCenter itself or an API poll.
+  const [unreadNotifications] = useState(3);
 
   const isMessagesTab = currentTab === 'messages';
-  const narrowNavBarPadding = 'pb-[4rem] sm:pb-[4.5rem]'; // Base padding for nav bar
+  // Define padding for content when a bottom nav is present
+  const bottomNavHeightPx = 64; // h-16 in Tailwind is 4rem = 64px
+  const bottomNavPaddingClass = `pb-[${bottomNavHeightPx / 16}rem]`; // Convert px to rem for Tailwind JIT
 
+  // Define width classes for the fixed bottom navigation bar's container
+  // Full width on small screens by default (w-full)
+  // On large screens, if it's the messages tab, constrain to 2/3 and center.
+  // Otherwise (for other tabs on large screens), it remains w-full within its context.
   const navBarWidthClasses = isMessagesTab
-    ? 'w-full lg:max-w-[calc(66.666667%_-_1.5rem)] lg:mx-auto' // Use lg:mx-auto for horizontal centering
-    : 'w-full';
+    ? 'w-full lg:max-w-[calc(66.666667%_-_1.5rem)] lg:mx-auto'
+    : 'w-full'; // Default to full width for consistency if it's always visible
+
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* The main Tabs component. It's now a flex column to push content up and nav down */}
       <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full flex-grow flex flex-col">
 
-        {/* Content Area - Adjusted padding-bottom conditionally */}
-        <div className={`flex-grow overflow-y-auto ${isMessagesTab ? narrowNavBarPadding : ''}`}>
+        {/* Main Content Area - This will take up most of the space and be scrollable */}
+        {/* Conditional padding is applied to ensure content doesn't hide behind the fixed bottom nav */}
+        <div className={`flex-grow overflow-y-auto ${bottomNavPaddingClass}`}>
           <div className="container mx-auto px-4 py-6">
 
             {/* TabsContent for FYP */}
@@ -63,8 +74,8 @@ const SocialMediaLayout: React.FC<SocialMediaLayoutProps> = ({ activeTab = 'fyp'
                             New Post
                           </Button>
                         </div>
-                      </div> {/* This div closes the flex items-center justify-between div */}
-                    </CardHeader> {/* This is line 73 in your error, ensure the div above it is properly closed */}
+                      </div>
+                    </CardHeader>
                     <CardContent>
                       <ImprovedForumsList />
                     </CardContent>
@@ -83,7 +94,7 @@ const SocialMediaLayout: React.FC<SocialMediaLayoutProps> = ({ activeTab = 'fyp'
               <FollowingFeed />
             </TabsContent>
 
-            {/* TabsContent for Messages (Sokko Chat Page) */}
+            {/* TabsContent for Messages */}
             <TabsContent value="messages" className="mt-0">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-1">
@@ -124,12 +135,12 @@ const SocialMediaLayout: React.FC<SocialMediaLayoutProps> = ({ activeTab = 'fyp'
         </div> {/* End of flex-grow overflow-y-auto */}
 
 
-        {/* Navigation Tabs - ALWAYS rendered, but styling changes for width */}
+        {/* Navigation Tabs - Fixed at the bottom and always rendered */}
         <div
           className={`fixed bottom-0 left-0 right-0 z-10 bg-white border-t border-gray-200 shadow-lg ${navBarWidthClasses}`}
         >
           <div className="container mx-auto px-4">
-            <TabsList className="grid w-full grid-cols-5 h-16 bg-transparent p-0">
+            <TabsList className="grid w-full grid-cols-5 h-16 bg-transparent p-0"> {/* Increased height slightly for better tap target */}
 
               <TabsTrigger
                 value="fyp"
@@ -162,6 +173,11 @@ const SocialMediaLayout: React.FC<SocialMediaLayoutProps> = ({ activeTab = 'fyp'
               >
                 <MessageCircle className="w-5 h-5" />
                 <span className="text-xs font-medium">Messages</span>
+                {unreadNotifications > 0 && (
+                  <Badge className="absolute top-1 right-3 w-4 h-4 p-0 text-xs bg-red-500 hover:bg-red-600 flex items-center justify-center">
+                    {unreadNotifications}
+                  </Badge>
+                )}
               </TabsTrigger>
 
               <TabsTrigger
@@ -199,7 +215,7 @@ const SocialMediaLayout: React.FC<SocialMediaLayoutProps> = ({ activeTab = 'fyp'
   );
 };
 
-// Trending Sidebar Component (unchanged)
+// Trending Sidebar Component (remains unchanged)
 const TrendingSidebar: React.FC = () => {
   const trendingTopics = [
     { tag: '#SokkoSasa', posts: 1234 },
@@ -227,7 +243,7 @@ const TrendingSidebar: React.FC = () => {
   );
 };
 
-// Suggested Users Component (unchanged)
+// Suggested Users Component (remains unchanged)
 const SuggestedUsers: React.FC = () => {
   const suggestedUsers = [
     { name: 'John Doe', username: '@johndoe', avatar: null },

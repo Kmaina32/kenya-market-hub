@@ -12,7 +12,8 @@ import {
   TrendingUp,
   MoreHorizontal,
   Check,
-  X
+  X,
+  Loader2 // Import for spinner
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -27,7 +28,7 @@ interface Notification {
     avatar?: string;
   };
   content: string;
-  timestamp: Date;
+  timestamp: Date; // Keep as Date for direct usage with date-fns
   isRead: boolean;
   postId?: string;
 }
@@ -44,76 +45,23 @@ const NotificationCenter: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // --- REPLACE THIS WITH YOUR ACTUAL API CALL ---
+        // Example: const response = await fetch('/api/notifications');
+        // Example: const result = await response.json();
+        // Example: setNotifications(result.notifications.map(n => ({ ...n, timestamp: new Date(n.timestamp) })));
 
-        // Generate some dynamic notifications for demonstration
-        const mockNotifications: Notification[] = [
-          {
-            id: 'notif-101',
-            type: 'like',
-            user: { id: 'user-001', name: 'Alex M', username: 'alex_m_ke', avatar: 'https://i.pravatar.cc/150?img=1' },
-            content: 'liked your post "Exploring the Nairobi Tech Scene"',
-            timestamp: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
-            isRead: false,
-            postId: 'post-xyz'
-          },
-          {
-            id: 'notif-102',
-            type: 'comment',
-            user: { id: 'user-002', name: 'Grace W', username: 'grace_dev', avatar: 'https://i.pravatar.cc/150?img=2' },
-            content: 'commented on your article: "This is a must-read for any dev!"',
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 1), // 1 hour ago
-            isRead: false,
-            postId: 'post-abc'
-          },
-          {
-            id: 'notif-103',
-            type: 'follow',
-            user: { id: 'user-003', name: 'Kenyan Coder', username: 'kencodes' },
-            content: 'started following you',
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3), // 3 hours ago
-            isRead: true, // Mark this one as read initially
-          },
-          {
-            id: 'notif-104',
-            type: 'mention',
-            user: { id: 'user-004', name: 'Data Wizard', username: 'dataninja' },
-            content: 'mentioned you in their latest project update: "Check out @yourusername\'s insights here!"',
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-            isRead: false,
-          },
-          {
-            id: 'notif-105',
-            type: 'like',
-            user: { id: 'user-005', name: 'Software Sam', username: 'samsoft' },
-            content: 'liked your comment on the "AI in Africa" thread',
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48), // 2 days ago
-            isRead: true,
-          },
-          {
-            id: 'notif-106',
-            type: 'trending',
-            user: { id: 'system', name: 'Sokko Sasa', username: 'sokkosasa' }, // Example for a system/trending notification
-            content: 'Your post "Tips for Startup Funding in Kenya" is trending!',
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 10), // 10 hours ago
-            isRead: false,
-            postId: 'post-xyz' // Assuming trending notifications could also link to posts
-          },
-          {
-            id: 'notif-107',
-            type: 'comment',
-            user: { id: 'user-006', name: 'Tech Enthusiast', username: 'techenthusiast' },
-            content: 'replied to your comment: "Agreed, the community aspect is key!"',
-            timestamp: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
-            isRead: false,
-            postId: 'comment-abc'
-          },
-        ];
-        setNotifications(mockNotifications);
-      } catch (err) {
+        // FOR DEMONSTRATION: Simulating an API call that returns empty data
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network latency
+
+        // --- Option 1: Simulate successful fetch with NO initial data (truly empty) ---
+        setNotifications([]);
+
+        // --- Option 2: Simulate a fetch error (uncomment to test error state) ---
+        // throw new Error("Network error: Could not retrieve notifications.");
+
+      } catch (err: any) {
         console.error("Failed to fetch notifications:", err);
-        setError("Failed to load notifications. Please try again later.");
+        setError(err.message || "Failed to load notifications. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -128,12 +76,14 @@ const NotificationCenter: React.FC = () => {
         notif.id === notificationId ? { ...notif, isRead: true } : notif
       )
     );
+    // In a real app, you'd send an API request here to mark as read on the backend
   };
 
   const markAllAsRead = () => {
     setNotifications(prev =>
       prev.map(notif => ({ ...notif, isRead: true }))
     );
+    // In a real app, you'd send an API request here to mark all as read on the backend
   };
 
   const getNotificationIcon = (type: Notification['type']) => {
@@ -179,7 +129,7 @@ const NotificationCenter: React.FC = () => {
               variant="outline"
               size="sm"
               onClick={markAllAsRead}
-              disabled={unreadCount === 0 || loading} // Disable if loading
+              disabled={unreadCount === 0 || loading}
             >
               <Check className="w-4 h-4 mr-2" />
               Mark all as read
@@ -196,17 +146,14 @@ const NotificationCenter: React.FC = () => {
               <TabsTrigger value="comment">Comments</TabsTrigger>
               <TabsTrigger value="follow">Follows</TabsTrigger>
               <TabsTrigger value="mention">Mentions</TabsTrigger>
-              {/* Optional: Add a "Trending" tab if you want to filter by it */}
-              {/* <TabsTrigger value="trending">Trending</TabsTrigger> */}
+              <TabsTrigger value="trending">Trending</TabsTrigger> {/* Added Trending tab for consistency */}
             </TabsList>
 
             <div className="mt-6">
               {loading ? (
                 <div className="text-center py-12">
                   <span className="animate-spin text-orange-500 block mb-4">
-                    <svg className="mx-auto h-8 w-8 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004 12c0 2.21.896 4.21 2.344 5.656M20 20v-5h-.581m0 0a8.001 8.001 0 01-15.357-2m15.357 2H4" />
-                    </svg>
+                    <Loader2 className="mx-auto h-8 w-8" /> {/* Using Loader2 from lucide-react */}
                   </span>
                   <p className="text-gray-600">Loading notifications...</p>
                 </div>

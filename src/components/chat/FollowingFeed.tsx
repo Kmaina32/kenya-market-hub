@@ -1,19 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { 
-  Users, 
-  Heart, 
-  MessageCircle, 
-  Share, 
+import {
+  Users,
+  Heart,
+  MessageCircle,
+  Share,
   MoreHorizontal,
   Search,
   UserMinus,
   UserPlus,
-  Shield
+  Shield,
+  Loader2 // Import for spinner
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -24,7 +25,7 @@ interface Post {
     name: string;
     username: string;
     avatar?: string;
-    isFollowing: true;
+    isFollowing: boolean;
   };
   content: string;
   timestamp: Date;
@@ -50,79 +51,103 @@ const FollowingFeed: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'feed' | 'people'>('feed');
 
-  const [followingPosts] = useState<Post[]>([
-    {
-      id: '1',
-      author: {
-        id: '1',
-        name: 'John Doe',
-        username: 'johndoe',
-        isFollowing: true,
-      },
-      content: 'Just launched my new startup! Excited to share this journey with the Sokko Sasa community. 🚀 #entrepreneurship #startup',
-      timestamp: new Date(Date.now() - 1000 * 60 * 30),
-      likes: 24,
-      comments: 8,
-      shares: 3,
-      isLiked: false,
-      category: 'Business',
-    },
-    {
-      id: '2',
-      author: {
-        id: '2',
-        name: 'Jane Smith',
-        username: 'janesmith',
-        isFollowing: true,
-      },
-      content: 'Amazing tech meetup in Nairobi today! Great to connect with fellow developers and learn about the latest trends in React and TypeScript.',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-      likes: 45,
-      comments: 12,
-      shares: 6,
-      isLiked: true,
-      category: 'Technology',
-    },
-  ]);
+  // Initialize with empty arrays and loading/error states
+  const [followingPosts, setFollowingPosts] = useState<Post[]>([]);
+  const [followingUsers, setFollowingUsers] = useState<User[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(true);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [errorPosts, setErrorPosts] = useState<string | null>(null);
+  const [errorUsers, setErrorUsers] = useState<string | null>(null);
 
-  const [followingUsers] = useState<User[]>([
-    {
-      id: '1',
-      name: 'John Doe',
-      username: 'johndoe',
-      followers: 1234,
-      following: 567,
-      isFollowing: true,
-      bio: 'Entrepreneur | Tech enthusiast | Building the future',
-    },
-    {
-      id: '2',
-      name: 'Jane Smith',
-      username: 'janesmith',
-      followers: 2345,
-      following: 789,
-      isFollowing: true,
-      bio: 'Full-stack developer | React specialist | Open source contributor',
-    },
-    {
-      id: '3',
-      name: 'Tech Guru',
-      username: 'techguru',
-      followers: 5678,
-      following: 234,
-      isFollowing: true,
-      bio: 'Software architect | Startup advisor | Keynote speaker',
-    },
-  ]);
+  // --- Simulate fetching posts from an API ---
+  useEffect(() => {
+    const fetchPosts = async () => {
+      setLoadingPosts(true);
+      setErrorPosts(null);
+      try {
+        // --- REPLACE THIS WITH YOUR ACTUAL API CALL FOR POSTS ---
+        // Example: const response = await fetch('/api/following/posts');
+        // Example: const result = await response.json();
+        // Example: setFollowingPosts(result.posts.map(p => ({ ...p, timestamp: new Date(p.timestamp) })));
+
+        await new Promise(resolve => setTimeout(resolve, 800)); // Simulate network delay
+
+        // --- Option 1: Simulate successful fetch with NO initial data (truly empty) ---
+        setFollowingPosts([]);
+
+        // --- Option 2: Simulate a fetch error (uncomment to test error state) ---
+        // throw new Error("Network error: Could not fetch posts.");
+
+      } catch (err: any) {
+        console.error("Failed to fetch posts:", err);
+        setErrorPosts(err.message || "Failed to load posts. Please try again.");
+      } finally {
+        setLoadingPosts(false);
+      }
+    };
+    fetchPosts();
+  }, []); // Empty dependency array means this runs once on mount
+
+  // --- Simulate fetching users from an API ---
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setLoadingUsers(true);
+      setErrorUsers(null);
+      try {
+        // --- REPLACE THIS WITH YOUR ACTUAL API CALL FOR USERS ---
+        // Example: const response = await fetch('/api/following/users');
+        // Example: const result = await response.json();
+        // Example: setFollowingUsers(result.users);
+
+        await new Promise(resolve => setTimeout(resolve, 600)); // Simulate network delay
+
+        // --- Option 1: Simulate successful fetch with NO initial data (truly empty) ---
+        setFollowingUsers([]);
+
+        // --- Option 2: Simulate a fetch error (uncomment to test error state) ---
+        // throw new Error("Network error: Could not fetch users.");
+
+      } catch (err: any) {
+        console.error("Failed to fetch users:", err);
+        setErrorUsers(err.message || "Failed to load users. Please try again.");
+      } finally {
+        setLoadingUsers(false);
+      }
+    };
+    fetchUsers();
+  }, []); // Empty dependency array means this runs once on mount
+
 
   const toggleFollow = (userId: string) => {
-    // Implementation for follow/unfollow functionality
-    console.log('Toggle follow for user:', userId);
+    setFollowingUsers(prevUsers =>
+      prevUsers.map(user =>
+        user.id === userId
+          ? {
+              ...user,
+              isFollowing: !user.isFollowing,
+              followers: user.isFollowing ? user.followers - 1 : user.followers + 1,
+            }
+          : user
+      )
+    );
+    // In a real app, you'd send an API request here to update follow status on the backend
+    console.log(`Toggled follow for user: ${userId}`);
   };
 
   const toggleLike = (postId: string) => {
-    // Implementation for like/unlike functionality
-    console.log('Toggle like for post:', postId);
+    setFollowingPosts(prevPosts =>
+      prevPosts.map(post =>
+        post.id === postId
+          ? {
+              ...post,
+              isLiked: !post.isLiked,
+              likes: post.isLiked ? post.likes - 1 : post.likes + 1,
+            }
+          : post
+      )
+    );
+    // In a real app, you'd send an API request here to update like status on the backend
+    console.log(`Toggled like for post: ${postId}`);
   };
 
   const filteredUsers = followingUsers.filter(user =>
@@ -165,7 +190,23 @@ const FollowingFeed: React.FC = () => {
       {/* Content */}
       {activeTab === 'feed' ? (
         <div className="space-y-6">
-          {followingPosts.length === 0 ? (
+          {loadingPosts ? (
+            <Card>
+              <CardContent className="text-center py-12">
+                <Loader2 className="w-8 h-8 text-orange-500 mx-auto mb-4 animate-spin" />
+                <p className="text-gray-600">Loading posts...</p>
+              </CardContent>
+            </Card>
+          ) : errorPosts ? (
+            <Card>
+              <CardContent className="text-center py-12 text-red-600">
+                <X className="w-12 h-12 mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">Error loading posts</h3>
+                <p>{errorPosts}</p>
+                <Button onClick={() => window.location.reload()} className="mt-4">Retry</Button>
+              </CardContent>
+            </Card>
+          ) : followingPosts.length === 0 ? (
             <Card>
               <CardContent className="text-center py-12">
                 <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -258,54 +299,23 @@ const FollowingFeed: React.FC = () => {
           </Card>
 
           {/* Following List */}
-          <div className="grid gap-4">
-            {filteredUsers.map((user) => (
-              <Card key={user.id}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <Avatar className="w-16 h-16">
-                        <AvatarImage src={user.avatar} />
-                        <AvatarFallback className="bg-gradient-to-r from-orange-500 to-red-600 text-white text-lg">
-                          {user.name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg">{user.name}</h3>
-                        <p className="text-gray-500">@{user.username}</p>
-                        {user.bio && (
-                          <p className="text-gray-700 mt-1">{user.bio}</p>
-                        )}
-                        <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                          <span>{user.followers.toLocaleString()} followers</span>
-                          <span>{user.following.toLocaleString()} following</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => toggleFollow(user.id)}
-                        className="text-red-600 border-red-600 hover:bg-red-50"
-                      >
-                        <UserMinus className="w-4 h-4 mr-2" />
-                        Unfollow
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Shield className="w-4 h-4 mr-2" />
-                        Block
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {filteredUsers.length === 0 && (
+          {loadingUsers ? (
+            <Card>
+              <CardContent className="text-center py-12">
+                <Loader2 className="w-8 h-8 text-orange-500 mx-auto mb-4 animate-spin" />
+                <p className="text-gray-600">Loading users...</p>
+              </CardContent>
+            </Card>
+          ) : errorUsers ? (
+            <Card>
+              <CardContent className="text-center py-12 text-red-600">
+                <X className="w-12 h-12 mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">Error loading users</h3>
+                <p>{errorUsers}</p>
+                <Button onClick={() => window.location.reload()} className="mt-4">Retry</Button>
+              </CardContent>
+            </Card>
+          ) : filteredUsers.length === 0 ? (
             <Card>
               <CardContent className="text-center py-12">
                 <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -315,6 +325,64 @@ const FollowingFeed: React.FC = () => {
                 </p>
               </CardContent>
             </Card>
+          ) : (
+            <div className="grid gap-4">
+              {filteredUsers.map((user) => (
+                <Card key={user.id}>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <Avatar className="w-16 h-16">
+                          <AvatarImage src={user.avatar} />
+                          <AvatarFallback className="bg-gradient-to-r from-orange-500 to-red-600 text-white text-lg">
+                            {user.name.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-lg">{user.name}</h3>
+                          <p className="text-gray-500">@{user.username}</p>
+                          {user.bio && (
+                            <p className="text-gray-700 mt-1">{user.bio}</p>
+                          )}
+                          <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                            <span>{user.followers.toLocaleString()} followers</span>
+                            <span>{user.following.toLocaleString()} following</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {user.isFollowing ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => toggleFollow(user.id)}
+                            className="text-red-600 border-red-600 hover:bg-red-50"
+                          >
+                            <UserMinus className="w-4 h-4 mr-2" />
+                            Unfollow
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            onClick={() => toggleFollow(user.id)}
+                            className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
+                          >
+                            <UserPlus className="w-4 h-4 mr-2" />
+                            Follow
+                          </Button>
+                        )}
+                        <Button variant="outline" size="sm">
+                          <Shield className="w-4 h-4 mr-2" />
+                          Block
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           )}
         </div>
       )}
