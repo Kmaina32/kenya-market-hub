@@ -5,6 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { ChatMessage } from '@/types/chat';
 
+export type { ChatMessage };
+
 export const useChatMessages = (conversationId: string) => {
   return useQuery({
     queryKey: ['chat-messages', conversationId],

@@ -5,6 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { ForumPost, ForumCategory, UserSearchResult } from '@/types/chat';
 
+export type { UserSearchResult };
+
 // Get forum categories
 export const useForumCategories = () => {
   return useQuery({

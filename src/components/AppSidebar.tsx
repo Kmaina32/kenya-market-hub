@@ -46,7 +46,7 @@ const AppSidebar = () => {
     { icon: ShoppingBag, label: 'Shop', path: '/shop' },
     { icon: UtensilsCrossed, label: 'Food Delivery', path: '/food' },
     { icon: Calendar, label: 'Events', path: '/events' },
-    { icon: MessageCircle, label: 'Chat & Forums', path: '/chat-forums' }
+    { icon: MessageCircle, label: 'Sokko Chat', path: '/chat-forums' }
   ];
 
   const servicesItems = [

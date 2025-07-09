@@ -7,11 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Search, Send, Plus, Users, MessageSquare } from 'lucide-react';
-import { useConversations, useCreateConversation, Conversation } from '@/hooks/useChat';
+import { useConversations, useCreateConversation, ChatConversation } from '@/hooks/useChat';
 import { useUserSearch, UserSearchResult } from '@/hooks/useChatForums';
 import { useChatMessages, useSendMessage, ChatMessage } from '@/hooks/useChatMessages';
 import { useAuth } from '@/contexts/AuthContext';
-import { useUserOnlineStatus } from '@/hooks/useOnlineStatus';
+// import { useUserOnlineStatus } from '@/hooks/useOnlineStatus';
 import { formatDistanceToNow } from 'date-fns';
 
 const ImprovedChatInterface = () => {
@@ -225,14 +225,15 @@ const ConversationCard = ({
   onClick,
   currentUserId
 }: { 
-  conversation: Conversation;
+  conversation: ChatConversation;
   isSelected: boolean; 
   onClick: () => void; 
   currentUserId?: string;
 }) => {
   const otherParticipant = conversation.participant1_id === currentUserId ? 
     conversation.participant2 : conversation.participant1;
-  const { isOnline } = useUserOnlineStatus(otherParticipant?.id || '');
+  // const { isOnline } = useUserOnlineStatus(otherParticipant?.id || '');
+  const isOnline = false; // Placeholder
 
   return (
     <div
@@ -278,14 +279,15 @@ const ChatHeader = ({
   isMobileView,
   currentUserId
 }: { 
-  conversation: Conversation; 
+  conversation: ChatConversation; 
   onBack: () => void; 
   isMobileView: boolean; 
   currentUserId?: string;
 }) => {
   const otherParticipant = conversation.participant1_id === currentUserId ? 
     conversation.participant2 : conversation.participant1;
-  const { isOnline } = useUserOnlineStatus(otherParticipant?.id || '');
+  // const { isOnline } = useUserOnlineStatus(otherParticipant?.id || '');
+  const isOnline = false; // Placeholder
 
   return (
     <div className="border-b p-4 bg-gradient-to-r from-orange-50 to-red-50">
