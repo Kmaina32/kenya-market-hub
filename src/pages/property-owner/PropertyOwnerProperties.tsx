@@ -154,9 +154,9 @@ const PropertyOwnerProperties = () => {
                       <TableCell>
                         <div className="flex items-start space-x-3">
                           <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
-                            {property.images && property.images.length > 0 ? (
+                            {property.images && (property.images as string[]).length > 0 ? (
                               <img 
-                                src={property.images[0]} 
+                                src={(property.images as string[])[0]} 
                                 alt={property.title}
                                 className="w-full h-full object-cover rounded-lg"
                               />

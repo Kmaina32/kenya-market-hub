@@ -72,14 +72,14 @@ const PropertyOwnerEditProperty = () => {
         location_address: property.location_address || '',
         county: property.county || '',
         city: property.city || '',
-        amenities: property.amenities || [],
-        features: property.features || [],
+        amenities: (property.amenities as string[]) || [],
+        features: (property.features as string[]) || [],
         contact_phone: property.contact_phone || '',
         contact_email: property.contact_email || '',
         available_from: property.available_from || '',
         is_featured: property.is_featured || false
       });
-      setExistingImages(property.images || []);
+      setExistingImages((property.images as string[]) || []);
     }
   }, [property]);
 
