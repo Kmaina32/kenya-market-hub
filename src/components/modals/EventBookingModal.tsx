@@ -9,7 +9,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Calendar, User, Mail, Phone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCartContext } from '@/contexts/CartContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useMutation } from '@tanstack/react-query';
 
 interface EventBookingModalProps {
   isOpen: boolean;
@@ -26,7 +27,6 @@ const EventBookingModal = ({ isOpen, onClose, event }: EventBookingModalProps) =
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { addToCart } = useCartContext();
   
   const [formData, setFormData] = useState({
     fullName: '',
@@ -34,6 +34,85 @@ const EventBookingModal = ({ isOpen, onClose, event }: EventBookingModalProps) =
     phone: '',
     tickets: 1,
     specialRequests: ''
+  });
+
+  // Create event booking mutation
+  const createBookingMutation = useMutation({
+    mutationFn: async () => {
+      if (!user || !event) throw new Error('Missing user or event data');
+
+      // Create a temporary order for the event tickets
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: user.id,
+          total_amount: event.price * formData.tickets,
+          status: 'pending',
+          shipping_address: '', // Not applicable for events
+          shipping_city: '',
+          contact_phone: formData.phone,
+          contact_email: formData.email,
+          payment_method: 'pending',
+          payment_status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // Store event booking details in order metadata or create a separate booking record
+      // For now, we'll use the order system and navigate to checkout
+      return {
+        orderId: order.id,
+        eventData: {
+          eventId: event.id,
+          eventTitle: event.title,
+          eventDate: event.date,
+          tickets: formData.tickets,
+          totalAmount: event.price * formData.tickets,
+          bookingDetails: {
+            fullName: formData.fullName,
+            email: formData.email,
+            phone: formData.phone,
+            specialRequests: formData.specialRequests
+          }
+        }
+      };
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Booking Created",
+        description: `${formData.tickets} ticket(s) for ${event?.title} reserved. Proceeding to payment.`,
+      });
+
+      // Navigate to checkout with event booking data
+      navigate('/checkout', {
+        state: {
+          isEventBooking: true,
+          orderId: data.orderId,
+          eventData: data.eventData
+        }
+      });
+      
+      onClose();
+      
+      // Reset form
+      setFormData({
+        fullName: '',
+        email: user?.email || '',
+        phone: '',
+        tickets: 1,
+        specialRequests: ''
+      });
+    },
+    onError: (error: any) => {
+      console.error('Booking error:', error);
+      toast({
+        title: "Booking Failed",
+        description: error.message || "Failed to create booking. Please try again.",
+        variant: "destructive"
+      });
+    }
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -50,28 +129,7 @@ const EventBookingModal = ({ isOpen, onClose, event }: EventBookingModalProps) =
 
     if (!event) return;
 
-    // Add event tickets to cart using the correct method
-    for (let i = 0; i < formData.tickets; i++) {
-      addToCart(event.id, 1);
-    }
-    
-    toast({
-      title: "Tickets Added to Cart",
-      description: `${formData.tickets} ticket(s) for ${event.title} added to your cart.`,
-    });
-
-    // Close modal and navigate to checkout
-    onClose();
-    navigate('/checkout');
-    
-    // Reset form
-    setFormData({
-      fullName: '',
-      email: user?.email || '',
-      phone: '',
-      tickets: 1,
-      specialRequests: ''
-    });
+    createBookingMutation.mutate();
   };
 
   const handleInputChange = (field: string, value: string | number) => {
@@ -164,8 +222,12 @@ const EventBookingModal = ({ isOpen, onClose, event }: EventBookingModalProps) =
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               Cancel
             </Button>
-            <Button type="submit" className="flex-1">
-              Book Now
+            <Button 
+              type="submit" 
+              className="flex-1"
+              disabled={createBookingMutation.isPending}
+            >
+              {createBookingMutation.isPending ? 'Processing...' : 'Book Now'}
             </Button>
           </div>
         </form>
