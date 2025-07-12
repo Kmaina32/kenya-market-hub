@@ -1,22 +1,19 @@
-// src/components/PaymentMethodSelector.tsx
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { CreditCard, Smartphone, DollarSign } from 'lucide-react';
-import { useMpesaPayment, usePayPalPayment, useStripePayment, type PaymentData } from '@/hooks/usePayments';
+import { Label } from '@/components/ui/label';
+import { CreditCard, Smartphone, DollarSign, Loader2 } from 'lucide-react';
+import MpesaPayment from '@/components/MpesaPayment';
+import { PaymentData } from '@/hooks/usePayments';
 
-// Export the interface so it can be used by parent components
 export interface PaymentMethodSelectorProps {
   paymentData: PaymentData;
-  onPaymentSuccess: () => void;
+  onPaymentSuccess: (paymentDetails?: { transactionId?: string; paymentMethod?: string }) => void;
   onCancel: () => void;
 }
 
-// Re-export PaymentData for external usage
 export type { PaymentData } from '@/hooks/usePayments';
 
 const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
@@ -25,47 +22,35 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   onCancel
 }) => {
   const [selectedMethod, setSelectedMethod] = useState<'mpesa' | 'paypal' | 'stripe'>('mpesa');
-  const [phoneNumber, setPhoneNumber] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const mpesaPayment = useMpesaPayment();
-  const paypalPayment = usePayPalPayment();
-  const stripePayment = useStripePayment();
+  const handleMpesaSuccess = (transactionId: string) => {
+    onPaymentSuccess({ transactionId, paymentMethod: 'mpesa' });
+  };
 
-  const handlePayment = async () => {
+  const handleMpesaError = (error: string) => {
+    console.error('M-Pesa payment error:', error);
+  };
+
+  const handleOtherPayment = async () => {
     setIsProcessing(true);
-
-    try {
-      switch (selectedMethod) {
-        case 'mpesa':
-          if (!phoneNumber) {
-            throw new Error('Phone number is required for M-Pesa');
-          }
-          await mpesaPayment.mutateAsync({ ...paymentData, phoneNumber });
-          break;
-        case 'paypal':
-          const paypalResult = await paypalPayment.mutateAsync(paymentData);
-          window.location.href = paypalResult.approvalUrl;
-          break;
-        case 'stripe':
-          const stripeResult = await stripePayment.mutateAsync(paymentData);
-          console.log('Stripe client secret:', stripeResult.clientSecret);
-          break;
-      }
-      onPaymentSuccess();
-    } catch (error) {
-      console.error('Payment error:', error);
-    } finally {
+    
+    // Simulate other payment methods
+    setTimeout(() => {
       setIsProcessing(false);
-    }
+      onPaymentSuccess({ 
+        transactionId: `${selectedMethod.toUpperCase()}_${Date.now()}`, 
+        paymentMethod: selectedMethod 
+      });
+    }, 2000);
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <CreditCard className="h-5 w-5" />
-          Select Payment Method
+          Complete Your Payment
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -76,6 +61,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
               {paymentData.currency} {paymentData.amount.toLocaleString()}
             </span>
           </div>
+          <p className="text-sm text-gray-600 mt-1">{paymentData.description}</p>
         </div>
 
         <RadioGroup value={selectedMethod} onValueChange={(value: any) => setSelectedMethod(value)}>
@@ -90,23 +76,23 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
             </Label>
           </div>
 
-          <div className="flex items-center space-x-2 p-3 border rounded-lg">
-            <RadioGroupItem value="paypal" id="paypal" />
+          <div className="flex items-center space-x-2 p-3 border rounded-lg opacity-60">
+            <RadioGroupItem value="paypal" id="paypal" disabled />
             <Label htmlFor="paypal" className="flex items-center gap-2 cursor-pointer flex-1">
               <DollarSign className="h-4 w-4 text-blue-600" />
               <div>
-                <div className="font-medium">PayPal</div>
+                <div className="font-medium">PayPal (Coming Soon)</div>
                 <div className="text-sm text-gray-600">Pay with PayPal account</div>
               </div>
             </Label>
           </div>
 
-          <div className="flex items-center space-x-2 p-3 border rounded-lg">
-            <RadioGroupItem value="stripe" id="stripe" />
+          <div className="flex items-center space-x-2 p-3 border rounded-lg opacity-60">
+            <RadioGroupItem value="stripe" id="stripe" disabled />
             <Label htmlFor="stripe" className="flex items-center gap-2 cursor-pointer flex-1">
               <CreditCard className="h-4 w-4 text-purple-600" />
               <div>
-                <div className="font-medium">Credit/Debit Card</div>
+                <div className="font-medium">Credit/Debit Card (Coming Soon)</div>
                 <div className="text-sm text-gray-600">Pay with Visa, Mastercard, etc.</div>
               </div>
             </Label>
@@ -114,39 +100,40 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
         </RadioGroup>
 
         {selectedMethod === 'mpesa' && (
-          <div className="space-y-2">
-            <Label htmlFor="phone">M-Pesa Phone Number</Label>
-            <Input
-              id="phone"
-              type="tel"
-              placeholder="254712345678"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              className="w-full"
-            />
-            <p className="text-sm text-gray-600">
-              Enter your M-Pesa registered phone number
-            </p>
-          </div>
+          <MpesaPayment
+            amount={paymentData.amount}
+            orderId={paymentData.orderId}
+            onSuccess={handleMpesaSuccess}
+            onError={handleMpesaError}
+          />
         )}
 
-        <div className="flex gap-3 pt-4">
-          <Button 
-            variant="outline" 
-            onClick={onCancel}
-            className="flex-1"
-            disabled={isProcessing}
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handlePayment}
-            className="flex-1 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
-            disabled={isProcessing || (selectedMethod === 'mpesa' && !phoneNumber)}
-          >
-            {isProcessing ? 'Processing...' : `Pay ${paymentData.currency} ${paymentData.amount}`}
-          </Button>
-        </div>
+        {selectedMethod !== 'mpesa' && (
+          <div className="flex gap-3 pt-4">
+            <Button 
+              variant="outline" 
+              onClick={onCancel}
+              className="flex-1"
+              disabled={isProcessing}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleOtherPayment}
+              className="flex-1 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                `Pay ${paymentData.currency} ${paymentData.amount}`
+              )}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

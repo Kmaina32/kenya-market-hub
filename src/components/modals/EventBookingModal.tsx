@@ -7,6 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Calendar, User, Mail, Phone } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCartContext } from '@/contexts/CartContext';
 
 interface EventBookingModalProps {
   isOpen: boolean;
@@ -21,9 +24,13 @@ interface EventBookingModalProps {
 
 const EventBookingModal = ({ isOpen, onClose, event }: EventBookingModalProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { addItem } = useCartContext();
+  
   const [formData, setFormData] = useState({
     fullName: '',
-    email: '',
+    email: user?.email || '',
     phone: '',
     tickets: 1,
     specialRequests: ''
@@ -41,21 +48,46 @@ const EventBookingModal = ({ isOpen, onClose, event }: EventBookingModalProps) =
       return;
     }
 
-    console.log('Event booking submitted:', { event, ...formData });
+    if (!event) return;
+
+    // Create a virtual product for the event ticket
+    const eventTicket = {
+      id: event.id,
+      name: `${event.title} - Event Ticket`,
+      price: event.price,
+      quantity: formData.tickets,
+      image: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=400',
+      category: 'events',
+      description: `Event: ${event.title}\nDate: ${new Date(event.date).toLocaleDateString()}\nTickets: ${formData.tickets}`,
+      booking_details: {
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        specialRequests: formData.specialRequests,
+        eventDate: event.date
+      }
+    };
+
+    // Add to cart and navigate to checkout
+    addItem(eventTicket);
     
     toast({
-      title: "Booking Confirmed!",
-      description: `Your tickets for ${event?.title} have been reserved.`,
+      title: "Tickets Added to Cart",
+      description: `${formData.tickets} ticket(s) for ${event.title} added to your cart.`,
     });
 
+    // Close modal and navigate to checkout
+    onClose();
+    navigate('/checkout');
+    
+    // Reset form
     setFormData({
       fullName: '',
-      email: '',
+      email: user?.email || '',
       phone: '',
       tickets: 1,
       specialRequests: ''
     });
-    onClose();
   };
 
   const handleInputChange = (field: string, value: string | number) => {
@@ -107,7 +139,7 @@ const EventBookingModal = ({ isOpen, onClose, event }: EventBookingModalProps) =
               id="phone"
               value={formData.phone}
               onChange={(e) => handleInputChange('phone', e.target.value)}
-              placeholder="Enter your phone number"
+              placeholder="254712345678"
               required
             />
           </div>
@@ -149,7 +181,7 @@ const EventBookingModal = ({ isOpen, onClose, event }: EventBookingModalProps) =
               Cancel
             </Button>
             <Button type="submit" className="flex-1">
-              Book Tickets
+              Book Now
             </Button>
           </div>
         </form>

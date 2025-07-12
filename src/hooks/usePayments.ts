@@ -1,19 +1,19 @@
 
 import { useMutation } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useCreateTransaction, useUpdateTransactionStatus } from './useTransactions';
-import { useAuth } from '@/contexts/AuthContext';
 
 export interface PaymentData {
+  orderId: string;
   amount: number;
   currency: string;
-  orderId: string;
+  description: string;
   customerInfo: {
     name: string;
     email: string;
-    phone?: string;
+    phone: string;
   };
-  shippingInfo?: { 
+  shippingInfo?: {
     address: string;
     city: string;
     phone: string;
@@ -23,71 +23,31 @@ export interface PaymentData {
 
 export const useMpesaPayment = () => {
   const { toast } = useToast();
-  const { user } = useAuth();
-  const createTransaction = useCreateTransaction();
-  const updateTransaction = useUpdateTransactionStatus();
 
   return useMutation({
     mutationFn: async (paymentData: PaymentData & { phoneNumber: string }) => {
-      console.log('Processing M-Pesa payment:', paymentData);
-      
-      if (!user) {
-        throw new Error('User must be authenticated to make payment');
-      }
-      
-      // Create transaction record with user_id
-      const transaction = await createTransaction.mutateAsync({
-        order_id: paymentData.orderId,
-        payment_method: 'mpesa',
-        amount: paymentData.amount,
-        user_id: user.id,
-        payment_data: {
-          phone_number: paymentData.phoneNumber,
-          customer_info: paymentData.customerInfo
+      const { data, error } = await supabase.functions.invoke('mpesa-payment', {
+        body: {
+          phoneNumber: paymentData.phoneNumber,
+          amount: paymentData.amount,
+          orderId: paymentData.orderId
         }
       });
 
-      // Simulate M-Pesa STK Push
-      const mpesaResponse = await fetch('/api/mpesa/stkpush', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          phone_number: paymentData.phoneNumber,
-          amount: paymentData.amount,
-          order_id: paymentData.orderId,
-          transaction_id: transaction.id
-        }),
-      });
-
-      if (!mpesaResponse.ok) {
-        throw new Error('M-Pesa payment failed');
-      }
-
-      const result = await mpesaResponse.json();
-      
-      // Update transaction with M-Pesa response
-      await updateTransaction.mutateAsync({
-        id: transaction.id,
-        status: 'pending',
-        transaction_id: result.CheckoutRequestID
-      });
-
-      return result;
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       toast({
-        title: 'M-Pesa Payment Initiated',
-        description: 'Please complete the payment on your phone.',
+        title: "Payment Request Sent",
+        description: "Please check your phone and complete the M-Pesa payment.",
       });
     },
-    onError: (error) => {
-      console.error('M-Pesa payment error:', error);
+    onError: (error: any) => {
       toast({
-        title: 'Payment Failed',
-        description: 'M-Pesa payment could not be processed.',
-        variant: 'destructive',
+        title: "Payment Failed",
+        description: error.message || "Failed to initiate M-Pesa payment",
+        variant: "destructive",
       });
     },
   });
@@ -95,62 +55,17 @@ export const useMpesaPayment = () => {
 
 export const usePayPalPayment = () => {
   const { toast } = useToast();
-  const { user } = useAuth();
-  const createTransaction = useCreateTransaction();
 
   return useMutation({
     mutationFn: async (paymentData: PaymentData) => {
-      console.log('Processing PayPal payment:', paymentData);
-      
-      if (!user) {
-        throw new Error('User must be authenticated to make payment');
-      }
-      
-      // Create transaction record with user_id
-      const transaction = await createTransaction.mutateAsync({
-        order_id: paymentData.orderId,
-        payment_method: 'paypal',
-        amount: paymentData.amount,
-        user_id: user.id,
-        payment_data: {
-          currency: paymentData.currency,
-          customer_info: paymentData.customerInfo
-        }
-      });
-
-      // Simulate PayPal integration
-      const paypalResponse = await fetch('/api/paypal/create-order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          amount: paymentData.amount,
-          currency: paymentData.currency,
-          order_id: paymentData.orderId,
-          transaction_id: transaction.id
-        }),
-      });
-
-      if (!paypalResponse.ok) {
-        throw new Error('PayPal payment failed');
-      }
-
-      const result = await paypalResponse.json();
-      return { ...result, transactionId: transaction.id };
+      // Simulate PayPal payment
+      return { approvalUrl: '#' };
     },
-    onSuccess: () => {
+    onError: (error: any) => {
       toast({
-        title: 'PayPal Payment Initiated',
-        description: 'Redirecting to PayPal...',
-      });
-    },
-    onError: (error) => {
-      console.error('PayPal payment error:', error);
-      toast({
-        title: 'Payment Failed',
-        description: 'PayPal payment could not be processed.',
-        variant: 'destructive',
+        title: "PayPal Payment Failed",
+        description: error.message,
+        variant: "destructive",
       });
     },
   });
@@ -158,62 +73,17 @@ export const usePayPalPayment = () => {
 
 export const useStripePayment = () => {
   const { toast } = useToast();
-  const { user } = useAuth();
-  const createTransaction = useCreateTransaction();
 
   return useMutation({
     mutationFn: async (paymentData: PaymentData) => {
-      console.log('Processing Stripe payment:', paymentData);
-      
-      if (!user) {
-        throw new Error('User must be authenticated to make payment');
-      }
-      
-      // Create transaction record with user_id
-      const transaction = await createTransaction.mutateAsync({
-        order_id: paymentData.orderId,
-        payment_method: 'stripe',
-        amount: paymentData.amount,
-        user_id: user.id,
-        payment_data: {
-          currency: paymentData.currency,
-          customer_info: paymentData.customerInfo
-        }
-      });
-
-      // Simulate Stripe integration
-      const stripeResponse = await fetch('/api/stripe/create-payment-intent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          amount: paymentData.amount * 100, // Stripe uses cents
-          currency: paymentData.currency,
-          order_id: paymentData.orderId,
-          transaction_id: transaction.id
-        }),
-      });
-
-      if (!stripeResponse.ok) {
-        throw new Error('Stripe payment failed');
-      }
-
-      const result = await stripeResponse.json();
-      return { ...result, transactionId: transaction.id };
+      // Simulate Stripe payment
+      return { clientSecret: 'mock_client_secret' };
     },
-    onSuccess: () => {
+    onError: (error: any) => {
       toast({
-        title: 'Stripe Payment Initiated',
-        description: 'Processing your payment...',
-      });
-    },
-    onError: (error) => {
-      console.error('Stripe payment error:', error);
-      toast({
-        title: 'Payment Failed',
-        description: 'Stripe payment could not be processed.',
-        variant: 'destructive',
+        title: "Card Payment Failed",
+        description: error.message,
+        variant: "destructive",
       });
     },
   });
