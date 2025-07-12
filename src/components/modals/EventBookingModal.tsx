@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -52,7 +51,7 @@ const EventBookingModal = ({ isOpen, onClose, event }: EventBookingModalProps) =
           shipping_city: '',
           contact_phone: formData.phone,
           contact_email: formData.email,
-          payment_method: 'M-Pesa', // Use a valid payment method value
+          payment_method: 'M-Pesa', // Use valid payment method from constraint
           payment_status: 'pending'
         })
         .select()
