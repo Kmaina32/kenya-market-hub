@@ -52,7 +52,7 @@ const EventBookingModal = ({ isOpen, onClose, event }: EventBookingModalProps) =
           shipping_city: '',
           contact_phone: formData.phone,
           contact_email: formData.email,
-          payment_method: 'pending',
+          payment_method: 'M-Pesa', // Use a valid payment method value
           payment_status: 'pending'
         })
         .select()
