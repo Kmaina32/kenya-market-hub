@@ -26,7 +26,7 @@ const EventBookingModal = ({ isOpen, onClose, event }: EventBookingModalProps) =
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { addItem } = useCartContext();
+  const { addToCart } = useCartContext();
   
   const [formData, setFormData] = useState({
     fullName: '',
@@ -50,26 +50,10 @@ const EventBookingModal = ({ isOpen, onClose, event }: EventBookingModalProps) =
 
     if (!event) return;
 
-    // Create a virtual product for the event ticket
-    const eventTicket = {
-      id: event.id,
-      name: `${event.title} - Event Ticket`,
-      price: event.price,
-      quantity: formData.tickets,
-      image: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=400',
-      category: 'events',
-      description: `Event: ${event.title}\nDate: ${new Date(event.date).toLocaleDateString()}\nTickets: ${formData.tickets}`,
-      booking_details: {
-        fullName: formData.fullName,
-        email: formData.email,
-        phone: formData.phone,
-        specialRequests: formData.specialRequests,
-        eventDate: event.date
-      }
-    };
-
-    // Add to cart and navigate to checkout
-    addItem(eventTicket);
+    // Add event tickets to cart using the correct method
+    for (let i = 0; i < formData.tickets; i++) {
+      addToCart(event.id, 1);
+    }
     
     toast({
       title: "Tickets Added to Cart",
