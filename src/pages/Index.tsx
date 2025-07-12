@@ -1,4 +1,3 @@
-
 import React from 'react';
 import FrontendLayout from '@/components/layouts/FrontendLayout';
 import HomeHeroSection from '@/components/shared/HomeHeroSection';
@@ -156,30 +155,31 @@ const Index = () => {
             </div>
           </div>
         </div>
-
-        {/* CTA Section */}
-        <div className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 py-16">
-          <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-white mb-4">
+        {/* Call to Action Section - MODIFIED */}
+        <div className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 py-16
+         mx-4 sm:mx-6 lg:mx-8 rounded-3xl shadow-xl mt-12 mb-12"> {/* Added these classes */}
+          <div className="max-w-4xl mx-auto text-center px-6 sm:px-8 lg:px-12"> {/* Kept inner padding for content */}
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4"> {/* Increased text size for impact */}
               Ready to Get Started?
             </h2>
-            <p className="text-xl text-orange-100 mb-8">
+            <p className="text-lg md:text-xl text-orange-100 mb-8 max-w-2xl mx-auto"> {/* Adjusted text size and added max-width */}
               Join thousands of users who trust Sokko Sasa for their daily needs.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/auth">
-                <Button size="lg" className="bg-white text-orange-600 hover:bg-gray-100 font-semibold px-8 py-3">
+                <Button size="lg" className="bg-orange-600 text-white hover:bg-orange-700 font-semibold px-8 py-3 !rounded-full">
                   Sign Up Today
                 </Button>
               </Link>
               <Link to="/shop">
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-orange-600 font-semibold px-8 py-3">
+                <Button size="lg" variant="outline" className="border-white text-orange-600 bg-white hover:bg-orange-50 font-semibold px-8 py-3 !rounded-full">
                   Start Shopping
                 </Button>
               </Link>
             </div>
           </div>
         </div>
+        
       </div>
     </FrontendLayout>
   );
