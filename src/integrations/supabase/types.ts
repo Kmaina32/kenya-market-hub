@@ -3024,10 +3024,6 @@ export type Database = {
           estimated_pickup_minutes: number
         }[]
       }
-      get_current_user_role: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
       get_driver_analytics: {
         Args: Record<PropertyKey, never> | { p_driver_id: string }
         Returns: Json
