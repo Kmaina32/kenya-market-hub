@@ -15,15 +15,16 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 
-interface NotificationType {
+// Use the actual Supabase notification type instead of custom interface
+type NotificationType = {
   id: string;
   title: string;
   message: string;
   is_read: boolean;
   created_at: string;
-  type: 'success' | 'warning' | 'error' | 'info';
-  action_url?: string;
-}
+  type: string;
+  action_url?: string | null;
+};
 
 const NotificationDropdown = () => {
   const {
@@ -52,7 +53,7 @@ const NotificationDropdown = () => {
     toast.success('Notification deleted');
   };
 
-  const getNotificationIcon = (type: NotificationType['type'] | string) => {
+  const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'success':
         return <CheckCircle className="h-3 w-3 text-green-500" />;
@@ -109,7 +110,7 @@ const NotificationDropdown = () => {
           </div>
         ) : (
           <div className="max-h-96 overflow-y-auto">
-            {notifications.slice(0, 10).map((notification: NotificationType) => (
+            {notifications.slice(0, 10).map((notification) => (
               <DropdownMenuItem
                 key={notification.id}
                 className={
