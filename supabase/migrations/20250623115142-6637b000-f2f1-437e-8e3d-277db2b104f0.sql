@@ -1,4 +1,3 @@
-
 -- Fix remaining performance and security warnings - handle existing policies
 -- This addresses broken RLS policies, missing constraints, and security issues
 
@@ -38,11 +37,11 @@ CREATE POLICY "Anyone can view products" ON public.products
 CREATE POLICY "Vendors can manage their products" ON public.products
   FOR ALL USING (
     vendor_id IN (SELECT id FROM public.vendors WHERE user_id = auth.uid()) OR
-    EXISTS(SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin')
+    has_role(auth.uid(), 'admin'::user_role) -- Replaced EXISTS with has_role
   )
   WITH CHECK (
     vendor_id IN (SELECT id FROM public.vendors WHERE user_id = auth.uid()) OR
-    EXISTS(SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin')
+    has_role(auth.uid(), 'admin'::user_role) -- Replaced EXISTS with has_role
   );
 
 -- 4. Add missing RLS policies for tables - drop existing first
@@ -94,7 +93,7 @@ CREATE POLICY "Users can manage own orders" ON public.orders
   WITH CHECK (user_id = auth.uid());
 
 CREATE POLICY "Admins can view all orders" ON public.orders
-  FOR SELECT USING (EXISTS(SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin'));
+  FOR SELECT USING (has_role(auth.uid(), 'admin'::user_role)); -- Replaced EXISTS with has_role
 
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users can view own order items" ON public.order_items;
@@ -161,8 +160,8 @@ CREATE POLICY "Property owners can manage their properties" ON public.properties
   WITH CHECK (owner_id = auth.uid());
 
 CREATE POLICY "Admins can manage all properties" ON public.properties
-  FOR ALL USING (EXISTS(SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin'))
-  WITH CHECK (EXISTS(SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin'));
+  FOR ALL USING (has_role(auth.uid(), 'admin'::user_role)) -- Replaced EXISTS with has_role
+  WITH CHECK (has_role(auth.uid(), 'admin'::user_role)); -- Replaced EXISTS with has_role
 
 -- 9. Add constraints to ensure data integrity
 DO $$
@@ -171,17 +170,17 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'products_price_positive') THEN
         ALTER TABLE public.products ADD CONSTRAINT products_price_positive CHECK (price >= 0);
     END IF;
-    
+
     -- Add orders total constraint
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'orders_total_positive') THEN
         ALTER TABLE public.orders ADD CONSTRAINT orders_total_positive CHECK (total_amount >= 0);
     END IF;
-    
+
     -- Add order items quantity constraint
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'order_items_quantity_positive') THEN
         ALTER TABLE public.order_items ADD CONSTRAINT order_items_quantity_positive CHECK (quantity > 0);
     END IF;
-    
+
     -- Add order items price constraint
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'order_items_price_positive') THEN
         ALTER TABLE public.order_items ADD CONSTRAINT order_items_price_positive CHECK (unit_price >= 0);
