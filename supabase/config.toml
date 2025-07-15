@@ -1,4 +1,3 @@
-
 project_id = "qkiupbzdobltnmpkacsu"
 
 [api]
@@ -12,12 +11,20 @@ max_rows = 1000
 enabled = true
 port = 54320
 site_url = "https://qkiupbzdobltnmpkacsu.lovable.app"
-additional_redirect_urls = ["https://localhost:3000"]
+additional_redirect_urls = [
+  "https://localhost:3000",
+  "http://localhost:3000",
+  "https://qkiupbzdobltnmpkacsu.lovable.app/**"
+]
 jwt_expiry = 3600
 enable_signup = true
 enable_confirmations = false
+# Add these settings to help with token refresh issues
+refresh_token_rotation_enabled = true
+security_refresh_token_reuse_interval = 10
 
 [functions]
+enabled = true
 
 [functions.mpesa-payment]
 verify_jwt = true
@@ -30,3 +37,11 @@ enabled = true
 port = 54322
 shadow_port = 54320
 major_version = 15
+
+# Add connection pooling to prevent connection issues
+[db.pooler]
+enabled = true
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
