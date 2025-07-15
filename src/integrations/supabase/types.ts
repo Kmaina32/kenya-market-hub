@@ -3053,6 +3053,10 @@ export type Database = {
         Args: { property_id_param: string }
         Returns: undefined
       }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       list_backups: {
         Args: Record<PropertyKey, never>
         Returns: {
