@@ -1,18 +1,12 @@
 // In src/pages/ChatForums.tsx
-import React from 'react'; // Removed useState
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Forum } from '@/types/chat';
 import MainLayout from '@/components/MainLayout';
 import { MessageCircle, Loader2 } from 'lucide-react';
-// Removed: Tabs, TabsContent, TabsList, TabsTrigger, Badge, Home, Bell, Users, TrendingUp
 
 function ChatForums() {
-  // Removed: const [currentTab, setCurrentTab] = useState('messages');
-  // Removed: const [unreadNotifications] = useState(3);
-  // Removed: const contentPaddingBottom = `pb-[${bottomNavHeightPx / 16}rem]`;
-  // Removed: const navBarWidthClasses = 'w-full lg:max-w-[calc(66.666667%_-_1.5rem)] lg:mx-auto';
-
   const { data: forums, isLoading, error } = useQuery<Forum[], Error>({
     queryKey: ['chatForums'],
     queryFn: async () => {
@@ -32,10 +26,8 @@ function ChatForums() {
   });
 
   return (
-    // The MainLayout will handle the overall structure including the top/bottom navigation.
     <MainLayout>
-      {/* Removed the flex-col and Tabs wrapper from here. */}
-      <div className="container mx-auto px-4 py-8 max-w-4xl"> {/* No dynamic padding here */}
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
         <h1 className="text-4xl font-bold text-red-800 mb-6 flex items-center">
           <MessageCircle className="w-10 h-10 mr-3 text-orange-600" />
           Chat Forums
@@ -64,16 +56,11 @@ function ChatForums() {
             ))}
           </div>
         ) : (
-          !isLoading && !error && (
+          !isLoading && !error && ( // This condition now means: if not loading, no error, and no forums found
             <div className="flex flex-col items-center justify-center h-64 bg-gray-50 rounded-lg shadow-inner">
               <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-xl text-red-700 font-medium mb-4">No forums available.</p>
-              <p className="text-md text-red-500">
-                It looks like there are no chat forums yet.
-              </p>
-              <p className="text-md text-red-500">
-                You can add new forums from your Supabase dashboard.
-              </p>
+              <p className="text-xl text-gray-700 font-medium mb-4">No forums found.</p>
+              <p className="text-md text-gray-500">It looks like there are no chat forums available right now.</p>
             </div>
           )
         )}

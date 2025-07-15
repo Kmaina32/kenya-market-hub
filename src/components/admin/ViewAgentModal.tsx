@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
@@ -19,11 +18,11 @@ const ViewAgentModal = ({ agent, isOpen, onClose }: ViewAgentModalProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-xl">
-        {/* Add DialogTitle here wrapped in VisuallyHidden for accessibility */}
-        <VisuallyHidden>
-          <DialogTitle>Agent Details</DialogTitle>
-        </VisuallyHidden>
-        <DialogHeader>
+        {/* Move DialogTitle here wrapped in VisuallyHidden for accessibility */}
+        <DialogHeader> {/* DialogHeader should wrap DialogTitle and DialogDescription */}
+          <VisuallyHidden>
+            <DialogTitle>Agent Details</DialogTitle>
+          </VisuallyHidden>
           <DialogDescription>
             Viewing details for {agent.full_name || agent.email}
           </DialogDescription>
