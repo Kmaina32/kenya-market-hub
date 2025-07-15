@@ -2440,13 +2440,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "service_bookings_provider_id_fkey"
-            columns: ["provider_id"]
-            isOneToOne: false
-            referencedRelation: "service_provider_profiles"
-            referencedColumns: ["user_id"]
-          },
-          {
             foreignKeyName: "service_bookings_service_category_id_fkey"
             columns: ["service_category_id"]
             isOneToOne: false
@@ -2478,50 +2471,53 @@ export type Database = {
       }
       service_provider_profiles: {
         Row: {
-          business_description: string | null
-          business_name: string | null
-          created_at: string | null
-          documents: Json | null
+          business_name: string
+          created_at: string
+          description: string | null
           email: string | null
+          hourly_rate_max: number
+          hourly_rate_min: number
           id: string
           is_active: boolean | null
-          location_address: string | null
-          location_coordinates: unknown | null
-          phone_number: string | null
+          location_address: string
+          phone: string | null
           provider_type: string
-          updated_at: string | null
+          rating: number | null
+          updated_at: string
           user_id: string
           verification_status: string | null
         }
         Insert: {
-          business_description?: string | null
-          business_name?: string | null
-          created_at?: string | null
-          documents?: Json | null
+          business_name: string
+          created_at?: string
+          description?: string | null
           email?: string | null
+          hourly_rate_max?: number
+          hourly_rate_min?: number
           id?: string
           is_active?: boolean | null
-          location_address?: string | null
-          location_coordinates?: unknown | null
-          phone_number?: string | null
+          location_address: string
+          phone?: string | null
           provider_type: string
-          updated_at?: string | null
+          rating?: number | null
+          updated_at?: string
           user_id: string
           verification_status?: string | null
         }
         Update: {
-          business_description?: string | null
-          business_name?: string | null
-          created_at?: string | null
-          documents?: Json | null
+          business_name?: string
+          created_at?: string
+          description?: string | null
           email?: string | null
+          hourly_rate_max?: number
+          hourly_rate_min?: number
           id?: string
           is_active?: boolean | null
-          location_address?: string | null
-          location_coordinates?: unknown | null
-          phone_number?: string | null
+          location_address?: string
+          phone?: string | null
           provider_type?: string
-          updated_at?: string | null
+          rating?: number | null
+          updated_at?: string
           user_id?: string
           verification_status?: string | null
         }
@@ -3023,6 +3019,10 @@ export type Database = {
           distance_km: number
           estimated_pickup_minutes: number
         }[]
+      }
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       get_driver_analytics: {
         Args: Record<PropertyKey, never> | { p_driver_id: string }
