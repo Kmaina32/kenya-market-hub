@@ -2,6 +2,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { Separator } from '@/components/ui/separator';
 import { Calendar, Mail, Phone, Building, User, Star, CheckCircle, XCircle, FileText } from 'lucide-react';
 import { AdminAgent } from '@/hooks/useAdminAgents';
@@ -18,11 +19,11 @@ const ViewAgentModal = ({ agent, isOpen, onClose }: ViewAgentModalProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-xl">
+        {/* Add DialogTitle here wrapped in VisuallyHidden for accessibility */}
+        <VisuallyHidden>
+          <DialogTitle>Agent Details</DialogTitle>
+        </VisuallyHidden>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Agent Details
-          </DialogTitle>
           <DialogDescription>
             Viewing details for {agent.full_name || agent.email}
           </DialogDescription>
