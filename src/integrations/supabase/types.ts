@@ -2484,7 +2484,7 @@ export type Database = {
           provider_type: string
           rating: number | null
           updated_at: string
-          user_id: string
+          user_id: string | null
           verification_status: string | null
         }
         Insert: {
@@ -2501,7 +2501,7 @@ export type Database = {
           provider_type: string
           rating?: number | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
           verification_status?: string | null
         }
         Update: {
@@ -2518,7 +2518,7 @@ export type Database = {
           provider_type?: string
           rating?: number | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
           verification_status?: string | null
         }
         Relationships: []
@@ -2555,6 +2555,44 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      sokko_chats: {
+        Row: {
+          created_at: string
+          id: string
+          provider_id: string | null
+          service_type: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          provider_id?: string | null
+          service_type?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          provider_id?: string | null
+          service_type?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sokko_chats_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       surge_pricing: {
         Row: {
@@ -3003,6 +3041,14 @@ export type Database = {
         }
         Returns: Json
       }
+      can_view_product: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      check_user_role: {
+        Args: { check_role: string }
+        Returns: boolean
+      }
       expire_old_ride_requests: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -3163,7 +3209,7 @@ export type Database = {
         | "property_owner"
         | "rider"
         | "service_provider"
-      vehicle_type: "taxi" | "motorbike"
+      vehicle_type: "taxi" | "motorbike" | "delivery"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3350,7 +3396,7 @@ export const Constants = {
         "rider",
         "service_provider",
       ],
-      vehicle_type: ["taxi", "motorbike"],
+      vehicle_type: ["taxi", "motorbike", "delivery"],
     },
   },
 } as const
