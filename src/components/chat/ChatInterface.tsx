@@ -17,7 +17,7 @@ interface ChatInterfaceProps {
   onBack?: () => void;
 }
 
-const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedConversationId, onBack }) => {
+export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedConversationId, onBack }) => {
   const [newMessage, setNewMessage] = useState('');
   const [isNewChatOpen, setIsNewChatOpen] = useState(false);
   const [userSearchTerm, setUserSearchTerm] = useState('');
@@ -231,5 +231,3 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedConversationId, o
     </Card>
   );
 };
-
-export default ChatInterface;

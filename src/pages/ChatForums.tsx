@@ -2,9 +2,11 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Forum } from '@/types/chat';
 import MainLayout from '@/components/MainLayout';
-import { MessageCircle, Loader2 } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
+// Note: Using a broader type for chat list as the component might show different chat types
+// import { Forum } from '@/types/chat'; // Might be used later if forums are reintroduced
+import { ChatInterface } from '@/components/chat/ChatInterface'; // Import the main chat component
 
 function ChatForums() {
   const { data: forums, isLoading, error } = useQuery<Forum[], Error>({
@@ -21,6 +23,7 @@ function ChatForums() {
       }
       return data as Forum[];
     },
+    // Keeping stale and gc times for potential future forum list display
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
@@ -33,37 +36,10 @@ function ChatForums() {
           Chat Forums
         </h1>
 
-        {isLoading && (
-          <div className="flex justify-center items-center h-48">
-            <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
-            <p className="text-lg text-gray-600 ml-3">Loading forums...</p>
-          </div>
-        )}
-
-        {error && (
-          <div className="flex justify-center items-center h-48">
-            <p className="text-lg text-red-600">Error loading forums: {error.message}</p>
-          </div>
-        )}
-
-        {!isLoading && !error && forums && forums.length > 0 ? (
-          <div className="space-y-4">
-            {forums.map(forum => (
-              <div key={forum.id} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-2">{forum.name}</h2>
-                <p className="text-gray-700">{forum.description || 'No description available for this forum.'}</p>
-              </div>
-            ))}
-          </div>
-        ) : (
-          !isLoading && !error && ( // This condition now means: if not loading, no error, and no forums found
-            <div className="flex flex-col items-center justify-center h-64 bg-gray-50 rounded-lg shadow-inner">
-              <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-xl text-gray-700 font-medium mb-4">No forums found.</p>
-              <p className="text-md text-gray-500">It looks like there are no chat forums available right now.</p>
-            </div>
-          )
-        )}
+        {/* Render the main ChatInterface component */}
+        <div className="h-[calc(100vh-200px)]"> {/* Adjust height as needed */}
+          <ChatInterface selectedConversationId={null} /> {/* Pass null initially as no conversation is selected */}
+        </div>
       </div>
     </MainLayout>
   );
