@@ -232,8 +232,8 @@ const EnhancedRideBooking: React.FC<EnhancedRideBookingProps> = ({
                   <Label htmlFor="motorbike" className="font-medium">Motorbike</Label>
                   <p className="text-sm text-muted-foreground">Quick & affordable</p>
                 </div>
-                <div className=\"text-right\">\n
-                <p className=\"font-medium\">KSh {Math.round(estimatedFare * 0.6)}</p>
+                <div className="text-right">
+                  <p className="font-medium">KSh {Math.round(estimatedFare * 0.6)}</p>
                   <p className="text-sm text-muted-foreground flex items-center gap-1">
                     <Clock className="h-3 w-3" />
                     ~{Math.round(estimatedTime * 0.8)} min
