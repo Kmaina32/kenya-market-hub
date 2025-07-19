@@ -601,4 +601,4 @@ const ComprehensiveChatForums = () => {
   );
 };
 
-export default ComprehensiveChatForums;
+export default ComprehensiveChatForums;  
