@@ -82,10 +82,10 @@ CREATE POLICY "Users can send messages in their conversations" ON public.chat_me
 
 -- Insert sample forum categories
 INSERT INTO public.forum_categories (name, description, post_count, member_count) VALUES
-('General Discussion', 'Talk about anything', 45, 320),
-('Business & Services', 'Discuss local businesses', 89, 450),
-('Events & Activities', 'Share local events', 67, 280),
-('Buy & Sell', 'Marketplace discussions', 123, 560);
+('General Discussion', 'Talk about anything'),
+('Business & Services', 'Discuss local businesses'),
+('Events & Activities', 'Share local events'),
+('Buy & Sell', 'Marketplace discussions');
 
 -- Create trigger to update forum post counts
 CREATE OR REPLACE FUNCTION update_forum_category_post_count()

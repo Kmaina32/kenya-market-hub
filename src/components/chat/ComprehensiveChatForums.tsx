@@ -18,16 +18,14 @@ import {
   Heart,
   MessageSquare,
   Eye,
-  Users,
-  TrendingUp,
   Clock,
   Pin,
   User,
-  Send,
-  X // Added for close icon
+  Menu // Using Menu icon for mobile drawer trigger
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'; // Import Sheet for mobile sidebar
 
 const ComprehensiveChatForums = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -79,14 +77,19 @@ const ComprehensiveChatForums = () => {
       if (activeTab === 'latest') {
         query = query.order('created_at', { ascending: false });
       } else if (activeTab === 'trending') {
-        query = query.order('view_count', { ascending: false });
+        // For 'trending', we'll sort by view_count primarily, then creation date as a tie-breaker
+        query = query.order('view_count', { ascending: false }).order('created_at', { ascending: false });
       } else if (activeTab === 'top_liked') {
+        // This sorting assumes 'likesCount' is directly available in the DB or computed server-side.
+        // Since it's client-side computed currently, for real 'top_liked' you'd need a way to order by it in Supabase.
+        // For now, it will use view_count as a proxy or rely on client-side sorting if needed.
         query = query.order('view_count', { ascending: false }); // Fallback to views if true likes count is not in DB
       }
 
       const { data, error } = await query;
       if (error) throw error;
 
+      // Client-side processing to attach derived data (likesCount, hasLiked, reply_count)
       return data?.map(post => ({
         ...post,
         hasLiked: post.reactions?.some((r: any) => r.user_id === user?.id && r.reaction_type === 'like') || false,
@@ -110,7 +113,7 @@ const ComprehensiveChatForums = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['forum-posts'] });
-      queryClient.invalidateQueries({ queryKey: ['forum-categories'] });
+      queryClient.invalidateQueries({ queryKey: ['forum-categories'] }); // Invalidate categories to update post_count
       toast.success('Post created successfully');
       setNewPost({ title: '', content: '', category_id: '' });
       setIsCreatePostOpen(false);
@@ -169,13 +172,9 @@ const ComprehensiveChatForums = () => {
     },
     // Optimistic Update
     onMutate: async ({ postId, hasLiked }) => {
-      // Cancel any outgoing refetches for this query
       await queryClient.cancelQueries({ queryKey: ['forum-posts'] });
-
-      // Snapshot the previous value
       const previousPosts = queryClient.getQueryData(['forum-posts', searchTerm, selectedCategory, activeTab]);
 
-      // Optimistically update to the new value
       queryClient.setQueryData(['forum-posts', searchTerm, selectedCategory, activeTab], (oldPosts: any) => {
         return oldPosts?.map((post: any) => {
           if (post.id === postId) {
@@ -188,16 +187,13 @@ const ComprehensiveChatForums = () => {
           return post;
         });
       });
-
-      return { previousPosts }; // Return context for onError
+      return { previousPosts };
     },
     onError: (err, variables, context) => {
       toast.error(`Failed to toggle like: ${err.message}`);
-      // If the mutation fails, use the context for a rollback
       queryClient.setQueryData(['forum-posts', searchTerm, selectedCategory, activeTab], context?.previousPosts);
     },
     onSettled: () => {
-      // Invalidate to ensure consistency, refetches in background
       queryClient.invalidateQueries({ queryKey: ['forum-posts', searchTerm, selectedCategory, activeTab] });
     }
   });
@@ -210,7 +206,6 @@ const ComprehensiveChatForums = () => {
       if (error) throw error;
     },
     onMutate: async (postId: string) => {
-      // Optimistically increment view count in UI
       await queryClient.cancelQueries({ queryKey: ['forum-posts'] });
       const previousPosts = queryClient.getQueryData(['forum-posts', searchTerm, selectedCategory, activeTab]);
       queryClient.setQueryData(['forum-posts', searchTerm, selectedCategory, activeTab], (oldPosts: any) => {
@@ -228,11 +223,10 @@ const ComprehensiveChatForums = () => {
     },
     onError: (err, variables, context) => {
       console.error("Failed to increment views:", err);
-      // Rollback if mutation fails
       queryClient.setQueryData(['forum-posts', searchTerm, selectedCategory, activeTab], context?.previousPosts);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['forum-posts'] }); // Refetch to ensure server sync
+      queryClient.invalidateQueries({ queryKey: ['forum-posts'] });
     }
   });
 
@@ -259,215 +253,201 @@ const ComprehensiveChatForums = () => {
   };
 
   return (
-    <div className="flex min-h-screen"> {/* Main flex container for X-like layout */}
+    <div className="flex min-h-screen bg-gray-50"> {/* Added a light background color */}
       {/* Left Sidebar for Categories (Desktop/Tablet) */}
-      {/* Hidden on mobile (sm:hidden), visible on md and up. Fixed position. */}
-      <aside className="hidden md:flex flex-col w-64 lg:w-72 border-r border-gray-200 bg-white p-4 sticky top-0 h-screen overflow-y-auto">
-        <Card className="shadow-none border-0"> {/* Remove card shadow/border if redundant with aside */}
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Categories</CardTitle>
+      <aside className="hidden md:flex flex-col w-64 lg:w-72 border-r border-gray-200 bg-white p-4 sticky top-0 h-screen overflow-y-auto shadow-sm"> {/* Added subtle shadow */}
+        <Card className="shadow-none border-0 bg-transparent"> {/* Ensure card blends with aside */}
+          <CardHeader className="pb-3 pt-0"> {/* Adjusted padding */}
+            <CardTitle className="text-xl font-bold text-gray-800">Categories</CardTitle> {/* Increased font size */}
           </CardHeader>
-          <CardContent className="space-y-1"> {/* Tighter spacing */}
+          <CardContent className="space-y-1.5"> {/* Adjusted tighter spacing */}
             <Button
-              variant={selectedCategory === 'all' ? 'default' : 'ghost'}
-              className="w-full justify-start text-base" // Larger text
+              variant={selectedCategory === 'all' ? 'secondary' : 'ghost'}
+              className={`w-full justify-start text-base font-medium ${selectedCategory === 'all' ? 'bg-orange-50 text-orange-700 hover:bg-orange-100' : 'hover:bg-gray-100'}`} // Applied Sokko Sasa colors
               onClick={() => setSelectedCategory('all')}
             >
               All Discussions
             </Button>
             {categoriesLoading ? (
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 {[...Array(5)].map((_, i) => (
-                  <div key={i} className="h-8 bg-gray-100 rounded animate-pulse"></div>
+                  // Slightly larger pulse
+                  <div key={i} className="h-9 bg-gray-100 rounded animate-pulse"></div>
                 ))}
               </div>
             ) : (
               categories?.map((category) => (
                 <Button
                   key={category.id}
-                  variant={selectedCategory === category.id ? 'default' : 'ghost'}
-                  className="w-full justify-between text-base" // Larger text
+                  variant={selectedCategory === category.id ? 'secondary' : 'ghost'}
+                  className={`w-full justify-between text-base font-medium ${selectedCategory === category.id ? 'bg-orange-50 text-orange-700 hover:bg-orange-100' : 'hover:bg-gray-100'}`} // Applied Sokko Sasa colors
                   onClick={() => setSelectedCategory(category.id)}
                 >
                   <span>{category.name}</span>
-                  <Badge variant="outline" className="min-w-[2rem] text-center">{category.post_count || 0}</Badge>
+                  <Badge variant="outline" className="min-w-[2.2rem] text-center text-xs px-2 py-0.5 bg-gray-50 text-gray-600 border-gray-300">{category.post_count || 0}</Badge> {/* Refined badge */}
                 </Button>
               ))
             )}
           </CardContent>
         </Card>
-        {/* Potentially add Trending card here on larger screens if desired, but Tabs handle it now */}
+        <div className="mt-6 px-4"> {/* Increased margin and padding */}
+          <Dialog open={isCreateCategoryOpen} onOpenChange={setIsCreateCategoryOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="w-full border-dashed border-gray-300 text-gray-600 hover:text-orange-600 hover:border-orange-400 transition-colors">
+                <Plus className="h-4 w-4 mr-2" /> New Category
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Create New Category</DialogTitle></DialogHeader>
+              <div className="space-y-4">
+                <Input placeholder="Category name" value={newCategory.name} onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))} />
+                <Textarea placeholder="Category description" value={newCategory.description} onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))} />
+                <Button onClick={handleCreateCategory} disabled={createCategory.isPending} className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
+                  {createCategory.isPending ? 'Creating...' : 'Create Category'}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </aside>
 
       {/* Main Content Area (Feed) */}
-      <main className="flex-1 flex flex-col max-w-full md:max-w-[calc(100%-16rem)] lg:max-w-[calc(100%-18rem)] border-l md:border-l-0 border-gray-200"> {/* Dynamic width, no left border on desktop */}
-        {/* Fixed Header Bar for Mobile/Tablet */}
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 md:hidden">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-              <MessageCircle className="w-6 h-6 mr-2 text-orange-600" />
-              Sokko Forums
-            </h1>
-            <div className="flex gap-2">
-              <Dialog open={isCreateCategoryOpen} onOpenChange={setIsCreateCategoryOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 px-3">
-                    <Plus className="h-4 w-4 mr-1" /> Category
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader><DialogTitle>Create New Category</DialogTitle></DialogHeader>
-                  <div className="space-y-4">
-                    <Input placeholder="Category name" value={newCategory.name} onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))} />
-                    <Textarea placeholder="Category description" value={newCategory.description} onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))} />
-                    <Button onClick={handleCreateCategory} disabled={createCategory.isPending} className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
-                      {createCategory.isPending ? 'Creating...' : 'Create Category'}
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-              <Dialog open={isCreatePostOpen} onOpenChange={setIsCreatePostOpen}>
-                <DialogTrigger asChild>
-                  <Button size="sm" className="h-8 px-3 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
-                    <Plus className="h-4 w-4 mr-1" /> Post
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader><DialogTitle>Create New Post</DialogTitle></DialogHeader>
-                  <div className="space-y-4">
-                    <Input placeholder="Post title" value={newPost.title} onChange={(e) => setNewPost(prev => ({ ...prev, title: e.target.value }))} />
-                    <Select value={newPost.category_id} onValueChange={(value) => setNewPost(prev => ({ ...prev, category_id: value }))}>
-                      <SelectTrigger className="w-full"><SelectValue placeholder="Select a category" /></SelectTrigger>
-                      <SelectContent>
-                        {categoriesLoading ? (<SelectItem value="loading" disabled>Loading categories...</SelectItem>) : (
-                          <>
-                            <SelectItem value="" disabled>Select a category</SelectItem>
-                            {categories?.map((category) => (<SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>))}
-                          </>
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <Textarea placeholder="Write your post content here..." value={newPost.content} onChange={(e) => setNewPost(prev => ({ ...prev, content: e.target.value }))} rows={6} />
-                    <Button onClick={handleCreatePost} disabled={createPost.isPending} className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
-                      {createPost.isPending ? 'Creating...' : 'Create Post'}
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </div>
-          {/* Mobile Categories Quick Select - visible below header on mobile */}
-          <div className="flex items-center space-x-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-            <Button
-              variant={selectedCategory === 'all' ? 'default' : 'outline'}
-              size="sm"
-              className="flex-shrink-0"
-              onClick={() => setSelectedCategory('all')}
-            >
-              All Discussions
-            </Button>
-            {categories?.map((category) => (
-              <Button
-                key={category.id}
-                variant={selectedCategory === category.id ? 'default' : 'outline'}
-                size="sm"
-                className="flex-shrink-0"
-                onClick={() => setSelectedCategory(category.id)}
-              >
-                {category.name} ({category.post_count || 0})
-              </Button>
-            ))}
-          </div>
-        </div>
+      <main className="flex-1 flex flex-col max-w-full md:max-w-[calc(100%-16rem)] lg:max-w-[calc(100%-18rem)]"> {/* Removed border-l here as it's not needed with aside border-r */}
 
-        {/* Desktop Header Area & Search (hidden on mobile, visible md and up) */}
-        <div className="hidden md:block border-b border-gray-200 px-6 py-4">
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center mb-2">
-            <MessageCircle className="w-8 h-8 mr-3 text-orange-600" />
-            Sokko Chat Forums
-          </h1>
-          <p className="text-gray-600 mb-4">Connect, discuss, and share with the community</p>
-          <div className="flex items-center justify-between gap-4 mb-4">
-            <div className="relative flex-grow">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search discussions..."
-                className="pl-10 max-w-xl"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="flex gap-2 flex-shrink-0">
-              <Dialog open={isCreateCategoryOpen} onOpenChange={setIsCreateCategoryOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline">
-                    <Plus className="h-4 w-4 mr-2" />
-                    New Category
+        {/* --- Mobile Header & Search (visible only on small screens) --- */}
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 md:hidden shadow-sm"> {/* Added shadow */}
+          <div className="flex items-center justify-between mb-3"> {/* Adjusted margin-bottom */}
+            <div className="flex items-center">
+              {/* Mobile Drawer for Categories */}
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="mr-2">
+                    <Menu className="h-6 w-6 text-gray-700" />
                   </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader><DialogTitle>Create New Category</DialogTitle></DialogHeader>
-                  <div className="space-y-4">
-                    <Input placeholder="Category name" value={newCategory.name} onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))} />
-                    <Textarea placeholder="Category description" value={newCategory.description} onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))} />
-                    <Button onClick={handleCreateCategory} disabled={createCategory.isPending} className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
-                      {createCategory.isPending ? 'Creating...' : 'Create Category'}
+                </SheetTrigger>
+                <SheetContent side="left" className="w-64 sm:w-72 p-4"> {/* Adjusted width for sheet */}
+                  <SheetHeader className="mb-4">
+                    <SheetTitle className="text-xl font-bold">Categories</SheetTitle>
+                  </SheetHeader>
+                  <div className="flex flex-col space-y-1.5"> {/* Reused category list styling */}
+                    <Button
+                      variant={selectedCategory === 'all' ? 'secondary' : 'ghost'}
+                      className={`w-full justify-start text-base font-medium ${selectedCategory === 'all' ? 'bg-orange-50 text-orange-700 hover:bg-orange-100' : 'hover:bg-gray-100'}`}
+                      onClick={() => setSelectedCategory('all')}
+                    >
+                      All Discussions
                     </Button>
+                    {categoriesLoading ? (
+                      <div className="space-y-1.5">
+                        {[...Array(5)].map((_, i) => (
+                          <div key={i} className="h-9 bg-gray-100 rounded animate-pulse"></div>
+                        ))}
+                      </div>
+                    ) : (
+                      categories?.map((category) => (
+                        <Button
+                          key={category.id}
+                          variant={selectedCategory === category.id ? 'secondary' : 'ghost'}
+                          className={`w-full justify-between text-base font-medium ${selectedCategory === category.id ? 'bg-orange-50 text-orange-700 hover:bg-orange-100' : 'hover:bg-gray-100'}`}
+                          onClick={() => setSelectedCategory(category.id)}
+                        >
+                          <span>{category.name}</span>
+                          <Badge variant="outline" className="min-w-[2.2rem] text-center text-xs px-2 py-0.5 bg-gray-50 text-gray-600 border-gray-300">{category.post_count || 0}</Badge>
+                        </Button>
+                      ))
+                    )}
+                    <div className="pt-4 mt-4 border-t border-gray-200">
+                      <Dialog open={isCreateCategoryOpen} onOpenChange={setIsCreateCategoryOpen}>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" className="w-full border-dashed border-gray-300 text-gray-600 hover:text-orange-600 hover:border-orange-400 transition-colors">
+                            <Plus className="h-4 w-4 mr-2" /> New Category
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader><DialogTitle>Create New Category</DialogTitle></DialogHeader>
+                          <div className="space-y-4">
+                            <Input placeholder="Category name" value={newCategory.name} onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))} />
+                            <Textarea placeholder="Category description" value={newCategory.description} onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))} />
+                            <Button onClick={handleCreateCategory} disabled={createCategory.isPending} className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
+                              {createCategory.isPending ? 'Creating...' : 'Create Category'}
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                   </div>
-                </DialogContent>
-              </Dialog>
-              <Dialog open={isCreatePostOpen} onOpenChange={setIsCreatePostOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Post
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader><DialogTitle>Create New Post</DialogTitle></DialogHeader>
-                  <div className="space-y-4">
-                    <Input placeholder="Post title" value={newPost.title} onChange={(e) => setNewPost(prev => ({ ...prev, title: e.target.value }))} />
-                    <Select value={newPost.category_id} onValueChange={(value) => setNewPost(prev => ({ ...prev, category_id: value }))}>
-                      <SelectTrigger className="w-full"><SelectValue placeholder="Select a category" /></SelectTrigger>
-                      <SelectContent>
-                        {categoriesLoading ? (<SelectItem value="loading" disabled>Loading categories...</SelectItem>) : (
-                          <>
-                            <SelectItem value="" disabled>Select a category</SelectItem>
-                            {categories?.map((category) => (<SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>))}
-                          </>
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <Textarea placeholder="Write your post content here..." value={newPost.content} onChange={(e) => setNewPost(prev => ({ ...prev, content: e.target.value }))} rows={6} />
-                    <Button onClick={handleCreatePost} disabled={createPost.isPending} className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
-                      {createPost.isPending ? 'Creating...' : 'Create Post'}
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </div>
-        </div>
+                </SheetContent>
+              </Sheet>
 
-        {/* Main Content Area: Search, Tabs, and Posts */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 lg:px-8">
-          {/* Mobile search bar (only visible on mobile, desktop search is in desktop header) */}
-          <div className="relative mb-4 md:hidden">
+              <h1 className="text-xl font-bold text-gray-900 flex items-center">
+                <MessageCircle className="w-5 h-5 mr-1 text-orange-600" />
+                Sokko Forums
+              </h1>
+            </div>
+            {/* Consolidated mobile action button */}
+            <Dialog open={isCreatePostOpen} onOpenChange={setIsCreatePostOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="h-9 px-4 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
+                  <Plus className="h-4 w-4 mr-1" /> Post
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader><DialogTitle>Create New Post</DialogTitle></DialogHeader>
+                <div className="space-y-4">
+                  <Input placeholder="Post title" value={newPost.title} onChange={(e) => setNewPost(prev => ({ ...prev, title: e.target.value }))} />
+                  <Select value={newPost.category_id} onValueChange={(value) => setNewPost(prev => ({ ...prev, category_id: value }))}>
+                    <SelectTrigger className="w-full"><SelectValue placeholder="Select a category" /></SelectTrigger>
+                    <SelectContent>
+                      {categoriesLoading ? (<SelectItem value="loading" disabled>Loading categories...</SelectItem>) : (
+                        <>
+                          <SelectItem value="" disabled>Select a category</SelectItem>
+                          {categories?.map((category) => (<SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>))}
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <Textarea placeholder="Write your post content here..." value={newPost.content} onChange={(e) => setNewPost(prev => ({ ...prev, content: e.target.value }))} rows={6} />
+                  <Button onClick={handleCreatePost} disabled={createPost.isPending} className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
+                    {createPost.isPending ? 'Creating...' : 'Create Post'}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Search discussions..."
-              className="pl-10"
+              className="pl-10 w-full text-base"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+        </div>
 
+        {/* Main Content Area: Tabs and Posts */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 lg:px-8"> {/* Consistent padding */}
           {/* Tabs for Post Filtering */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="latest">Latest</TabsTrigger>
-              <TabsTrigger value="trending">Trending</TabsTrigger>
-              <TabsTrigger value="top_liked">Top Liked</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 bg-gray-100 rounded-lg p-1"> {/* Styled tab list */}
+              <TabsTrigger
+                value="latest"
+                className="data-[state=active]:bg-white data-[state=active]:text-orange-600 data-[state=active]:shadow-sm transition-all text-base font-medium"
+              >
+                Latest
+              </TabsTrigger>
+              <TabsTrigger
+                value="trending"
+                className="data-[state=active]:bg-white data-[state=active]:text-orange-600 data-[state=active]:shadow-sm transition-all text-base font-medium"
+              >
+                Trending
+              </TabsTrigger>
+              <TabsTrigger
+                value="top_liked"
+                className="data-[state=active]:bg-white data-[state=active]:text-orange-600 data-[state=active]:shadow-sm transition-all text-base font-medium"
+              >
+                Top Liked
+              </TabsTrigger>
             </TabsList>
             {/* TabsContent are just containers, actual posts rendered below */}
             <TabsContent value="latest" className="mt-4 hidden"></TabsContent>
@@ -476,18 +456,19 @@ const ComprehensiveChatForums = () => {
           </Tabs>
 
           {/* Posts List */}
-          <div className="space-y-4">
+          <div className="space-y-4"> {/* Consistent space between cards */}
             {postsLoading ? (
               <div className="space-y-4">
                 {[...Array(5)].map((_, i) => (
-                  <Card key={i} className="animate-pulse shadow-sm">
-                    <CardContent className="p-4">
-                      <div className="flex items-start space-x-3">
+                  <Card key={i} className="animate-pulse shadow-sm border border-gray-200">
+                    <CardContent className="p-4 sm:p-6">
+                      <div className="flex items-start space-x-4">
                         <div className="h-10 w-10 rounded-full bg-gray-200"></div>
                         <div className="flex-1 space-y-2">
-                          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                          <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                          <div className="h-12 bg-gray-200 rounded"></div>
+                          <div className="h-5 bg-gray-200 rounded w-3/4"></div>
+                          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                          <div className="h-16 bg-gray-200 rounded"></div>
+                          <div className="h-4 bg-gray-200 rounded w-1/3 mt-4"></div>
                         </div>
                       </div>
                     </CardContent>
@@ -496,13 +477,13 @@ const ComprehensiveChatForums = () => {
               </div>
             ) : posts && posts.length > 0 ? (
               posts.map((post) => (
-                <Card key={post.id} className="border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                <Card key={post.id} className="border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200 ease-in-out cursor-pointer group"> {/* Added group for hover effects */}
                   <CardContent className="p-4 sm:p-6" onClick={() => handlePostClick(post)}>
                     <div className="flex items-start space-x-3 sm:space-x-4">
-                      <Avatar className="h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0">
+                      <Avatar className="h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0 border-2 border-gray-200 group-hover:border-orange-400 transition-colors"> {/* Avatar border on hover */}
                         <AvatarImage src={post.author?.avatar_url} />
                         <AvatarFallback>
-                          <User className="h-5 w-5 sm:h-6 sm:w-6 text-gray-500" />
+                          <User className="h-5 w-5 sm:h-6 w-6 text-gray-500" />
                         </AvatarFallback>
                       </Avatar>
 
@@ -512,15 +493,19 @@ const ComprehensiveChatForums = () => {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center space-x-1 mb-1">
                               {post.is_pinned && <Pin className="h-4 w-4 text-orange-500 flex-shrink-0" />}
-                              <h3 className="font-semibold text-base sm:text-lg text-gray-900 leading-tight truncate">{post.title}</h3>
+                              <h3 className="font-semibold text-lg sm:text-xl text-gray-900 leading-tight group-hover:text-orange-700 transition-colors truncate">
+                                {post.title}
+                              </h3>
                             </div>
-                            <div className="flex items-center flex-wrap gap-x-2 text-xs text-gray-500">
+                            <div className="flex items-center flex-wrap gap-x-2 text-sm text-gray-500"> {/* Increased font for meta */}
                               <span className="font-medium text-gray-600">{post.author?.full_name}</span>
                               <span className="text-gray-400">•</span>
-                              <Badge variant="outline" className="px-2 py-0.5">{post.category?.name}</Badge>
+                              <Badge variant="secondary" className="px-2.5 py-0.5 text-xs bg-orange-100 text-orange-700 border-orange-200">
+                                {post.category?.name}
+                              </Badge>
                               <span className="text-gray-400">•</span>
                               <span className="flex items-center">
-                                <Clock className="h-3 w-3 mr-1" />
+                                <Clock className="h-4 w-4 mr-1" />
                                 {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
                               </span>
                             </div>
@@ -528,22 +513,24 @@ const ComprehensiveChatForums = () => {
                         </div>
 
                         {/* Content Preview */}
-                        <p className="text-gray-700 text-sm sm:text-base line-clamp-3 leading-relaxed">{post.content}</p>
+                        <p className="text-gray-700 text-base line-clamp-3 leading-relaxed">
+                          {post.content}
+                        </p>
 
                         {/* Stats and Actions */}
-                        <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-2">
-                          <div className="flex items-center space-x-4 text-sm text-gray-500">
+                        <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-3">
+                          <div className="flex items-center space-x-4 text-sm text-gray-600">
                             <div className="flex items-center space-x-1">
-                              <Eye className="h-4 w-4" />
+                              <Eye className="h-4 w-4 text-gray-500" />
                               <span>{post.view_count || 0}</span>
                             </div>
                             <div className="flex items-center space-x-1">
-                              <MessageSquare className="h-4 w-4" />
+                              <MessageSquare className="h-4 w-4 text-gray-500" />
                               <span>{post.reply_count || 0}</span>
                             </div>
                           </div>
 
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center">
                             <Button
                               size="sm"
                               variant="ghost"
@@ -551,11 +538,14 @@ const ComprehensiveChatForums = () => {
                                 e.stopPropagation();
                                 toggleLike.mutate({ postId: post.id, hasLiked: post.hasLiked });
                               }}
-                              className={`${post.hasLiked ? 'text-red-500' : 'text-gray-500'} hover:text-red-600`}
+                              className={`
+                                ${post.hasLiked ? 'text-red-500 hover:text-red-600' : 'text-gray-500 hover:text-red-500'}
+                                flex items-center px-2 py-1 rounded-md transition-colors duration-200
+                              `}
                               disabled={toggleLike.isPending && toggleLike.variables?.postId === post.id}
                             >
                               <Heart className={`h-4 w-4 mr-1 ${post.hasLiked ? 'fill-current' : ''}`} />
-                              {post.likesCount}
+                              <span className="text-sm">{post.likesCount}</span>
                             </Button>
                           </div>
                         </div>
@@ -565,20 +555,42 @@ const ComprehensiveChatForums = () => {
                 </Card>
               ))
             ) : (
-              <Card className="shadow-sm border-gray-200">
+              <Card className="shadow-sm border-gray-200 bg-white">
                 <CardContent className="p-8 sm:p-12 text-center">
                   <MessageCircle className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">No discussions found</h3>
-                  <p className="text-gray-600 mb-4">
+                  <p className="text-gray-600 text-base mb-4">
                     {searchTerm ? 'Try adjusting your search terms' : 'Be the first to start a discussion!'}
                   </p>
-                  <Button
-                    onClick={() => setIsCreatePostOpen(true)}
-                    className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create First Post
-                  </Button>
+                  <Dialog open={isCreatePostOpen} onOpenChange={setIsCreatePostOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-semibold">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create First Post
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl">
+                      <DialogHeader><DialogTitle>Create New Post</DialogTitle></DialogHeader>
+                      <div className="space-y-4">
+                        <Input placeholder="Post title" value={newPost.title} onChange={(e) => setNewPost(prev => ({ ...prev, title: e.target.value }))} />
+                        <Select value={newPost.category_id} onValueChange={(value) => setNewPost(prev => ({ ...prev, category_id: value }))}>
+                          <SelectTrigger className="w-full"><SelectValue placeholder="Select a category" /></SelectTrigger>
+                          <SelectContent>
+                            {categoriesLoading ? (<SelectItem value="loading" disabled>Loading categories...</SelectItem>) : (
+                              <>
+                                <SelectItem value="" disabled>Select a category</SelectItem>
+                                {categories?.map((category) => (<SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>))}
+                              </>
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <Textarea placeholder="Write your post content here..." value={newPost.content} onChange={(e) => setNewPost(prev => ({ ...prev, content: e.target.value }))} rows={6} />
+                        <Button onClick={handleCreatePost} disabled={createPost.isPending} className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
+                          {createPost.isPending ? 'Creating...' : 'Create Post'}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </CardContent>
               </Card>
             )}
