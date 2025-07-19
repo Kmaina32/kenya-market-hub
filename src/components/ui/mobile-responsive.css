@@ -105,6 +105,22 @@
     flex-direction: column;
     gap: 0.5rem;
   }
+
+  /* Chat Interface Specific Fixes */
+  .chat-container {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .chat-messages-area {
+    padding: 0.5rem; /* Adjust padding for smaller screens */
+  }
+
+  .message-bubble {
+    max-width: 85%; /* Allow bubbles to take up more width, but not full width */
+    word-break: break-word; /* Ensure long words break */
+  }
 }
 
 /* Medium screen fixes */

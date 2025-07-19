@@ -68,7 +68,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedConversati
   };
 
   return (
-    <Card className="h-full flex flex-col shadow-lg border-0 rounded-lg overflow-hidden">
+    <Card className="h-full flex flex-col shadow-lg border-0 rounded-lg overflow-hidden chat-container"> {/* Added chat-container class */}
       {selectedConversationId && selectedConversationData ? (
         <>
           {/* Chat Header */}
@@ -95,7 +95,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedConversati
           </CardHeader>
 
           {/* Chat Messages Area */}
-          <CardContent className="flex-1 p-4 overflow-y-auto space-y-4 bg-gray-50">
+          <CardContent className="flex-1 p-4 overflow-y-auto space-y-4 bg-gray-50 chat-messages-area"> {/* Added chat-messages-area class */}
             {messagesLoading ? (
               <div className="flex justify-center items-center h-32">
                 <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
@@ -116,7 +116,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedConversati
                   }`}
                 >
                   <div
-                    className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl shadow-md ${
+                    className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl shadow-md message-bubble ${
                       message.sender_id === user?.id
                         ? 'bg-gradient-to-r from-orange-500 to-red-600 text-white'
                         : 'bg-gray-100 text-gray-900'
