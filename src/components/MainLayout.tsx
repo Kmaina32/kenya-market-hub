@@ -1,10 +1,9 @@
-
 import React from 'react';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'; // Assuming SidebarProvider manages sidebar visibility
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { WifiOff, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import AppSidebar from './AppSidebar';
+import AppSidebar from './AppSidebar'; // This component is key for mobile responsiveness
 import UserNav from './UserNav';
 import NotificationDropdown from './NotificationDropdown';
 import GlobalSearch from './GlobalSearch';
@@ -27,12 +26,33 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
   return (
     <SidebarProvider>
+      {/*
+        The main container for the entire layout.
+        On small screens, the sidebar will likely be off-canvas,
+        so the main content area should span the full width.
+        On larger screens, the sidebar will be fixed, and the main content
+        area will sit next to it.
+      */}
       <div className="min-h-screen flex w-full bg-gray-50">
+        {/* AppSidebar is crucial here. It must be implemented to:
+          - Be fixed and visible on larger screens (e.g., `lg:w-64 lg:flex-shrink-0 lg:static`).
+          - Be off-canvas (hidden by default, slides out) on smaller screens 
+            (e.g., `fixed inset-y-0 left-0 z-50 transform -translate-x-full transition-transform duration-300 ease-in-out sm:translate-x-0 sm:static` 
+            controlled by a state from SidebarProvider).
+          - Have an appropriate width on desktop (e.g., w-64 or w-72).
+        */}
         <AppSidebar />
-        <main className="flex-1 flex flex-col">
+
+        {/* Main content area. This will expand to fill the remaining space.
+          On mobile, it should effectively take up 100% width, as the sidebar is off-canvas.
+          On desktop, it will take the space next to the fixed sidebar.
+        */}
+        <main className="flex-1 flex flex-col overflow-x-hidden"> {/* Added overflow-x-hidden here */}
+          {/* Header */}
           <div className="sticky top-0 z-40 flex items-center justify-between border-b border-gray-200 bg-white px-3 sm:px-6 py-3 shadow-sm">
             <div className="flex items-center gap-2 sm:gap-4 flex-1">
-              <SidebarTrigger className="hover:bg-orange-50 hover:text-orange-600" />
+              <SidebarTrigger className="hover:bg-orange-50 hover:text-orange-600" aria-label="Toggle Sidebar" /> 
+              {/* Logo & Sokko Sasa text - visible on small screens, hidden on md and up */}
               <div className="flex items-center space-x-2 sm:space-x-3 md:hidden">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg overflow-hidden flex-shrink-0">
                   <img 
@@ -50,7 +70,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                 </div>
               </div>
               
-              {/* Global Search - Hidden on small screens */}
+              {/* Global Search - Hidden on small screens, flex on md and up */}
               <div className="hidden md:flex flex-1 max-w-2xl">
                 <GlobalSearch />
               </div>
@@ -63,6 +83,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                 size="icon"
                 onClick={handleCartClick}
                 className="relative hover:bg-orange-50 hover:text-orange-600"
+                aria-label="Shopping Cart" 
               >
                 <ShoppingCart className="h-5 w-5" />
                 <CartQuantityBadge />
@@ -82,7 +103,9 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             </Alert>
           )}
           
-          <div className="flex-1">
+          {/* Main content area for children. Use padding for inner spacing. */}
+          {/* Added p-4 for general padding to prevent content from touching edges */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6"> 
             {children}
           </div>
           

@@ -293,7 +293,7 @@ const ComprehensiveChatForums = () => {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-4">
+      <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-4 gap-6"> {/* Modified grid classes */}
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Categories */}
