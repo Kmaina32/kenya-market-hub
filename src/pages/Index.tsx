@@ -3,7 +3,7 @@ import FrontendLayout from '@/components/layouts/FrontendLayout';
 import HomeHeroSection from '@/components/shared/HomeHeroSection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, ShoppingBag, Car, Home, Briefcase, Calendar, MessageCircle, Shield } from 'lucide-react';
+import { ArrowRight, ShoppingBag, Car, Home, Briefcase, Calendar, MessageCircle, Shield, Package, Truck } from 'lucide-react'; 
 import { Link } from 'react-router-dom';
 import SEOManager from '@/components/seo/SEOManager';
 import AdvertisementPopup from '@/components/ads/AdvertisementPopup';
@@ -133,7 +133,7 @@ const Index = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"> {/* Adjusted grid columns */}
               <div className="text-center">
                 <div className="mx-auto w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center mb-6">
                   <Shield className="h-8 w-8 text-orange-600" />
@@ -146,26 +146,37 @@ const Index = () => {
               
               <div className="text-center">
                 <div className="mx-auto w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-6">
-                  <MessageCircle className="h-8 w-8 text-green-600" />
+                  <Package className="h-8 w-8 text-green-600" /> 
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Wide Selection of Local Products</h3>
+                <p className="text-gray-600">
+                  Support local businesses and find unique products from vendors near you.
+                </p>
+              </div>
+              
+              <div className="text-center">
+                <div className="mx-auto w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mb-6">
+                  <Truck className="h-8 w-8 text-blue-600" /> 
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Fast and Reliable Delivery</h3>
+                <p className="text-gray-600">
+                  Get your orders delivered quickly and reliably right to your doorstep.
+                </p>
+              </div>
+               
+               <div className="text-center">
+                <div className="mx-auto w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mb-6"> 
+                  <MessageCircle className="h-8 w-8 text-purple-600" /> 
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-3">24/7 Support</h3>
                 <p className="text-gray-600">
                   Our dedicated support team is always here to help you succeed.
                 </p>
               </div>
-              
-              <div className="text-center">
-                <div className="mx-auto w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mb-6">
-                  <Briefcase className="h-8 w-8 text-blue-600" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">Local Focus</h3>
-                <p className="text-gray-600">
-                  Designed specifically for African markets with local payment methods.
-                </p>
-              </div>
             </div>
           </div>
         </div>
+
         {/* Call to Action Section - MODIFIED */}
         <div className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 py-16
          mx-4 sm:mx-6 lg:mx-8 rounded-3xl shadow-xl mt-12 mb-12"> {/* Added these classes */}
