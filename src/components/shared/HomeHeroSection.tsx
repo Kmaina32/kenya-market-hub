@@ -24,7 +24,7 @@ const HomeHeroSection = () => {
       }}
     >
       <div className="absolute inset-0 bg-black bg-opacity-40 rounded-b-3xl" />
-      <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-16">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-12">{/* Changed py-16 to py-12 */}
         <div className="text-center">
           <h1 className="text-3xl md:text-5xl font-bold mb-6">
             Everything You Need,

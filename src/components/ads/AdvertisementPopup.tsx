@@ -27,7 +27,7 @@ interface AdvertisementPopupProps {
 
 const AdvertisementPopup: React.FC<AdvertisementPopupProps> = ({ 
   isEnabled = true, 
-  intervalMinutes = 8 // Changed to 8 minutes
+  intervalMinutes = 10 // Changed to 10 minutes
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentAd, setCurrentAd] = useState<Advertisement | null>(null);
@@ -50,14 +50,14 @@ const AdvertisementPopup: React.FC<AdvertisementPopupProps> = ({
     // Initial check after 30 seconds
     const initialTimeout = setTimeout(checkAndShowAd, 30000);
     
-    // Regular interval check (still check every minute, but ad only shows every 8 mins)
-    const interval = setInterval(checkAndShowAd, 60000); 
+    // Regular interval check (still check every minute, but ad only shows after intervalMinutes)
+    const interval = setInterval(checkAndShowAd, 60000); // Check every minute
 
     return () => {
       clearTimeout(initialTimeout);
       clearInterval(interval);
     };
-  }, [isEnabled, intervalMinutes, lastShown]);
+  }, [isEnabled, intervalMinutes, lastShown]); // Dependency array is correct
 
   const fetchAndShowAd = async () => {
     try {
