@@ -167,11 +167,7 @@ const DriverProfile = () => {
                   </div>
                   <div>
                     <Label htmlFor="vehicle_model">Vehicle Model</Label>
-                    <Input
-                      id="vehicle_model"
-                      value={formData.vehicle_model}
-                      <Input id="editVehicleModel" value={formData.vehicle_model} onChange={(e) => setFormData({ ...formData, vehicle_model: e.target.value })} className="col-span-3" />
-                    />
+                    <Input id="editVehicleModel" value={formData.vehicle_model} onChange={(e) => setFormData({ ...formData, vehicle_model: e.target.value })} className="col-span-3" />
                   </div>
                   <div>
                     <Label htmlFor="vehicle_year">Vehicle Year</Label>
