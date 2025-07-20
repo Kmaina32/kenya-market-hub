@@ -18,8 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { format, addDays, isPast } from 'date-fns';
 import { Calendar as CalendarPicker } from '@/components/ui/calendar';
 import { DateRange } from 'react-day-picker';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'; // Import Dialog components
-
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 // --- Interfaces for better type safety and clarity ---
 interface Event {
@@ -63,13 +62,14 @@ const Events: React.FC = () => {
   const [showPreviewModal, setShowPreviewModal] = useState(false); // New state for preview modal
 
   // Debounced search term for better performance
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
     }, 500);
     return () => clearTimeout(timer);
   }, [searchTerm]);
+
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
 
   const { data: events, isLoading, isFetching, refetch } = useQuery<Event[]>({
     queryKey: ['events', debouncedSearchTerm, selectedEventType, sortBy, priceFilter, dateRange],
@@ -546,7 +546,7 @@ const Events: React.FC = () => {
           event={selectedEvent}
         />
 
-        {/* New Event Preview Modal */}
+        {/* Updated Event Preview Modal */}
         <EventPreviewModal
           isOpen={showPreviewModal}
           onClose={() => setShowPreviewModal(false)}
@@ -659,7 +659,7 @@ const EventListItem = React.memo(({ event, handleBookEvent, handleShareEvent, ha
   );
 });
 
-// --- New Event Preview Modal Component ---
+// --- Updated Event Preview Modal Component ---
 interface EventPreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -669,7 +669,7 @@ interface EventPreviewModalProps {
 }
 
 const EventPreviewModal: React.FC<EventPreviewModalProps> = ({ isOpen, onClose, event, onBook, onShare }) => {
-  if (!event) return null; // Don't render if no event is selected
+  if (!event) return null;
 
   const isFree = event.price === 0;
   const isFull = event.max_attendees && event.current_attendees && event.current_attendees >= event.max_attendees;
@@ -677,7 +677,7 @@ const EventPreviewModal: React.FC<EventPreviewModalProps> = ({ isOpen, onClose, 
 
   const handleBookClick = () => {
     onBook(event);
-    onClose(); // Close preview modal after initiating booking
+    onClose();
   };
 
   const handleShareClick = () => {
@@ -686,15 +686,23 @@ const EventPreviewModal: React.FC<EventPreviewModalProps> = ({ isOpen, onClose, 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden">
-        {event.image_url ? (
-          <img src={event.image_url} alt={event.title} className="w-full h-48 object-cover" />
-        ) : (
-          <div className="w-full h-48 bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
-            <Calendar className="h-20 w-20 text-white/70" />
-          </div>
-        )}
-        <div className="p-6">
+      <DialogContent
+        className="
+          p-0 overflow-hidden flex flex-col
+          max-w-[calc(100vw-2rem)] sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl
+          max-h-[90vh] sm:max-h-[90vh]
+        " // Adjusted classes for mobile size and max height
+      >
+        <div className="flex-shrink-0"> {/* Ensure image doesn't stretch */}
+          {event.image_url ? (
+            <img src={event.image_url} alt={event.title} className="w-full h-48 object-cover" />
+          ) : (
+            <div className="w-full h-48 bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
+              <Calendar className="h-20 w-20 text-white/70" />
+            </div>
+          )}
+        </div>
+        <div className="p-6 flex-1 overflow-y-auto"> {/* Added overflow-y-auto for scrollable content */}
           <DialogHeader className="mb-4">
             <DialogTitle className="text-2xl font-bold text-gray-900">{event.title}</DialogTitle>
             <DialogDescription className="text-gray-700 mt-2 text-base leading-relaxed">
@@ -738,30 +746,30 @@ const EventPreviewModal: React.FC<EventPreviewModalProps> = ({ isOpen, onClose, 
               </div>
             )}
           </div>
+        </div> {/* End of scrollable content div */}
 
-          <DialogFooter className="flex flex-col sm:flex-row sm:justify-between items-center pt-4 border-t border-gray-100">
-            <span className="text-3xl font-extrabold text-orange-600 mb-4 sm:mb-0">
-              {isFree ? 'FREE' : `KSh ${event.price.toLocaleString()}`}
-            </span>
-            <div className="flex gap-3">
-              <Button
-                onClick={handleBookClick}
-                className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-md"
-                disabled={isFull || isPastEvent}
-              >
-                <Ticket className="h-4 w-4 mr-1" />
-                {isPastEvent ? 'Event Ended' : isFull ? 'Sold Out' : 'Book Now'}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleShareClick}
-                className="border-orange-200 text-orange-600 hover:bg-orange-50 shadow-sm"
-              >
-                <Share2 className="h-4 w-4" /> Share
-              </Button>
-            </div>
-          </DialogFooter>
-        </div>
+        <DialogFooter className="flex flex-col sm:flex-row sm:justify-between items-center p-6 pt-4 border-t border-gray-100 flex-shrink-0">
+          <span className="text-3xl font-extrabold text-orange-600 mb-4 sm:mb-0">
+            {isFree ? 'FREE' : `KSh ${event.price.toLocaleString()}`}
+          </span>
+          <div className="flex gap-3">
+            <Button
+              onClick={handleBookClick}
+              className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-md"
+              disabled={isFull || isPastEvent}
+            >
+              <Ticket className="h-4 w-4 mr-1" />
+              {isPastEvent ? 'Event Ended' : isFull ? 'Sold Out' : 'Book Now'}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleShareClick}
+              className="border-orange-200 text-orange-600 hover:bg-orange-50 shadow-sm"
+            >
+              <Share2 className="h-4 w-4" /> Share
+            </Button>
+          </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
