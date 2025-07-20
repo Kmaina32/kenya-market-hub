@@ -1,40 +1,80 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Mail, X } from 'lucide-react';
+import { Mail, X, Loader2 } from 'lucide-react'; // Import Loader2 icon
 
+// TODO: Import your authentication hook or context
+// import { useAuth } from '@/contexts/AuthContext';
 
 const NewsletterNotification = () => {
-  // TODO: Implement logic to check if user is signed up for newsletter
+  // TODO: Get user from your authentication hook/context
+  // const { user } = useAuth();
+  const user = null; // Placeholder: Replace with actual user object
+
   const [isSignedUp, setIsSignedUp] = useState(false); 
-  // TODO: Implement logic to track last time notification was shown using local storage
-  const [isVisible, setIsVisible] = useState(true); 
+  const [isVisible, setIsVisible] = useState(false); // Set initial state to false
   const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(true); // Add loading state
 
-  // TODO: Add useEffect to check signup status and last shown time on mount
+  // Effect to check signup status and last shown time on mount
   useEffect(() => {
-    // Placeholder logic:
-    const lastShown = localStorage.getItem('lastNewsletterNotificationShown');
-    const oneDay = 24 * 60 * 60 * 1000; // milliseconds in a day
-    const now = new Date().getTime();
+    const checkStatus = async () => {
+      setIsLoading(true); // Start loading
+      
+      // TODO: Fetch actual newsletter signup status for the user
+      // If user is logged in, fetch from your backend/database
+      // const userSignupStatus = await fetchUserNewsletterStatus(user.id);
+      // setIsSignedUp(userSignupStatus);
 
-    if (lastShown && (now - parseInt(lastShown) < oneDay)) {
-      setIsVisible(false); // Hide if shown within the last day
-    } else {
-       // TODO: Check if user is actually signed up (requires backend check)
-       // For now, assuming not signed up if not shown recently
-       setIsVisible(!isSignedUp); // Show if not shown recently and not signed up
-    }
+      // Placeholder: Assume not signed up for now
+      const userSignedUp = false; 
+      setIsSignedUp(userSignedUp);
 
-  }, [isSignedUp]); // Re-run effect if signup status changes
+      const lastShown = localStorage.getItem('lastNewsletterNotificationShown');
+      const oneDay = 24 * 60 * 60 * 1000; // milliseconds in a day
+      const now = new Date().getTime();
 
-  const handleSignup = () => {
+      if (!userSignedUp && (!lastShown || (now - parseInt(lastShown) >= oneDay))) {
+        // Show if not signed up AND (never shown OR shown more than a day ago)
+        setIsVisible(true);
+      } else {
+        setIsVisible(false);
+      }
+      
+      setIsLoading(false); // End loading
+    };
+
+    checkStatus();
+
+  }, [user]); // Re-run effect when user object changes
+
+  const handleSignup = async () => {
     // TODO: Implement newsletter signup logic (requires backend integration)
     console.log('Attempting to sign up with:', email);
-    // On successful signup:
-    // setIsSignedUp(true);
-    // setIsVisible(false); // Hide notification after signup
-    // localStorage.setItem('lastNewsletterNotificationShown', new Date().getTime().toString()); // Update last shown time
+    setIsLoading(true); // Indicate signup in progress
+    
+    try {
+      // TODO: Call your backend API to subscribe the email
+      // const signupSuccess = await subscribeToNewsletter(email);
+
+      const signupSuccess = true; // Placeholder: Assume signup is successful
+
+      if (signupSuccess) {
+        setIsSignedUp(true);
+        setIsVisible(false); // Hide notification after successful signup
+        localStorage.setItem('lastNewsletterNotificationShown', new Date().getTime().toString()); // Update last shown time
+        // TODO: Show a success message to the user
+        console.log('Newsletter signup successful!');
+      } else {
+         // TODO: Handle signup failure (show error message)
+         console.error('Newsletter signup failed.');
+      }
+    } catch (error) {
+       // TODO: Handle errors during signup
+       console.error('Error during newsletter signup:', error);
+    } finally {
+      setIsLoading(false); // End loading
+    }
   };
 
   const handleDismiss = () => {
@@ -43,8 +83,9 @@ const NewsletterNotification = () => {
     localStorage.setItem('lastNewsletterNotificationShown', new Date().getTime().toString());
   };
 
-  if (!isVisible || isSignedUp) {
-    return null; // Don't render if not visible or already signed up
+  // Render nothing if loading or not visible
+  if (isLoading || !isVisible) {
+    return null;
   }
 
   return (
@@ -72,13 +113,14 @@ const NewsletterNotification = () => {
         <Button 
           onClick={handleSignup}
           className="bg-orange-600 text-white hover:bg-orange-700 font-semibold px-4 py-2 rounded-md text-sm"
+          disabled={isLoading} // Disable button while loading
         >
+           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           Subscribe
         </Button>
       </div>
     </div>
   );
 };
-
 
 export default NewsletterNotification;

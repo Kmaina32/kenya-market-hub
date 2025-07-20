@@ -11,6 +11,7 @@ import Footer from './Footer';
 import CartQuantityBadge from './CartQuantityBadge';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useNavigate } from 'react-router-dom';
+import NewsletterNotification from './NewsletterNotification'; // Import NewsletterNotification
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -111,6 +112,10 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           
           {/* Footer only in MainLayout */}
           <Footer />
+
+          {/* Newsletter Notification */}
+          <NewsletterNotification />
+
         </main>
       </div>
     </SidebarProvider>

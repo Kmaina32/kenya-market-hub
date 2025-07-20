@@ -64,9 +64,9 @@ const Index = () => {
   return (
     <FrontendLayout>
       <SEOManager
-        title="Sokko Sasa - Africa's Smart Marketplace | Shop, Ride, Connect"
-        description="Discover everything you need on Sokko Sasa - Kenya's premier marketplace. Shop products, book rides, find properties, hire services, and connect with your community all in one place."
-        keywords="Sokko Sasa, Kenya marketplace, online shopping Kenya, taxi booking Kenya, property Kenya, services Kenya, events Kenya"
+        title="Sokko Sasa Kenya: Online Shopping, Taxi, Real Estate & Local Services in Nairobi"
+        description="Sokko Sasa is Kenya's smart marketplace. Shop online for products in Nairobi, book rides, find properties for rent/sale, hire professional services, and discover events across Kenya."
+        keywords="Sokko Sasa, Kenya marketplace, online shopping Kenya, taxi booking Nairobi, ride hailing Kenya, property for sale Nairobi, apartments for rent Kilimani, professional services Kenya, events Nairobi, local businesses Kenya, buy electronics Kenya, find jobs Kenya, community forums Kenya"
         url={window.location.origin}
         type="website"
       />
