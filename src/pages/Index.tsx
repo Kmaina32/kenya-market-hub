@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, ShoppingBag, Car, Home, Briefcase, Calendar, MessageCircle, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SEOManager from '@/components/seo/SEOManager';
-import AdvertisementBanner from '@/components/ads/AdvertisementBanner';
 import AdvertisementPopup from '@/components/ads/AdvertisementPopup';
 import AdvertisementBillboard from '@/components/ads/AdvertisementBillboard';
 
@@ -96,10 +95,6 @@ const Index = () => {
             </p>
           </div>
 
-          {/* Advertisement Banner */}
-          <div className="mb-8">
-            <AdvertisementBanner size="medium" />
-          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {services.map((service, index) => (

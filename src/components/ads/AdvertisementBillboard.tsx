@@ -62,6 +62,7 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
           .limit(5);
 
         if (products) {
+          console.log('Fetched products for billboard:', products);
           products.forEach(product => {
             advertisements.push({
               id: product.id,
@@ -88,6 +89,7 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
           .limit(3);
 
         if (services) {
+           console.log('Fetched services for billboard:', services);
           services.forEach(service => {
             advertisements.push({
               id: service.id.toString(),
