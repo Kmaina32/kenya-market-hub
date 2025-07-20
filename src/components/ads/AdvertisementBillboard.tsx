@@ -151,32 +151,35 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
         <div className={`absolute inset-0 bg-gradient-to-r ${getAdTypeGradient(currentAd.type)}`} />
 
         {/* Content */}
-        <div className="relative z-10 p-8 lg:p-12 text-white">
+        <div className="relative z-10 p-4 sm:p-6 lg:p-12 text-white">
           <div className={`${layout === 'horizontal' ? 'flex items-center justify-between' : 'space-y-6'}`}>
-            <div className={`${layout === 'horizontal' ? 'flex-1 pr-8' : ''}`}>
+            <div className={`${layout === 'horizontal' ? 'flex-1 pr-4 lg:pr-8' : ''}`}>
               {/* Header */}
-              <div className="flex items-center space-x-3 mb-4">
-                <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+              <div className="flex items-center space-x-2 sm:space-x-3 mb-3 sm:mb-4">
+                <Badge variant="secondary" className="bg-white/20 text-white border-white/30 text-xs">
                   {currentAd.type.toUpperCase()}
                 </Badge>
                 {currentAd.category && (
-                  <Badge variant="outline" className="border-white/30 text-white">
+                  <Badge variant="outline" className="border-white/30 text-white text-xs">
                     {currentAd.category}
                   </Badge>
                 )}
               </div>
 
               {/* Title and Description */}
-              <h2 className="text-3xl lg:text-4xl font-bold mb-3 leading-tight">
-                {currentAd.title}
+              <h2 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold mb-2 sm:mb-3 leading-tight line-clamp-2">
+                {currentAd.title.length > 60 ? `${currentAd.title.substring(0, 60)}...` : currentAd.title}
               </h2>
               
               {currentAd.vendor && (
-                <p className="text-lg opacity-90 mb-2">by {currentAd.vendor}</p>
+                <p className="text-sm sm:text-base lg:text-lg opacity-90 mb-2 line-clamp-1">by {currentAd.vendor}</p>
               )}
               
-              <p className="text-lg opacity-95 mb-6 leading-relaxed max-w-2xl">
-                {currentAd.description}
+              <p className="text-sm sm:text-base lg:text-lg opacity-95 mb-4 sm:mb-6 leading-relaxed max-w-2xl line-clamp-2 sm:line-clamp-3">
+                {currentAd.description?.length > 120 ? 
+                  `${currentAd.description.substring(0, 120)}...` : 
+                  currentAd.description
+                }
               </p>
 
               {/* Details */}

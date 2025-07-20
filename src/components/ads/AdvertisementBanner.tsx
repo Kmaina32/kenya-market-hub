@@ -138,9 +138,9 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
           <X className="h-3 w-3" />
         </Button>
 
-        <div className="flex items-center space-x-4 h-full">
+        <div className="flex items-center space-x-3 sm:space-x-4 h-full">
           {currentAd.image_url && (
-            <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-white/10">
+            <div className="flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 rounded-lg overflow-hidden bg-white/10">
               <LazyImage 
                 src={currentAd.image_url} 
                 alt={currentAd.title}
@@ -155,14 +155,21 @@ const AdvertisementBanner: React.FC<AdvertisementBannerProps> = ({
                 {currentAd.type.toUpperCase()}
               </Badge>
               {currentAd.category && (
-                <Badge variant="outline" className="border-white/30 text-white text-xs">
+                <Badge variant="outline" className="border-white/30 text-white text-xs hidden sm:inline-flex">
                   {currentAd.category}
                 </Badge>
               )}
             </div>
             
-            <h3 className="font-semibold truncate mb-1">{currentAd.title}</h3>
-            <p className="text-sm opacity-90 line-clamp-2">{currentAd.description}</p>
+            <h3 className="font-semibold text-sm sm:text-base line-clamp-1 mb-1">
+              {currentAd.title.length > 40 ? `${currentAd.title.substring(0, 40)}...` : currentAd.title}
+            </h3>
+            <p className="text-xs sm:text-sm opacity-90 line-clamp-1 sm:line-clamp-2">
+              {currentAd.description?.length > 80 ? 
+                `${currentAd.description.substring(0, 80)}...` : 
+                currentAd.description
+              }
+            </p>
             
             <div className="flex items-center justify-between mt-2">
               <div className="flex items-center space-x-3 text-sm">
