@@ -27,7 +27,7 @@ interface AdvertisementPopupProps {
 
 const AdvertisementPopup: React.FC<AdvertisementPopupProps> = ({ 
   isEnabled = true, 
-  intervalMinutes = 5 
+  intervalMinutes = 8 // Changed to 8 minutes
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentAd, setCurrentAd] = useState<Advertisement | null>(null);
@@ -39,7 +39,7 @@ const AdvertisementPopup: React.FC<AdvertisementPopupProps> = ({
     const checkAndShowAd = () => {
       const now = Date.now();
       const timeSinceLastShown = now - lastShown;
-      const intervalMs = intervalMinutes * 60 * 1000;
+      const intervalMs = intervalMinutes * 60 * 1000; // Calculate interval in milliseconds
 
       if (timeSinceLastShown >= intervalMs) {
         fetchAndShowAd();
@@ -50,8 +50,8 @@ const AdvertisementPopup: React.FC<AdvertisementPopupProps> = ({
     // Initial check after 30 seconds
     const initialTimeout = setTimeout(checkAndShowAd, 30000);
     
-    // Regular interval check
-    const interval = setInterval(checkAndShowAd, 60000); // Check every minute
+    // Regular interval check (still check every minute, but ad only shows every 8 mins)
+    const interval = setInterval(checkAndShowAd, 60000); 
 
     return () => {
       clearTimeout(initialTimeout);
@@ -163,7 +163,7 @@ const AdvertisementPopup: React.FC<AdvertisementPopupProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="max-w-md w-[90vw] p-0 rounded-2xl overflow-hidden">
+      <DialogContent className="max-w-sm w-[90vw] p-0 rounded-2xl overflow-hidden"> {/* Changed max-w-md to max-w-sm */}
         <div className="relative">
           <Button
             variant="ghost"

@@ -35,17 +35,17 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
 
   useEffect(() => {
     fetchAdvertisements();
-  }, [showCategories]);
+  }, [JSON.stringify(showCategories)]); // Fetch ads only when the content of showCategories changes
 
   useEffect(() => {
-    if (ads.length > 1) {
+    if (ads.length > 0) { // Only start interval if there are ads
       const interval = setInterval(() => {
         setCurrentIndex((prev) => (prev + 1) % ads.length);
       }, 8000); // Change every 8 seconds
 
-      return () => clearInterval(interval);
+      return () => clearInterval(interval); // Clear interval on component unmount or when ads change
     }
-  }, [ads.length]);
+  }, [ads]); // Restart interval if ads array changes
 
   const fetchAdvertisements = async () => {
     setIsLoading(true);
@@ -110,6 +110,8 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
       setIsLoading(false);
     }
   };
+
+  console.log('AdvertisementBillboard ads length:', ads.length);
 
   if (isLoading) {
     return (
