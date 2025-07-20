@@ -170,7 +170,7 @@ const DriverProfile = () => {
                     <Input
                       id="vehicle_model"
                       value={formData.vehicle_model}
-                      onChange={(e) => setFormData({ ...formData, vehicle_model: e.target.value })}
+                      <Input id="editVehicleModel" value={formData.vehicle_model} onChange={(e) => setFormData({ ...formData, vehicle_model: e.target.value })} className="col-span-3" />
                     />
                   </div>
                   <div>
