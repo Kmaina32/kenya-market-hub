@@ -41,11 +41,19 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
     if (ads.length > 0) { // Only start interval if there are ads
       const interval = setInterval(() => {
         setCurrentIndex((prev) => (prev + 1) % ads.length);
-      }, 8000); // Change every 8 seconds
+      }, 30000); // Change every 30 seconds
 
       return () => clearInterval(interval); // Clear interval on component unmount or when ads change
+    } else if (!isLoading) {
+      // If no ads fetched and not loading, clear interval just in case
+      const interval = setInterval(() => {}, 1000); // Dummy interval to get an ID
+      clearInterval(interval);
     }
-  }, [ads]); // Restart interval if ads array changes
+
+    // This dependency array was causing the loop
+    // It's now correctly dependent on 'ads'
+  }, [ads, isLoading]); // Restart interval if ads array changes or loading state changes
+
 
   const fetchAdvertisements = async () => {
     setIsLoading(true);
@@ -156,8 +164,8 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
 
         {/* Content */}
         <div className="relative z-10 p-4 sm:p-6 lg:p-12 text-white">
-          <div className={`${layout === 'horizontal' ? 'flex items-center justify-between' : 'space-y-6'}`}>
-            <div className={`${layout === 'horizontal' ? 'flex-1 pr-4 lg:pr-8' : ''}`}>
+          <div className={`${layout === 'horizontal' ? 'flex flex-col lg:flex-row items-center justify-between' : 'space-y-6'}`}> {/* Added flex classes for responsiveness */}
+            <div className={`${layout === 'horizontal' ? 'flex-1 pr-0 lg:pr-8' : ''}`}> {/* Adjusted padding for responsiveness */}
               {/* Header */}
               <div className="flex items-center space-x-2 sm:space-x-3 mb-3 sm:mb-4">
                 <Badge variant="secondary" className="bg-white/20 text-white border-white/30 text-xs">
@@ -220,9 +228,9 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
               </Button>
             </div>
 
-            {/* Right side image for horizontal layout */}
+            {/* Image (visible on all screen sizes in horizontal layout) */}
             {layout === 'horizontal' && currentAd.image_url && (
-              <div className="hidden lg:block flex-shrink-0 w-80 h-64 rounded-lg overflow-hidden bg-white/10 backdrop-blur-sm">
+              <div className="flex-shrink-0 w-full lg:w-80 h-48 lg:h-64 rounded-lg overflow-hidden bg-white/10 backdrop-blur-sm mt-4 lg:mt-0"> {/* Removed hidden lg:block and adjusted size/margin */}
                 <LazyImage 
                   src={currentAd.image_url} 
                   alt={currentAd.title}
