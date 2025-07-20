@@ -44,20 +44,20 @@ const ProductPreviewModal = ({ open, onOpenChange, product }: ProductPreviewModa
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto p-0 rounded-2xl">
+      <DialogContent className="max-w-5xl max-h-[95vh] w-[95vw] sm:w-full overflow-y-auto p-0 rounded-2xl mobile-safe-padding">
         <div className="relative">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => onOpenChange(false)}
-            className="absolute top-4 right-4 z-50 bg-white/90 hover:bg-white rounded-full p-2"
+            className="fixed top-2 right-2 sm:absolute sm:top-4 sm:right-4 z-50 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg"
           >
             <X className="h-4 w-4" />
           </Button>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
             {/* Enhanced Image Carousel Section */}
-            <div className="relative bg-gray-50 p-6">
+            <div className="relative bg-gray-50 p-3 sm:p-6">
               <Carousel className="w-full">
                 <CarouselContent>
                   {images.map((image, index) => (
@@ -105,7 +105,7 @@ const ProductPreviewModal = ({ open, onOpenChange, product }: ProductPreviewModa
             </div>
             
             {/* Product Details Section */}
-            <div className="p-8 space-y-6">
+            <div className="p-4 sm:p-8 space-y-4 sm:space-y-6">
               <DialogHeader>
                 <DialogTitle className="text-2xl lg:text-3xl font-bold text-gray-900">
                   {product.name}
