@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
   Calendar, MapPin, Clock, Users, Ticket, Search, Share2,
-  Filter, DollarSign, Loader2, List, Grid, CheckCircle
+  Filter, DollarSign, Loader2, List, Grid, CheckCircle, Info
 } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
 import { useQuery } from '@tanstack/react-query';
@@ -17,7 +17,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format, addDays, isPast } from 'date-fns';
 import { Calendar as CalendarPicker } from '@/components/ui/calendar';
-import { DateRange } from 'react-day-picker'; // Fixed: Import DateRange from react-day-picker
+import { DateRange } from 'react-day-picker';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'; // Import Dialog components
+
 
 // --- Interfaces for better type safety and clarity ---
 interface Event {
@@ -58,6 +60,7 @@ const Events: React.FC = () => {
 
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false); // New state for preview modal
 
   // Debounced search term for better performance
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
@@ -120,7 +123,13 @@ const Events: React.FC = () => {
   const handleBookEvent = useCallback((event: Event) => {
     setSelectedEvent(event);
     setShowBookingModal(true);
+    setShowPreviewModal(false); // Close preview if open
     toast.success(`Booking process for "${event.title}" started.`);
+  }, []);
+
+  const handlePreviewEvent = useCallback((event: Event) => {
+    setSelectedEvent(event);
+    setShowPreviewModal(true);
   }, []);
 
   const handleShareEvent = useCallback((event: Event) => {
@@ -140,7 +149,7 @@ const Events: React.FC = () => {
   }, [refetch]);
 
   // --- Event Card Component (Memoized for performance) ---
-  const EventCard = React.memo(({ event }: { event: Event }) => {
+  const EventCard = React.memo(({ event, onPreview, onBook, onShare }: { event: Event; onPreview: (event: Event) => void; onBook: (event: Event) => void; onShare: (event: Event) => void; }) => {
     const isFree = event.price === 0;
     const isFull = event.max_attendees && event.current_attendees && event.current_attendees >= event.max_attendees;
     const isPastEvent = isPast(new Date(event.date));
@@ -151,7 +160,10 @@ const Events: React.FC = () => {
           isPastEvent ? 'opacity-70 bg-gray-100 cursor-not-allowed' : 'hover:shadow-lg hover:border-orange-400 bg-white'
         }`}
       >
-        <div className="aspect-video bg-gray-200 relative overflow-hidden">
+        <div
+          className="aspect-video bg-gray-200 relative overflow-hidden cursor-pointer" // Add cursor-pointer
+          onClick={() => onPreview(event)} // Handle preview on image/header click
+        >
           {event.image_url ? (
             <img
               src={event.image_url}
@@ -179,7 +191,7 @@ const Events: React.FC = () => {
           )}
         </div>
 
-        <CardHeader className="pb-3 px-4 pt-4">
+        <CardHeader className="pb-3 px-4 pt-4 cursor-pointer" onClick={() => onPreview(event)}>
           <CardTitle className="text-xl font-bold text-gray-900 line-clamp-2 group-hover:text-orange-700 transition-colors">
             {event.title}
           </CardTitle>
@@ -193,7 +205,7 @@ const Events: React.FC = () => {
             <div className="flex items-center gap-2 text-sm text-gray-700">
               <Calendar className="h-4 w-4 text-orange-500 flex-shrink-0" />
               <span>
-                {format(new Date(event.date), 'EEE, MMM d, yyyy')} {/* Fixed: Correct date-fns format */}
+                {format(new Date(event.date), 'EEE, MMM d, yyyy')}
                 {event.end_date && ` - ${format(new Date(event.end_date), 'MMM d, yyyy')}`}
               </span>
             </div>
@@ -228,7 +240,7 @@ const Events: React.FC = () => {
           <div className="flex gap-2 pt-4">
             <Button
               size="sm"
-              onClick={() => handleBookEvent(event)}
+              onClick={() => onBook(event)}
               className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-md transition-all duration-200"
               disabled={isFull || isPastEvent}
             >
@@ -238,7 +250,7 @@ const Events: React.FC = () => {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => handleShareEvent(event)}
+              onClick={() => onShare(event)}
               className="border-orange-200 text-orange-600 hover:bg-orange-50 shadow-sm"
             >
               <Share2 className="h-4 w-4" />
@@ -377,7 +389,7 @@ const Events: React.FC = () => {
                           </label>
                           <Select
                             value={priceFilter}
-                            onValueChange={(value) => setPriceFilter(value as "all" | "free" | "paid")} // Fixed: Explicit cast for onValueChange
+                            onValueChange={(value) => setPriceFilter(value as "all" | "free" | "paid")}
                           >
                             <SelectTrigger id="mobile-price-filter" className="w-full">
                               <SelectValue placeholder="All Prices" />
@@ -444,7 +456,7 @@ const Events: React.FC = () => {
                   </label>
                   <Select
                     value={priceFilter}
-                    onValueChange={(value) => setPriceFilter(value as "all" | "free" | "paid")} // Fixed: Explicit cast for onValueChange
+                    onValueChange={(value) => setPriceFilter(value as "all" | "free" | "paid")}
                   >
                     <SelectTrigger id="price-filter" className="w-full">
                       <SelectValue placeholder="All Prices" />
@@ -507,8 +519,8 @@ const Events: React.FC = () => {
             <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
               {events.map((event) => (
                 viewMode === 'grid'
-                  ? <EventCard key={event.id} event={event} />
-                  : <EventListItem key={event.id} event={event} handleBookEvent={handleBookEvent} handleShareEvent={handleShareEvent} />
+                  ? <EventCard key={event.id} event={event} onPreview={handlePreviewEvent} onBook={handleBookEvent} onShare={handleShareEvent} />
+                  : <EventListItem key={event.id} event={event} handleBookEvent={handleBookEvent} handleShareEvent={handleShareEvent} handlePreviewEvent={handlePreviewEvent} />
               ))}
             </div>
           ) : (
@@ -533,6 +545,15 @@ const Events: React.FC = () => {
           onClose={() => setShowBookingModal(false)}
           event={selectedEvent}
         />
+
+        {/* New Event Preview Modal */}
+        <EventPreviewModal
+          isOpen={showPreviewModal}
+          onClose={() => setShowPreviewModal(false)}
+          event={selectedEvent}
+          onBook={handleBookEvent}
+          onShare={handleShareEvent}
+        />
       </div>
     </MainLayout>
   );
@@ -543,9 +564,10 @@ interface EventListItemProps {
   event: Event;
   handleBookEvent: (event: Event) => void;
   handleShareEvent: (event: Event) => void;
+  handlePreviewEvent: (event: Event) => void; // New prop for preview
 }
 
-const EventListItem = React.memo(({ event, handleBookEvent, handleShareEvent }: EventListItemProps) => {
+const EventListItem = React.memo(({ event, handleBookEvent, handleShareEvent, handlePreviewEvent }: EventListItemProps) => {
   const isFree = event.price === 0;
   const isFull = event.max_attendees && event.current_attendees && event.current_attendees >= event.max_attendees;
   const isPastEvent = isPast(new Date(event.date));
@@ -556,7 +578,10 @@ const EventListItem = React.memo(({ event, handleBookEvent, handleShareEvent }: 
         isPastEvent ? 'opacity-70 bg-gray-100 cursor-not-allowed' : 'hover:shadow-lg hover:border-orange-400 bg-white'
       }`}
     >
-      <div className="flex items-start sm:items-center flex-1 min-w-0 mb-4 sm:mb-0 sm:pr-4">
+      <div
+        className="flex items-start sm:items-center flex-1 min-w-0 mb-4 sm:mb-0 sm:pr-4 cursor-pointer" // Add cursor-pointer
+        onClick={() => handlePreviewEvent(event)} // Handle preview on image/text click
+      >
         <div className="w-28 h-28 sm:w-36 sm:h-36 flex-shrink-0 bg-gray-200 relative overflow-hidden rounded-lg mr-4">
           {event.image_url ? (
             <img src={event.image_url} alt={event.title} className="w-full h-full object-cover" loading="lazy" />
@@ -586,7 +611,7 @@ const EventListItem = React.memo(({ event, handleBookEvent, handleShareEvent }: 
           <p className="text-sm text-gray-600 line-clamp-2">{event.description}</p>
           <div className="flex items-center gap-2 text-sm text-gray-700">
             <Calendar className="h-4 w-4 text-orange-500" />
-            <span>{format(new Date(event.date), 'EEE, MMM d, yyyy')}</span> {/* Fixed: Correct format */}
+            <span>{format(new Date(event.date), 'EEE, MMM d, yyyy')}</span>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-700">
             <MapPin className="h-4 w-4 text-orange-500" />
@@ -633,5 +658,113 @@ const EventListItem = React.memo(({ event, handleBookEvent, handleShareEvent }: 
     </Card>
   );
 });
+
+// --- New Event Preview Modal Component ---
+interface EventPreviewModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  event: Event | null;
+  onBook: (event: Event) => void;
+  onShare: (event: Event) => void;
+}
+
+const EventPreviewModal: React.FC<EventPreviewModalProps> = ({ isOpen, onClose, event, onBook, onShare }) => {
+  if (!event) return null; // Don't render if no event is selected
+
+  const isFree = event.price === 0;
+  const isFull = event.max_attendees && event.current_attendees && event.current_attendees >= event.max_attendees;
+  const isPastEvent = isPast(new Date(event.date));
+
+  const handleBookClick = () => {
+    onBook(event);
+    onClose(); // Close preview modal after initiating booking
+  };
+
+  const handleShareClick = () => {
+    onShare(event);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden">
+        {event.image_url ? (
+          <img src={event.image_url} alt={event.title} className="w-full h-48 object-cover" />
+        ) : (
+          <div className="w-full h-48 bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
+            <Calendar className="h-20 w-20 text-white/70" />
+          </div>
+        )}
+        <div className="p-6">
+          <DialogHeader className="mb-4">
+            <DialogTitle className="text-2xl font-bold text-gray-900">{event.title}</DialogTitle>
+            <DialogDescription className="text-gray-700 mt-2 text-base leading-relaxed">
+              {event.description}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-sm text-gray-700 mb-6">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-orange-500" />
+              <span>
+                {format(new Date(event.date), 'EEE, MMM d, yyyy')}
+                {event.end_date && ` - ${format(new Date(event.end_date), 'MMM d, yyyy')}`}
+              </span>
+            </div>
+            {event.time && (
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-orange-500" />
+                <span>{event.time}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-orange-500" />
+              <span>{event.location}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Ticket className="h-4 w-4 text-orange-500" />
+              <span>{event.event_type}</span>
+            </div>
+            {event.organizer && (
+              <div className="flex items-center gap-2">
+                <Info className="h-4 w-4 text-orange-500" />
+                <span>By {event.organizer}</span>
+              </div>
+            )}
+            {event.max_attendees && (
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-orange-500" />
+                <span>Attendees: {event.current_attendees || 0}/{event.max_attendees}</span>
+                {isFull && <Badge variant="secondary" className="bg-blue-500 text-white">Sold Out</Badge>}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="flex flex-col sm:flex-row sm:justify-between items-center pt-4 border-t border-gray-100">
+            <span className="text-3xl font-extrabold text-orange-600 mb-4 sm:mb-0">
+              {isFree ? 'FREE' : `KSh ${event.price.toLocaleString()}`}
+            </span>
+            <div className="flex gap-3">
+              <Button
+                onClick={handleBookClick}
+                className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-md"
+                disabled={isFull || isPastEvent}
+              >
+                <Ticket className="h-4 w-4 mr-1" />
+                {isPastEvent ? 'Event Ended' : isFull ? 'Sold Out' : 'Book Now'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleShareClick}
+                className="border-orange-200 text-orange-600 hover:bg-orange-50 shadow-sm"
+              >
+                <Share2 className="h-4 w-4" /> Share
+              </Button>
+            </div>
+          </DialogFooter>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 export default Events;
