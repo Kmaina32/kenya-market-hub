@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, ShoppingBag, Car, Home, Briefcase, Calendar, MessageCircle, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SEOManager from '@/components/seo/SEOManager';
+import AdvertisementBanner from '@/components/ads/AdvertisementBanner';
+import AdvertisementPopup from '@/components/ads/AdvertisementPopup';
+import AdvertisementBillboard from '@/components/ads/AdvertisementBillboard';
 
 const Index = () => {
   const services = [
@@ -69,9 +72,17 @@ const Index = () => {
         type="website"
       />
 
+      {/* Advertisement Popup */}
+      <AdvertisementPopup isEnabled={true} intervalMinutes={5} />
+
       <div className="min-h-screen bg-gray-50">
         {/* Hero Section */}
         <HomeHeroSection />
+        
+        {/* Advertisement Billboard */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <AdvertisementBillboard className="mb-6 sm:mb-8" layout="horizontal" />
+        </div>
 
         {/* Services Grid */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -83,6 +94,11 @@ const Index = () => {
               From shopping to transportation, real estate to professional services - 
               Sokko Sasa connects you to what matters most.
             </p>
+          </div>
+
+          {/* Advertisement Banner */}
+          <div className="mb-8">
+            <AdvertisementBanner size="medium" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
