@@ -1,160 +1,260 @@
+
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { MessageSquare, Plus, Search, Users, Eye, Lock, Pin, Trash2, Edit } from 'lucide-react';
-import { toast } from 'sonner';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { 
+  MessageSquare, 
+  Users, 
+  Plus, 
+  Trash2, 
+  Edit,
+  Search,
+  Filter,
+  MoreHorizontal,
+  Lock,
+  Pin,
+  Eye
+} from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+interface ForumCategory {
+  id: string;
+  name: string;
+  description?: string;
+  post_count: number;
+  member_count: number;
+  created_at: string;
+}
+
+interface ForumPost {
+  id: string;
+  title: string;
+  content: string;
+  author_id: string;
+  category_id: string;
+  like_count: number;
+  reply_count: number;
+  view_count: number;
+  is_pinned: boolean;
+  is_locked: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 const ForumManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [newCategory, setNewCategory] = useState({ name: '', description: '' });
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [isCreateCategoryOpen, setIsCreateCategoryOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryDescription, setNewCategoryDescription] = useState('');
+  const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch forum categories
+  // Fetch categories
   const { data: categories, isLoading: categoriesLoading } = useQuery({
-    queryKey: ['admin-forum-categories'],
+    queryKey: ['forum-categories'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('forum_categories')
         .select('*')
-        .order('created_at', { ascending: false });
-      
+        .order('name');
+
       if (error) throw error;
-      return data || [];
-    }
+      return data as ForumCategory[];
+    },
   });
 
-  // Fetch forum posts
+  // Fetch posts with simplified query (no profile join)
   const { data: posts, isLoading: postsLoading } = useQuery({
-    queryKey: ['admin-forum-posts', searchTerm, selectedCategory],
+    queryKey: ['forum-posts', selectedCategory],
     queryFn: async () => {
       let query = supabase
         .from('forum_posts')
-        .select(`
-          *,
-          author:profiles!author_id(full_name, email),
-          category:forum_categories!category_id(name)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (searchTerm) {
-        query = query.ilike('title', `%${searchTerm}%`);
-      }
-
-      if (selectedCategory && selectedCategory !== 'all') {
+      if (selectedCategory) {
         query = query.eq('category_id', selectedCategory);
       }
 
       const { data, error } = await query;
       if (error) throw error;
-      return data || [];
-    }
+      return data as ForumPost[];
+    },
   });
 
   // Create category mutation
-  const createCategory = useMutation({
-    mutationFn: async (categoryData: { name: string; description: string }) => {
+  const createCategoryMutation = useMutation({
+    mutationFn: async ({ name, description }: { name: string; description: string }) => {
+      const { data, error } = await supabase
+        .from('forum_categories')
+        .insert({ name, description })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['forum-categories'] });
+      setIsCreateCategoryOpen(false);
+      setNewCategoryName('');
+      setNewCategoryDescription('');
+      toast({
+        title: 'Category Created',
+        description: 'Forum category has been created successfully.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: `Failed to create category: ${error.message}`,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Delete category mutation
+  const deleteCategoryMutation = useMutation({
+    mutationFn: async (categoryId: string) => {
       const { error } = await supabase
         .from('forum_categories')
-        .insert(categoryData);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-forum-categories'] });
-      toast.success('Category created successfully');
-      setNewCategory({ name: '', description: '' });
-      setIsCreateCategoryOpen(false);
-    },
-    onError: (error) => {
-      toast.error(`Failed to create category: ${error.message}`);
-    }
-  });
-
-  // Delete post mutation
-  const deletePost = useMutation({
-    mutationFn: async (postId: string) => {
-      const { error } = await supabase
-        .from('forum_posts')
         .delete()
-        .eq('id', postId);
-      
+        .eq('id', categoryId);
+
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-forum-posts'] });
-      toast.success('Post deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['forum-categories'] });
+      toast({
+        title: 'Category Deleted',
+        description: 'Forum category has been deleted successfully.',
+      });
     },
-    onError: (error) => {
-      toast.error(`Failed to delete post: ${error.message}`);
-    }
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: `Failed to delete category: ${error.message}`,
+        variant: 'destructive',
+      });
+    },
   });
 
-  // Toggle post status mutations
-  const togglePostPin = useMutation({
+  // Toggle post pin
+  const togglePinMutation = useMutation({
     mutationFn: async ({ postId, isPinned }: { postId: string; isPinned: boolean }) => {
       const { error } = await supabase
         .from('forum_posts')
         .update({ is_pinned: !isPinned })
         .eq('id', postId);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-forum-posts'] });
-      toast.success('Post pin status updated');
-    }
+      queryClient.invalidateQueries({ queryKey: ['forum-posts'] });
+      toast({
+        title: 'Post Updated',
+        description: 'Post pin status has been updated.',
+      });
+    },
   });
 
-  const togglePostLock = useMutation({
+  // Toggle post lock
+  const toggleLockMutation = useMutation({
     mutationFn: async ({ postId, isLocked }: { postId: string; isLocked: boolean }) => {
       const { error } = await supabase
         .from('forum_posts')
         .update({ is_locked: !isLocked })
         .eq('id', postId);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-forum-posts'] });
-      toast.success('Post lock status updated');
-    }
+      queryClient.invalidateQueries({ queryKey: ['forum-posts'] });
+      toast({
+        title: 'Post Updated',
+        description: 'Post lock status has been updated.',
+      });
+    },
+  });
+
+  // Delete post mutation
+  const deletePostMutation = useMutation({
+    mutationFn: async (postId: string) => {
+      const { error } = await supabase
+        .from('forum_posts')
+        .delete()
+        .eq('id', postId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['forum-posts'] });
+      toast({
+        title: 'Post Deleted',
+        description: 'Forum post has been deleted successfully.',
+      });
+    },
   });
 
   const handleCreateCategory = () => {
-    if (!newCategory.name.trim()) {
-      toast.error('Category name is required');
+    if (!newCategoryName.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Category name is required.',
+        variant: 'destructive',
+      });
       return;
     }
-    createCategory.mutate(newCategory);
+
+    createCategoryMutation.mutate({
+      name: newCategoryName.trim(),
+      description: newCategoryDescription.trim(),
+    });
   };
 
-  const handleDeletePost = (postId: string) => {
-    if (confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
-      deletePost.mutate(postId);
-    }
-  };
+  const filteredPosts = posts?.filter(post =>
+    post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    post.content.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Forum Management</h1>
-          <p className="text-gray-600">Manage forum categories, posts, and community discussions</p>
+          <h2 className="text-2xl font-bold">Forum Management</h2>
+          <p className="text-gray-600">Manage forum categories and posts</p>
         </div>
         <Dialog open={isCreateCategoryOpen} onOpenChange={setIsCreateCategoryOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
+            <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Create Category
+              New Category
             </Button>
           </DialogTrigger>
           <DialogContent>
@@ -163,59 +263,81 @@ const ForumManagement = () => {
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium mb-2 block">Category Name</label>
+                <label className="text-sm font-medium">Category Name</label>
                 <Input
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
                   placeholder="Enter category name"
-                  value={newCategory.name}
-                  onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-2 block">Description</label>
+                <label className="text-sm font-medium">Description</label>
                 <Textarea
-                  placeholder="Category description"
-                  value={newCategory.description}
-                  onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
-                  rows={3}
+                  value={newCategoryDescription}
+                  onChange={(e) => setNewCategoryDescription(e.target.value)}
+                  placeholder="Enter category description"
                 />
               </div>
-              <Button 
-                onClick={handleCreateCategory}
-                disabled={createCategory.isPending}
-                className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
-              >
-                {createCategory.isPending ? 'Creating...' : 'Create Category'}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleCreateCategory}
+                  disabled={createCategoryMutation.isPending}
+                >
+                  Create Category
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsCreateCategoryOpen(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Categories Overview */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* Categories Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {categoriesLoading ? (
-          [...Array(4)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-6">
-                <div className="space-y-3">
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-8 bg-gray-200 rounded w-1/2"></div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+          <div className="col-span-full text-center py-8">Loading categories...</div>
         ) : (
           categories?.map((category) => (
-            <Card key={category.id} className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-gray-900">{category.name}</h3>
-                  <MessageSquare className="h-5 w-5 text-orange-500" />
+            <Card key={category.id}>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">{category.name}</CardTitle>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem
+                        onClick={() => deleteCategoryMutation.mutate(category.id)}
+                        className="text-red-600"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
-                <p className="text-sm text-gray-600 mb-3">{category.description}</p>
-                <div className="flex items-center justify-between text-sm">
-                  <Badge variant="outline">{category.post_count || 0} posts</Badge>
-                  <span className="text-gray-500">{category.member_count || 0} members</span>
+                {category.description && (
+                  <p className="text-sm text-gray-600">{category.description}</p>
+                )}
+              </CardHeader>
+              <CardContent>
+                <div className="flex justify-between text-sm">
+                  <span className="flex items-center">
+                    <MessageSquare className="h-4 w-4 mr-1" />
+                    {category.post_count} posts
+                  </span>
+                  <span className="flex items-center">
+                    <Users className="h-4 w-4 mr-1" />
+                    {category.member_count} members
+                  </span>
                 </div>
               </CardContent>
             </Card>
@@ -223,129 +345,119 @@ const ForumManagement = () => {
         )}
       </div>
 
-      {/* Search and Filters */}
-      <div className="flex items-center space-x-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input 
-            placeholder="Search posts..." 
-            className="pl-10"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <select 
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className="px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-        >
-          <option value="all">All Categories</option>
-          {categories?.map((category) => (
-            <option key={category.id} value={category.id}>{category.name}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Posts Table */}
+      {/* Posts Management */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <MessageSquare className="h-5 w-5 mr-2" />
-            Forum Posts ({posts?.length || 0})
-          </CardTitle>
+          <CardTitle>Forum Posts</CardTitle>
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <Input
+                placeholder="Search posts..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="max-w-sm"
+              />
+            </div>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filter by category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All Categories</SelectItem>
+                {categories?.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent>
           {postsLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-              <span className="ml-2">Loading posts...</span>
-            </div>
-          ) : posts && posts.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Author</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Stats</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {posts.map((post) => (
-                    <TableRow key={post.id}>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          {post.is_pinned && <Pin className="h-4 w-4 text-orange-500" />}
-                          {post.is_locked && <Lock className="h-4 w-4 text-red-500" />}
-                          <span className="font-medium">{post.title}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{post.author?.full_name}</p>
-                          <p className="text-sm text-gray-500">{post.author?.email}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{post.category?.name}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="flex items-center space-x-2 text-sm">
-                            <Eye className="h-3 w-3" />
-                            <span>{post.view_count || 0}</span>
-                          </div>
-                          <div className="flex items-center space-x-2 text-sm">
-                            <Users className="h-3 w-3" />
-                            <span>{post.reply_count || 0} replies</span>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col space-y-1">
-                          {post.is_pinned && <Badge className="bg-orange-100 text-orange-800">Pinned</Badge>}
-                          {post.is_locked && <Badge className="bg-red-100 text-red-800">Locked</Badge>}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => togglePostPin.mutate({ postId: post.id, isPinned: post.is_pinned })}
-                          >
-                            <Pin className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => togglePostLock.mutate({ postId: post.id, isLocked: post.is_locked })}
-                          >
-                            <Lock className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleDeletePost(post.id)}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <div className="text-center py-8">Loading posts...</div>
+          ) : filteredPosts.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">No posts found</div>
           ) : (
-            <div className="text-center py-12">
-              <MessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No posts found</h3>
-              <p className="text-gray-600">Forum posts will appear here once users start creating them.</p>
+            <div className="space-y-4">
+              {filteredPosts.map((post) => {
+                // Get author info from user_id - simplified display
+                const authorName = `User ${post.author_id.slice(0, 8)}`;
+                const authorEmail = 'user@example.com';
+
+                return (
+                  <div key={post.id} className="border rounded-lg p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-semibold">{post.title}</h3>
+                          {post.is_pinned && (
+                            <Badge variant="secondary">
+                              <Pin className="h-3 w-3 mr-1" />
+                              Pinned
+                            </Badge>
+                          )}
+                          {post.is_locked && (
+                            <Badge variant="outline">
+                              <Lock className="h-3 w-3 mr-1" />
+                              Locked
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">
+                          By {authorName} • {new Date(post.created_at).toLocaleDateString()}
+                        </p>
+                        <p className="text-sm mb-3 line-clamp-2">{post.content}</p>
+                        <div className="flex gap-4 text-sm text-gray-500">
+                          <span className="flex items-center">
+                            <Eye className="h-4 w-4 mr-1" />
+                            {post.view_count} views
+                          </span>
+                          <span className="flex items-center">
+                            <MessageSquare className="h-4 w-4 mr-1" />
+                            {post.reply_count} replies
+                          </span>
+                          <span>{post.like_count} likes</span>
+                        </div>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem
+                            onClick={() => togglePinMutation.mutate({
+                              postId: post.id,
+                              isPinned: post.is_pinned
+                            })}
+                          >
+                            <Pin className="h-4 w-4 mr-2" />
+                            {post.is_pinned ? 'Unpin' : 'Pin'} Post
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => toggleLockMutation.mutate({
+                              postId: post.id,
+                              isLocked: post.is_locked
+                            })}
+                          >
+                            <Lock className="h-4 w-4 mr-2" />
+                            {post.is_locked ? 'Unlock' : 'Lock'} Post
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => deletePostMutation.mutate(post.id)}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete Post
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </CardContent>

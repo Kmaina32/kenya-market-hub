@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -153,7 +152,7 @@ const SocialMediaLayout = () => {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-4">
             {activeView === 'chat' ? (
-              <ChatInterface />
+              <ChatInterface selectedConversationId={null} />
             ) : (
               <>
                 {/* Create Post */}

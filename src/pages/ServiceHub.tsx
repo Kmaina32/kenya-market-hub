@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import FrontendLayout from '@/components/layouts/FrontendLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -91,7 +90,7 @@ const ServiceHub = () => {
         .select(`
           id, user_id, business_name, email,
           is_active, created_at, updated_at,
-          location_address, location_coordinates, verification_status
+          location_address, verification_status
         `)
         .eq('is_active', true)
         .limit(2);
