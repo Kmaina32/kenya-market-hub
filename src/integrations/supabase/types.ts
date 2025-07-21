@@ -2383,6 +2383,48 @@ export type Database = {
           },
         ]
       }
+      security_audit_log: {
+        Row: {
+          action: string
+          created_at: string | null
+          error_message: string | null
+          id: string
+          ip_address: unknown | null
+          metadata: Json | null
+          resource_id: string | null
+          resource_type: string
+          success: boolean
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          resource_id?: string | null
+          resource_type: string
+          success: boolean
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          resource_id?: string | null
+          resource_type?: string
+          success?: boolean
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       service_bookings: {
         Row: {
           booking_address: string | null
@@ -3049,6 +3091,14 @@ export type Database = {
         Args: { check_role: string }
         Returns: boolean
       }
+      create_admin_user: {
+        Args: {
+          admin_email: string
+          admin_password: string
+          admin_full_name: string
+        }
+        Returns: string
+      }
       expire_old_ride_requests: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -3100,7 +3150,7 @@ export type Database = {
         Returns: undefined
       }
       is_admin: {
-        Args: Record<PropertyKey, never>
+        Args: Record<PropertyKey, never> | { check_user_id?: string }
         Returns: boolean
       }
       list_backups: {

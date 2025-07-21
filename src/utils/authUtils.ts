@@ -19,15 +19,9 @@ export const checkUserRole = async (userId: string): Promise<string | null> => {
 
 export const isUserAdmin = async (userId: string): Promise<boolean> => {
   try {
-    // Check user role from user_roles table
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId)
-      .eq('role', 'admin')
-      .single();
+    const { data, error } = await supabase.rpc('is_admin', { check_user_id: userId });
     
-    if (error && error.code !== 'PGRST116') { // PGRST116 is "not found" error
+    if (error) {
       console.error('Error checking admin status:', error);
       return false;
     }
@@ -59,4 +53,21 @@ export const validateEmail = (email: string): boolean => {
 export const validatePhoneNumber = (phone: string): boolean => {
   const phoneRegex = /^[\+]?[0-9\s\-\(\)]{10,15}$/;
   return phoneRegex.test(phone);
+};
+
+export const sanitizeUserInput = (input: any): any => {
+  if (typeof input === 'string') {
+    return validateInput(input);
+  }
+  if (Array.isArray(input)) {
+    return input.map(sanitizeUserInput);
+  }
+  if (typeof input === 'object' && input !== null) {
+    const sanitized: any = {};
+    for (const [key, value] of Object.entries(input)) {
+      sanitized[validateInput(key, 50)] = sanitizeUserInput(value);
+    }
+    return sanitized;
+  }
+  return input;
 };

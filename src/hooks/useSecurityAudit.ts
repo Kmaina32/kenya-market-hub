@@ -14,22 +14,16 @@ interface SecurityEvent {
 export const useSecurityAudit = () => {
   const logSecurityEvent = useMutation({
     mutationFn: async (event: SecurityEvent) => {
-      // Since we don't have the security_audit_log table yet, 
-      // we'll log to notifications as a temporary solution
       const { error } = await supabase
-        .from('notifications')
+        .from('security_audit_log')
         .insert({
           user_id: (await supabase.auth.getUser()).data.user?.id,
-          title: event.action,
-          message: `${event.resourceType} - ${event.success ? 'Success' : 'Failed'}`,
-          type: 'security',
-          metadata: {
-            resource_type: event.resourceType,
-            resource_id: event.resourceId,
-            success: event.success ?? true,
-            error_message: event.errorMessage,
-            ...event.metadata
-          }
+          action: event.action,
+          resource_type: event.resourceType,
+          resource_id: event.resourceId,
+          success: event.success ?? true,
+          error_message: event.errorMessage,
+          metadata: event.metadata || {}
         });
 
       if (error) {

@@ -5,56 +5,56 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Shield, AlertTriangle, Eye, Lock } from 'lucide-react';
-
-interface SecurityEvent {
-  id: string;
-  action: string;
-  resource_type: string;
-  resource_id?: string;
-  success: boolean;
-  error_message?: string;
-  metadata?: any;
-  created_at: string;
-  user_id?: string;
-}
+import { Shield, AlertTriangle, Eye, Lock, Activity } from 'lucide-react';
 
 export const SecurityDashboard: React.FC = () => {
-  // Use notifications table as a fallback for security events
   const { data: securityEvents, isLoading } = useQuery({
     queryKey: ['security-events'],
     queryFn: async () => {
-      // Try to get security audit logs, fallback to notifications for now
       const { data, error } = await supabase
-        .from('notifications')
+        .from('security_audit_log')
         .select('*')
-        .eq('type', 'security')
         .order('created_at', { ascending: false })
-        .limit(100);
+        .limit(50);
 
       if (error) {
         console.error('Failed to fetch security events:', error);
         return [];
       }
 
-      // Transform notifications to security events format
-      return (data || []).map(notification => ({
-        id: notification.id,
-        action: notification.title,
-        resource_type: 'system',
-        success: true,
-        created_at: notification.created_at,
-        user_id: notification.user_id
-      }));
+      return data || [];
     }
   });
 
-  // Mock data for demonstration since we don't have the audit table yet
-  const mockSecurityData = {
-    failedLogins: 3,
-    adminActions: 12,
-    totalEvents: 45
-  };
+  const { data: securityStats } = useQuery({
+    queryKey: ['security-stats'],
+    queryFn: async () => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const { data: failedLogins } = await supabase
+        .from('security_audit_log')
+        .select('id', { count: 'exact', head: true })
+        .eq('action', 'login_failed')
+        .gte('created_at', today.toISOString());
+
+      const { data: adminActions } = await supabase
+        .from('security_audit_log')
+        .select('id', { count: 'exact', head: true })
+        .like('action', 'admin_%')
+        .gte('created_at', today.toISOString());
+
+      const { data: totalEvents } = await supabase
+        .from('security_audit_log')
+        .select('id', { count: 'exact', head: true });
+
+      return {
+        failedLogins: failedLogins || 0,
+        adminActions: adminActions || 0,
+        totalEvents: totalEvents || 0
+      };
+    }
+  });
 
   if (isLoading) {
     return (
@@ -63,6 +63,10 @@ export const SecurityDashboard: React.FC = () => {
       </div>
     );
   }
+
+  const criticalEvents = securityEvents?.filter(event => 
+    !event.success || event.action === 'login_failed'
+  ) || [];
 
   return (
     <div className="space-y-6">
@@ -78,7 +82,9 @@ export const SecurityDashboard: React.FC = () => {
             <AlertTriangle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{mockSecurityData.failedLogins}</div>
+            <div className="text-2xl font-bold text-red-600">
+              {securityStats?.failedLogins || 0}
+            </div>
           </CardContent>
         </Card>
 
@@ -88,17 +94,21 @@ export const SecurityDashboard: React.FC = () => {
             <Lock className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{mockSecurityData.adminActions}</div>
+            <div className="text-2xl font-bold text-blue-600">
+              {securityStats?.adminActions || 0}
+            </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Security Events</CardTitle>
-            <Eye className="h-4 w-4 text-green-500" />
+            <Activity className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{mockSecurityData.totalEvents}</div>
+            <div className="text-2xl font-bold text-green-600">
+              {securityStats?.totalEvents || 0}
+            </div>
           </CardContent>
         </Card>
 
@@ -115,11 +125,11 @@ export const SecurityDashboard: React.FC = () => {
         </Card>
       </div>
 
-      {mockSecurityData.failedLogins > 10 && (
+      {criticalEvents.length > 0 && (
         <Alert>
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            High number of failed login attempts detected in the last 24 hours. Consider reviewing access logs.
+            {criticalEvents.length} security events require attention in the last 24 hours.
           </AlertDescription>
         </Alert>
       )}
@@ -132,21 +142,33 @@ export const SecurityDashboard: React.FC = () => {
           <div className="space-y-2">
             {securityEvents && securityEvents.length > 0 ? (
               securityEvents.slice(0, 20).map((event) => (
-                <div key={event.id} className="flex items-center justify-between p-2 border rounded">
-                  <div className="flex items-center gap-2">
+                <div key={event.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center gap-3">
                     <Badge variant={event.success ? 'default' : 'destructive'}>
                       {event.action}
                     </Badge>
                     <span className="text-sm text-gray-600">{event.resource_type}</span>
+                    {event.resource_id && (
+                      <span className="text-xs text-gray-500">{event.resource_id}</span>
+                    )}
                   </div>
-                  <span className="text-xs text-gray-500">
-                    {new Date(event.created_at).toLocaleString()}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {!event.success && event.error_message && (
+                      <span className="text-xs text-red-500 max-w-xs truncate">
+                        {event.error_message}
+                      </span>
+                    )}
+                    <span className="text-xs text-gray-500">
+                      {new Date(event.created_at).toLocaleString()}
+                    </span>
+                  </div>
                 </div>
               ))
             ) : (
-              <div className="text-center py-4 text-gray-500">
-                No security events recorded yet. Events will appear here once the audit logging is fully configured.
+              <div className="text-center py-8 text-gray-500">
+                <Shield className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                <p>No security events recorded yet.</p>
+                <p className="text-sm">Events will appear here once security logging is active.</p>
               </div>
             )}
           </div>
