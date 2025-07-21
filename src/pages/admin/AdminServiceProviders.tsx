@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -185,7 +186,7 @@ const AdminServiceProviders = () => {
                           <Badge variant={provider.is_active ? 'default' : 'outline'}>
                             {provider.is_active ? 'Active' : 'Inactive'}
                           </Badge>
-                          <Badge variant={provider.verification_status === 'verified' ? 'success' : provider.verification_status === 'rejected' ? 'destructive' : 'secondary'}>
+                          <Badge variant={provider.verification_status === 'verified' ? 'default' : provider.verification_status === 'rejected' ? 'destructive' : 'secondary'}>
                             {provider.verification_status}
                           </Badge>
                         </div>

@@ -116,7 +116,7 @@ const ComprehensiveChatForums = () => {
     },
   });
 
-export const useForumPosts = (categoryId?: string) => {
+const useForumPosts = (categoryId?: string) => {
   const { user } = useAuth();
   
   return useQuery({
@@ -146,7 +146,10 @@ export const useForumPosts = (categoryId?: string) => {
           full_name: `User ${post.author_id.slice(0, 8)}`,
           avatar_url: null 
         },
-        category: { name: 'General' }
+        category: { 
+          name: 'General',
+          color: '#3B82F6' // Default blue color
+        }
       }));
 
       return transformedData as ForumPost[];
@@ -392,7 +395,7 @@ export const useForumPosts = (categoryId?: string) => {
                             <Button
                               className="bg-orange-600 hover:bg-orange-700"
                               onClick={handleCreatePost}
-                              disabled={createPostMutation.isLoading}
+                              disabled={createPostMutation.isPending}
                             >
                               Post
                             </Button>
