@@ -60,7 +60,7 @@ export const useForumPosts = (categoryId?: string) => {
           ...post,
           has_liked,
           author_profile: post.author_profile || { full_name: 'Unknown User' },
-          category: post.category || { name: 'General', color: '#f59e0b' }
+          category: post.category || { name: 'General' }
         };
       }));
 
@@ -102,7 +102,6 @@ export const useCreateForumPost = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['forum-posts'] });
-      queryClient.invalidateQueries({ queryKey: ['trending-topics'] });
       toast({
         title: 'Post Created',
         description: 'Your forum post has been created successfully.'
@@ -182,37 +181,6 @@ export const useIncrementPostViews = () => {
       });
 
       if (error) throw error;
-    }
-  });
-};
-
-export const useTrendingTopics = () => {
-  return useQuery({
-    queryKey: ['trending-topics'],
-    queryFn: async () => {
-      const { data: posts, error } = await supabase
-        .from('forum_posts')
-        .select('content')
-        .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
-
-      if (error) throw error;
-
-      // Extract hashtags from posts
-      const hashtagCounts: Record<string, number> = {};
-      
-      posts?.forEach(post => {
-        const hashtags = post.content.match(/#\w+/g) || [];
-        hashtags.forEach(tag => {
-          const cleanTag = tag.toLowerCase();
-          hashtagCounts[cleanTag] = (hashtagCounts[cleanTag] || 0) + 1;
-        });
-      });
-
-      // Convert to array and sort by count
-      return Object.entries(hashtagCounts)
-        .map(([tag, count]) => ({ tag: tag.substring(1), posts: count }))
-        .sort((a, b) => b.posts - a.posts)
-        .slice(0, 5);
     }
   });
 };
