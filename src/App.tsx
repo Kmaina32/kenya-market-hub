@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -33,6 +32,7 @@ import NotFound from "./pages/NotFound";
 import EmailConfirmation from "./pages/EmailConfirmation";
 import ResetPassword from "./pages/ResetPassword";
 import TermsAndConditions from "./pages/TermsAndConditions";
+import ProductDetail from "./pages/ProductDetail";
 
 // Admin pages
 import AdminLogin from "./pages/AdminLogin";
@@ -104,6 +104,7 @@ function App() {
                     <Route path="/checkout" element={<Checkout />} />
                     <Route path="/real-estate" element={<RealEstate />} />
                     <Route path="/property/:id" element={<PropertyDetail />} />
+                    <Route path="/product/:id" element={<ProductDetail />} />
                     <Route path="/services" element={<Services />} />
                     <Route path="/rides" element={<Rides />} />
                     <Route path="/food-delivery" element={<FoodDelivery />} />
