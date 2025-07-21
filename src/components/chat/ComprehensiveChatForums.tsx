@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -60,6 +59,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { useForumPosts, useCreateForumPost, useTrendingTopics } from '@/hooks/useForumPosts';
 
 // Define interfaces
 interface ForumCategory {
@@ -117,105 +117,18 @@ const ComprehensiveChatForums = () => {
     },
   });
 
-  const useForumPosts = (categoryId?: string) => {
-    const { user } = useAuth();
-    
-    return useQuery({
-      queryKey: ['forum-posts', categoryId, user?.id],
-      queryFn: async () => {
-        let query = supabase
-          .from('forum_posts')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (categoryId) {
-          query = query.eq('category_id', categoryId);
-        }
-
-        const { data, error } = await query;
-
-        if (error) {
-          console.error('Error fetching forum posts:', error);
-          throw error;
-        }
-
-        // Transform data with simplified author info
-        const transformedData = (data || []).map((post) => ({
-          ...post,
-          has_liked: false, // Simplified for now
-          author_profile: { 
-            full_name: `User ${post.author_id.slice(0, 8)}`,
-            avatar_url: null 
-          },
-          category: { 
-            name: 'General',
-            color: '#3B82F6' // Default blue color
-          }
-        }));
-
-        return transformedData as ForumPost[];
-      }
-    });
-  };
-
   // Create post mutation
-  const createPostMutation = useMutation({
-    mutationFn: async ({
-      title,
-      content,
-      category_id,
-    }: {
-      title: string;
-      content: string;
-      category_id: string;
-    }) => {
-      if (!user) throw new Error('User not authenticated');
-
-      const { data, error } = await supabase
-        .from('forum_posts')
-        .insert([
-          {
-            title,
-            content,
-            category_id,
-            author_id: user.id,
-          },
-        ])
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['forum-posts'] });
-      setNewPostTitle('');
-      setNewPostContent('');
-      setSelectedCategory('');
-      setShowNewPost(false);
-      toast({
-        title: 'Post Created',
-        description: 'Your forum post has been created successfully.',
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Error',
-        description: `Failed to create post: ${error.message}`,
-        variant: 'destructive',
-      });
-    },
-  });
+  const createPostMutation = useCreateForumPost();
 
   const { data: posts, isLoading: postsLoading } = useForumPosts(selectedCategory);
 
-  // Fetch suggested users from profiles
+  // Fetch suggested users from profiles (actual usernames)
   const { data: suggestedUsers } = useQuery({
     queryKey: ['suggested-users'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, email')
+        .select('id, full_name, email, avatar_url')
         .limit(5);
 
       if (error) throw error;
@@ -242,13 +155,8 @@ const ComprehensiveChatForums = () => {
     enabled: !!user,
   });
 
-  const trendingTopics = [
-    { tag: 'NairobiTech', posts: 234 },
-    { tag: 'KenyanStartups', posts: 189 },
-    { tag: 'DigitalKenya', posts: 156 },
-    { tag: 'TechJobs', posts: 98 },
-    { tag: 'Innovation', posts: 87 },
-  ];
+  // Fetch trending topics dynamically
+  const { data: trendingTopics = [] } = useTrendingTopics();
 
   const handleCreatePost = () => {
     if (!newPostTitle.trim() || !newPostContent.trim()) {
@@ -272,7 +180,7 @@ const ComprehensiveChatForums = () => {
     createPostMutation.mutate({
       title: newPostTitle.trim(),
       content: newPostContent.trim(),
-      category_id: selectedCategory,
+      categoryId: selectedCategory,
     });
   };
 
@@ -304,25 +212,36 @@ const ComprehensiveChatForums = () => {
     }
   };
 
+  const handleCreatePostSuccess = () => {
+    setNewPostTitle('');
+    setNewPostContent('');
+    setSelectedCategory('');
+    setShowNewPost(false);
+  };
+
   const renderMainContent = () => {
     switch (activeView) {
       case 'trending':
         return (
           <div className="space-y-4">
             <h2 className="text-xl font-bold">Trending Topics</h2>
-            {trendingTopics.map((topic, index) => (
-              <Card key={index}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold text-orange-600">#{topic.tag}</h3>
-                      <p className="text-sm text-gray-500">{topic.posts} posts</p>
+            {trendingTopics.length === 0 ? (
+              <p className="text-gray-600">No trending topics yet. Be the first to use hashtags!</p>
+            ) : (
+              trendingTopics.map((topic, index) => (
+                <Card key={index}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-semibold text-orange-600">#{topic.tag}</h3>
+                        <p className="text-sm text-gray-500">{topic.posts} posts</p>
+                      </div>
+                      <Hash className="h-6 w-6 text-gray-400" />
                     </div>
-                    <Hash className="h-6 w-6 text-gray-400" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
         );
       case 'events':
@@ -347,12 +266,12 @@ const ComprehensiveChatForums = () => {
               <CardContent className="p-4">
                 <div className="flex space-x-3">
                   <Avatar className="w-10 h-10">
-                    <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-                    <AvatarFallback>CN</AvatarFallback>
+                    <AvatarImage src={user?.user_metadata?.avatar_url} alt="User" />
+                    <AvatarFallback>{user?.email?.charAt(0)?.toUpperCase() || 'U'}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <Textarea
-                      placeholder="What's happening in your community?"
+                      placeholder="What's happening in your community? Use #hashtags to join trending topics!"
                       className="min-h-[80px] resize-none border-0 p-0 text-lg placeholder:text-gray-500 focus:ring-0"
                       onClick={() => setShowNewPost(true)}
                       value={newPostContent}
@@ -383,7 +302,7 @@ const ComprehensiveChatForums = () => {
                         </Select>
                         <div className="flex items-center justify-between">
                           <div className="flex space-x-2">
-                            <Badge variant="outline"># Add Topic</Badge>
+                            <Badge variant="outline"># Add hashtags in your content</Badge>
                           </div>
                           <div className="flex space-x-2">
                             <Button variant="outline" onClick={() => setShowNewPost(false)}>
@@ -525,15 +444,19 @@ const ComprehensiveChatForums = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {trendingTopics.map((topic, index) => (
-                    <div key={index} className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-orange-600">#{topic.tag}</p>
-                        <p className="text-sm text-gray-500">{topic.posts} posts</p>
+                  {trendingTopics.length === 0 ? (
+                    <p className="text-sm text-gray-500">No trending topics yet</p>
+                  ) : (
+                    trendingTopics.map((topic, index) => (
+                      <div key={index} className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-orange-600">#{topic.tag}</p>
+                          <p className="text-sm text-gray-500">{topic.posts} posts</p>
+                        </div>
+                        <Hash className="h-4 w-4 text-gray-400" />
                       </div>
-                      <Hash className="h-4 w-4 text-gray-400" />
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -571,16 +494,17 @@ const ComprehensiveChatForums = () => {
                   {suggestedUsers?.map((user, index) => (
                     <div key={index} className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-600 rounded-full flex items-center justify-center">
-                          <span className="text-white text-sm font-semibold">
+                        <Avatar className="w-8 h-8">
+                          <AvatarImage src={user.avatar_url} />
+                          <AvatarFallback className="bg-gradient-to-r from-orange-500 to-red-600 text-white text-xs">
                             {user.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
-                          </span>
-                        </div>
+                          </AvatarFallback>
+                        </Avatar>
                         <div>
                           <div className="flex items-center space-x-1">
                             <p className="font-medium text-sm">{user.full_name || user.email}</p>
                           </div>
-                          <p className="text-xs text-gray-500">New user</p>
+                          <p className="text-xs text-gray-500">@{user.full_name?.toLowerCase().replace(/\s+/g, '') || 'user'}</p>
                         </div>
                       </div>
                       <Button size="sm" variant="outline">
@@ -604,9 +528,11 @@ const ComprehensiveChatForums = () => {
               <CardContent>
                 <div className="space-y-3 text-sm">
                   {recentActivity?.map((activity, index) => (
-                    <p key={index}>
-                      <span className="font-medium">{activity.title}</span>: {activity.message}
-                    </p>
+                    <div key={index}>
+                      <p className="font-medium">{activity.title}</p>
+                      <p className="text-gray-600">{activity.message}</p>
+                      <p className="text-xs text-gray-400">{new Date(activity.created_at).toLocaleDateString()}</p>
+                    </div>
                   ))}
                   {(!recentActivity || recentActivity.length === 0) && (
                     <p className="text-gray-500">No recent activity</p>

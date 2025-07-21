@@ -4,151 +4,100 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
-import { CartProvider } from "./contexts/CartContext";
-import ErrorBoundary from "./components/ErrorBoundary";
-import PerformanceMonitor from "./components/PerformanceMonitor";
-
-// Import pages
+import { AuthProvider } from "@/contexts/AuthContext";
+import { HelmetProvider } from 'react-helmet-async';
 import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import Profile from "./pages/Profile";
-import Products from "./pages/Products";
-import Shop from "./pages/Shop";
-import Cart from "./pages/Cart";
-import Checkout from "./pages/Checkout";
-import RealEstate from "./pages/RealEstate";
-import PropertyDetail from "./pages/PropertyDetail";
-import Services from "./pages/Services";
-import Rides from "./pages/Rides";
-import FoodDelivery from "./pages/FoodDelivery";
-import Insurance from "./pages/Insurance";
-import Medical from "./pages/Medical";
-import Jobs from "./pages/Jobs";
-import JobDetail from "./pages/JobDetail";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
 import Events from "./pages/Events";
+import Jobs from "./pages/Jobs";
+import Properties from "./pages/Properties";
+import PropertyDetail from "./pages/PropertyDetail";
+import Products from "./pages/Products";
+import ProductDetail from "./pages/ProductDetail";
+import Restaurants from "./pages/Restaurants";
+import RestaurantDetail from "./pages/RestaurantDetail";
+import Healthcare from "./pages/Healthcare";
+import Ride from "./pages/Ride";
+import Dashboard from "./pages/Dashboard";
 import ChatForums from "./pages/ChatForums";
-import Wishlist from "./pages/Wishlist";
-import NotFound from "./pages/NotFound";
-import EmailConfirmation from "./pages/EmailConfirmation";
-import ResetPassword from "./pages/ResetPassword";
-import TermsAndConditions from "./pages/TermsAndConditions";
+import Chat from "./pages/Chat";
+import Profile from "./pages/Profile";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminProducts from "./pages/admin/AdminProducts";
+import AdminOrders from "./pages/admin/AdminOrders";
+import AdminEvents from "./pages/admin/AdminEvents";
+import AdminVendorApplications from "./pages/admin/AdminVendorApplications";
+import AdminDriverApplications from "./pages/admin/AdminDriverApplications";
+import AdminServiceProviders from "./pages/admin/AdminServiceProviders";
+import AdminBackup from "./pages/admin/AdminBackup";
+import AdminEmailCampaigns from "./pages/admin/AdminEmailCampaigns";
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import JobDetail from "./pages/JobDetail";
+import ProductCompare from "./pages/ProductCompare";
+import Checkout from "./pages/Checkout";
+import Cart from "./pages/Cart";
+import VendorApplication from "./pages/VendorApplication";
+import DriverApplication from "./pages/DriverApplication";
 
-// Admin pages
-import AdminLogin from "./pages/AdminLogin";
-import AdminDashboard from "./pages/AdminDashboard";
-import NewAdminDashboard from "./pages/NewAdminDashboard";
-import AdminApp from "./pages/AdminApp";
+const queryClient = new QueryClient();
 
-// Service provider pages
-import ServiceHub from "./pages/ServiceHub";
-import ServiceHubUnified from "./pages/ServiceHubUnified";
-import ServiceProviderHub from "./pages/ServiceProviderHub";
-import ServiceProviderRegistrationPage from "./pages/ServiceProviderRegistrationPage";
-
-// App-specific pages
-import VendorApp from "./pages/VendorApp";
-import VendorDashboard from "./pages/VendorDashboard";
-import VendorAnalyticsPage from "./pages/VendorAnalyticsPage";
-import DriverApp from "./pages/DriverApp";
-import PropertyOwnerApp from "./pages/PropertyOwnerApp";
-import ServicesApp from "./pages/ServicesApp";
-import ServicesDashboard from "./pages/ServicesDashboard";
-
-// Create a query client with better error handling
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: (failureCount, error: unknown) => {
-        if (
-          typeof error === 'object' &&
-          error !== null &&
-          'response' in error &&
-          typeof (error as { response: unknown }).response === 'object' &&
-          (error as { response: { status?: number } }).response !== null &&
-          'status' in (error as { response: { status: number } }).response
-        ) {
-          const status = (error as { response: { status: number } }).response.status;
-          if (status >= 400 && status < 500) {
-            return false;
-          }
-        }
-        return failureCount < 2;
-      },
-      staleTime: 5 * 60 * 1000,
-    },
-  },
-});
-
-function App() {
-  return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <CartProvider>
-            <TooltipProvider>
-              <BrowserRouter
-                future={{
-                  v7_startTransition: true,
-                  v7_relativeSplatPath: true,
-                }}
-              >
-                <div className="min-h-screen bg-background font-sans antialiased">
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/auth" element={<Auth />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/products" element={<Products />} />
-                    <Route path="/shop" element={<Shop />} />
-                    <Route path="/cart" element={<Cart />} />
-                    <Route path="/checkout" element={<Checkout />} />
-                    <Route path="/real-estate" element={<RealEstate />} />
-                    <Route path="/property/:id" element={<PropertyDetail />} />
-                    <Route path="/services" element={<Services />} />
-                    <Route path="/rides" element={<Rides />} />
-                    <Route path="/food-delivery" element={<FoodDelivery />} />
-                    <Route path="/food" element={<FoodDelivery />} />
-                    <Route path="/insurance" element={<Insurance />} />
-                    <Route path="/medical" element={<Medical />} />
-                    <Route path="/jobs" element={<Jobs />} />
-                    <Route path="/job/:id" element={<JobDetail />} />
-                    <Route path="/events" element={<Events />} />
-                    <Route path="/chat-forums" element={<ChatForums />} />
-                    <Route path="/wishlist" element={<Wishlist />} />
-                    <Route path="/email-confirmation" element={<EmailConfirmation />} />
-                    <Route path="/reset-password" element={<ResetPassword />} />
-                    <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
-
-                    <Route path="/admin-login" element={<AdminLogin />} />
-                    <Route path="/admin/*" element={<AdminApp />} />
-                    <Route path="/new-admin/*" element={<NewAdminDashboard />} />
-
-                    <Route path="/service-hub" element={<ServiceHub />} />
-                    <Route path="/service-hub-unified" element={<ServiceHubUnified />} />
-                    <Route path="/service-provider-hub" element={<ServiceProviderHub />} />
-                    <Route path="/service-provider-registration" element={<ServiceProviderRegistrationPage />} />
-
-                    <Route path="/vendor/*" element={<VendorApp />} />
-                    <Route path="/vendor-dashboard" element={<VendorDashboard />} />
-                    <Route path="/vendor-analytics" element={<VendorAnalyticsPage />} />
-                    <Route path="/driver-app/*" element={<DriverApp />} />
-                    <Route path="/property-owner/*" element={<PropertyOwnerApp />} />
-                    <Route path="/services-app/*" element={<ServicesApp />} />
-                    <Route path="/services-dashboard" element={<ServicesDashboard />} />
-
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </div>
-                <Toaster />
-                <Sonner />
-                <PerformanceMonitor />
-              </BrowserRouter>
-            </TooltipProvider>
-          </CartProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </ErrorBoundary>
-  );
-}
+const App = () => (
+  <HelmetProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/events" element={<Events />} />
+              <Route path="/jobs" element={<Jobs />} />
+              <Route path="/jobs/:id" element={<JobDetail />} />
+              <Route path="/properties" element={<Properties />} />
+              <Route path="/properties/:id" element={<PropertyDetail />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/products/:id" element={<ProductDetail />} />
+              <Route path="/product-compare" element={<ProductCompare />} />
+              <Route path="/restaurants" element={<Restaurants />} />
+              <Route path="/restaurants/:id" element={<RestaurantDetail />} />
+              <Route path="/healthcare" element={<Healthcare />} />
+              <Route path="/ride" element={<Ride />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/chat-forums" element={<ChatForums />} />
+              <Route path="/chat" element={<Chat />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/cart" element={<Cart />} />
+              <Route path="/vendor-application" element={<VendorApplication />} />
+              <Route path="/driver-application" element={<DriverApplication />} />
+              
+              {/* Admin Routes */}
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/users" element={<AdminUsers />} />
+              <Route path="/admin/products" element={<AdminProducts />} />
+              <Route path="/admin/orders" element={<AdminOrders />} />
+              <Route path="/admin/events" element={<AdminEvents />} />
+              <Route path="/admin/vendor-applications" element={<AdminVendorApplications />} />
+              <Route path="/admin/driver-applications" element={<AdminDriverApplications />} />
+              <Route path="/admin/service-providers" element={<AdminServiceProviders />} />
+              <Route path="/admin/backup" element={<AdminBackup />} />
+              <Route path="/admin/email-campaigns" element={<AdminEmailCampaigns />} />
+              <Route path="/admin/analytics" element={<AdminAnalytics />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </HelmetProvider>
+);
 
 export default App;
