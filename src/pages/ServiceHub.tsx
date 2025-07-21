@@ -41,8 +41,6 @@ interface ServiceProvider {
   verification_status?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
-  business_description?: string | null;
-  documents?: any | null;
   location_address?: string | null;
   location_coordinates?: any | null;
   rating?: number | null;
@@ -93,7 +91,7 @@ const ServiceHub = () => {
         .select(`
           id, user_id, business_name, email,
           is_active, created_at, updated_at,
-          business_description, documents, location_address, location_coordinates, verification_status
+          location_address, location_coordinates, verification_status
         `)
         .eq('is_active', true)
         .limit(2);

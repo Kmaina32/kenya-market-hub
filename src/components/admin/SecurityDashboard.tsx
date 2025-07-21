@@ -32,21 +32,21 @@ export const SecurityDashboard: React.FC = () => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const { data: failedLogins } = await supabase
+      const { count: failedLogins } = await supabase
         .from('security_audit_log')
-        .select('id', { count: 'exact', head: true })
+        .select('*', { count: 'exact', head: true })
         .eq('action', 'login_failed')
         .gte('created_at', today.toISOString());
 
-      const { data: adminActions } = await supabase
+      const { count: adminActions } = await supabase
         .from('security_audit_log')
-        .select('id', { count: 'exact', head: true })
+        .select('*', { count: 'exact', head: true })
         .like('action', 'admin_%')
         .gte('created_at', today.toISOString());
 
-      const { data: totalEvents } = await supabase
+      const { count: totalEvents } = await supabase
         .from('security_audit_log')
-        .select('id', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true });
 
       return {
         failedLogins: failedLogins || 0,
@@ -68,6 +68,37 @@ export const SecurityDashboard: React.FC = () => {
     !event.success || event.action === 'login_failed'
   ) || [];
 
+  const stats = [
+    {
+      title: "Failed Logins (24h)",
+      value: securityStats?.failedLogins || 0,
+      icon: AlertTriangle,
+      color: "text-red-500",
+      bgColor: "bg-red-100"
+    },
+    {
+      title: "Admin Actions (24h)",
+      value: securityStats?.adminActions || 0,
+      icon: Lock,
+      color: "text-blue-500",
+      bgColor: "bg-blue-100"
+    },
+    {
+      title: "Total Security Events",
+      value: securityStats?.totalEvents || 0,
+      icon: Activity,
+      color: "text-green-500",
+      bgColor: "bg-green-100"
+    },
+    {
+      title: "Security Status",
+      value: "Enhanced",
+      icon: Shield,
+      color: "text-orange-500",
+      bgColor: "bg-orange-100"
+    }
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
@@ -76,53 +107,28 @@ export const SecurityDashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Failed Logins (24h)</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {securityStats?.failedLogins || 0}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Admin Actions (24h)</CardTitle>
-            <Lock className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {securityStats?.adminActions || 0}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Security Events</CardTitle>
-            <Activity className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {securityStats?.totalEvents || 0}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Security Status</CardTitle>
-            <Shield className="h-4 w-4 text-orange-500" />
-          </CardHeader>
-          <CardContent>
-            <Badge variant="outline" className="text-orange-600 border-orange-600">
-              Enhanced
-            </Badge>
-          </CardContent>
-        </Card>
+        {stats.map((stat, index) => {
+          const IconComponent = stat.icon;
+          return (
+            <Card key={index}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                <IconComponent className={`h-4 w-4 ${stat.color}`} />
+              </CardHeader>
+              <CardContent>
+                <div className={`text-2xl font-bold ${stat.color}`}>
+                  {typeof stat.value === 'string' ? (
+                    <Badge variant="outline" className={`${stat.color} border-current`}>
+                      {stat.value}
+                    </Badge>
+                  ) : (
+                    stat.value.toLocaleString()
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {criticalEvents.length > 0 && (

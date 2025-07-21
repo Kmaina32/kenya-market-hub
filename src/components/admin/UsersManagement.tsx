@@ -24,12 +24,15 @@ import {
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 
+// Define allowed role types
+type UserRole = 'admin' | 'customer' | 'vendor' | 'driver' | 'property_owner' | 'rider' | 'service_provider';
+
 const UsersManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState<string>('all');
   const [isEditRoleOpen, setIsEditRoleOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [newRole, setNewRole] = useState('');
+  const [newRole, setNewRole] = useState<UserRole>('customer');
   const queryClient = useQueryClient();
 
   // Fetch users with profiles and roles
@@ -67,31 +70,43 @@ const UsersManagement = () => {
   const { data: userStats } = useQuery({
     queryKey: ['user-stats'],
     queryFn: async () => {
-      const [profilesResult, rolesResult] = await Promise.all([
-        supabase.from('profiles').select('id', { count: 'exact' }),
-        supabase.from('user_roles').select('role', { count: 'exact' })
-      ]);
+      const { count: totalUsers } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
 
-      const rolesCounts = await Promise.all([
-        supabase.from('user_roles').select('id', { count: 'exact' }).eq('role', 'admin'),
-        supabase.from('user_roles').select('id', { count: 'exact' }).eq('role', 'vendor'),
-        supabase.from('user_roles').select('id', { count: 'exact' }).eq('role', 'driver'),
-        supabase.from('user_roles').select('id', { count: 'exact' }).eq('role', 'customer')
-      ]);
+      const { count: admins } = await supabase
+        .from('user_roles')
+        .select('*', { count: 'exact', head: true })
+        .eq('role', 'admin');
+
+      const { count: vendors } = await supabase
+        .from('user_roles')
+        .select('*', { count: 'exact', head: true })
+        .eq('role', 'vendor');
+
+      const { count: drivers } = await supabase
+        .from('user_roles')
+        .select('*', { count: 'exact', head: true })
+        .eq('role', 'driver');
+
+      const { count: customers } = await supabase
+        .from('user_roles')
+        .select('*', { count: 'exact', head: true })
+        .eq('role', 'customer');
 
       return {
-        totalUsers: profilesResult.count || 0,
-        admins: rolesCounts[0].count || 0,
-        vendors: rolesCounts[1].count || 0,
-        drivers: rolesCounts[2].count || 0,
-        customers: rolesCounts[3].count || 0
+        totalUsers: totalUsers || 0,
+        admins: admins || 0,
+        vendors: vendors || 0,
+        drivers: drivers || 0,
+        customers: customers || 0
       };
     }
   });
 
   // Update user role mutation
   const updateUserRole = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+    mutationFn: async ({ userId, role }: { userId: string; role: UserRole }) => {
       // First, remove existing roles
       await supabase
         .from('user_roles')
@@ -112,7 +127,7 @@ const UsersManagement = () => {
       setIsEditRoleOpen(false);
       setSelectedUser(null);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast.error(`Failed to update user role: ${error.message}`);
     }
   });
@@ -348,7 +363,7 @@ const UsersManagement = () => {
             </div>
             <div>
               <label className="text-sm font-medium mb-2 block">Select New Role</label>
-              <Select value={newRole} onValueChange={setNewRole}>
+              <Select value={newRole} onValueChange={(value: UserRole) => setNewRole(value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>

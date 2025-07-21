@@ -112,14 +112,7 @@ export const useMyBookings = () => {
 
       const { data: bookings, error } = await supabase
         .from('service_bookings')
-        .select(`
-          *,
-          provider:service_provider_profiles!service_bookings_provider_id_fkey(
-            user_id,
-            business_name,
-            provider_type
-          )
-        `)
+        .select('*')
         .eq('customer_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -135,7 +128,7 @@ export const useMyBookings = () => {
 
       // Get provider profiles for full names
       const providerIds = bookings
-        .map(b => b.provider?.user_id)
+        .map(b => b.provider_id)
         .filter(Boolean);
 
       let providers: any[] = [];
@@ -160,9 +153,9 @@ export const useMyBookings = () => {
           email: customerProfile.email || '',
           phone: customerProfile.phone
         } : { full_name: '', email: '' },
-        provider: booking.provider ? {
-          full_name: providers.find(p => p.id === booking.provider?.user_id)?.full_name || '',
-          business_name: booking.provider.business_name
+        provider: booking.provider_id ? {
+          full_name: providers.find(p => p.id === booking.provider_id)?.full_name || '',
+          business_name: 'Service Provider'
         } : { full_name: '', business_name: undefined }
       })) as ServiceBooking[];
     },

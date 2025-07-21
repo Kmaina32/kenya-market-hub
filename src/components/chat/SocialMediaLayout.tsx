@@ -1,261 +1,311 @@
 
 import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import {
-  Home,
   MessageCircle,
-  Bell,
   Users,
   TrendingUp,
+  Calendar,
+  Search,
   Plus,
-  Filter
+  Hash,
+  UserPlus,
+  MessageSquare,
+  Heart,
+  Share,
+  MoreHorizontal
 } from 'lucide-react';
-import ImprovedForumsList from './ImprovedForumsList';
-import ChatInterface from './ChatInterface';
-import NotificationCenter from './NotificationCenter';
-import FollowingFeed from './FollowingFeed';
-import DirectMessages from './DirectMessages';
-import { useNotifications } from '@/hooks/useNotifications';
+import { ChatInterface } from '@/components/chat/ChatInterface';
 
-interface SocialMediaLayoutProps {
-  activeTab?: string;
-}
+const SocialMediaLayout = () => {
+  const [activeView, setActiveView] = useState('feed');
+  const [showNewPost, setShowNewPost] = useState(false);
 
-const SocialMediaLayout: React.FC<SocialMediaLayoutProps> = ({ activeTab = 'fyp' }) => {
-  const [currentTab, setCurrentTab] = useState(activeTab);
-  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
-  const { data: notifications } = useNotifications();
-  
-  // Calculate unread notifications count
-  const unreadNotifications = notifications?.filter(n => !n.is_read).length || 0;
+  const trendingTopics = [
+    { tag: 'NairobiTech', posts: 234 },
+    { tag: 'KenyanStartups', posts: 189 },
+    { tag: 'DigitalKenya', posts: 156 },
+    { tag: 'TechJobs', posts: 98 },
+    { tag: 'Innovation', posts: 87 }
+  ];
 
-  const isMessagesTab = currentTab === 'messages';
+  const recentPosts = [
+    {
+      id: 1,
+      author: 'Sarah Mwangi',
+      username: '@sarahmwangi',
+      time: '2h',
+      content: 'Just launched my new tech startup in Nairobi! Looking for feedback from the community. #NairobiTech #StartupLife',
+      likes: 45,
+      comments: 12,
+      shares: 8,
+      verified: true
+    },
+    {
+      id: 2,
+      author: 'David Kiprotich',
+      username: '@davidkip',
+      time: '4h',
+      content: 'Great networking event at iHub today. The Kenyan tech scene is really growing! Who else was there? #TechCommunity',
+      likes: 32,
+      comments: 7,
+      shares: 5,
+      verified: false
+    },
+    {
+      id: 3,
+      author: 'Tech Kenya',
+      username: '@techkenya',
+      time: '6h',
+      content: 'New opportunities in fintech emerging across East Africa. Exciting times ahead! What do you think will be the next big breakthrough?',
+      likes: 78,
+      comments: 23,
+      shares: 15,
+      verified: true
+    }
+  ];
+
+  const suggestedUsers = [
+    { name: 'Grace Wanjiku', username: '@gracewanjiku', followers: '2.3K', verified: true },
+    { name: 'Mike Ochieng', username: '@mikeochieng', followers: '1.8K', verified: false },
+    { name: 'Innovation Hub', username: '@innovationhub', followers: '5.2K', verified: true }
+  ];
 
   return (
-    <div className="h-full flex flex-col relative">
-      <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex-1 flex flex-col">
-        
-        {/* Main Content Area */}
-        <div className="flex-1 overflow-y-auto pb-20">
-          <div className="container mx-auto px-4 py-6">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Left Sidebar */}
+          <div className="lg:col-span-1 space-y-4">
+            {/* Navigation */}
+            <Card>
+              <CardContent className="p-4">
+                <nav className="space-y-2">
+                  <Button
+                    variant={activeView === 'feed' ? 'default' : 'ghost'}
+                    className="w-full justify-start"
+                    onClick={() => setActiveView('feed')}
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Feed
+                  </Button>
+                  <Button
+                    variant={activeView === 'groups' ? 'default' : 'ghost'}
+                    className="w-full justify-start"
+                    onClick={() => setActiveView('groups')}
+                  >
+                    <Users className="h-4 w-4 mr-2" />
+                    Groups
+                  </Button>
+                  <Button
+                    variant={activeView === 'trending' ? 'default' : 'ghost'}
+                    className="w-full justify-start"
+                    onClick={() => setActiveView('trending')}
+                  >
+                    <TrendingUp className="h-4 w-4 mr-2" />
+                    Trending
+                  </Button>
+                  <Button
+                    variant={activeView === 'events' ? 'default' : 'ghost'}
+                    className="w-full justify-start"
+                    onClick={() => setActiveView('events')}
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Events
+                  </Button>
+                  <Button
+                    variant={activeView === 'chat' ? 'default' : 'ghost'}
+                    className="w-full justify-start"
+                    onClick={() => setActiveView('chat')}
+                  >
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Direct Messages
+                  </Button>
+                </nav>
+              </CardContent>
+            </Card>
 
-            {/* TabsContent for FYP */}
-            <TabsContent value="fyp" className="mt-0">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
-                  <Card className="mb-6">
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="flex items-center gap-2">
-                          <Home className="w-6 h-6 text-orange-600" />
-                          For You Page
-                        </CardTitle>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <Filter className="w-4 h-4 mr-2" />
-                            Filter
-                          </Button>
-                          <Button size="sm" className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
-                            <Plus className="w-4 h-4 mr-2" />
-                            New Post
-                          </Button>
+            {/* Trending Topics */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Trending Topics</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {trendingTopics.map((topic, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-orange-600">#{topic.tag}</p>
+                        <p className="text-sm text-gray-500">{topic.posts} posts</p>
+                      </div>
+                      <Hash className="h-4 w-4 text-gray-400" />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-4">
+            {activeView === 'chat' ? (
+              <ChatInterface />
+            ) : (
+              <>
+                {/* Create Post */}
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex space-x-3">
+                      <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-600 rounded-full flex items-center justify-center">
+                        <span className="text-white font-semibold">U</span>
+                      </div>
+                      <div className="flex-1">
+                        <Textarea
+                          placeholder="What's happening in your community?"
+                          className="min-h-[80px] resize-none border-0 p-0 text-lg placeholder:text-gray-500 focus:ring-0"
+                          onClick={() => setShowNewPost(true)}
+                        />
+                        {showNewPost && (
+                          <div className="mt-3 flex items-center justify-between">
+                            <div className="flex space-x-2">
+                              <Badge variant="outline"># Add Topic</Badge>
+                            </div>
+                            <div className="flex space-x-2">
+                              <Button variant="outline" onClick={() => setShowNewPost(false)}>
+                                Cancel
+                              </Button>
+                              <Button className="bg-orange-600 hover:bg-orange-700">
+                                Post
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Posts Feed */}
+                <div className="space-y-4">
+                  {recentPosts.map((post) => (
+                    <Card key={post.id}>
+                      <CardContent className="p-4">
+                        <div className="flex space-x-3">
+                          <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-600 rounded-full flex items-center justify-center">
+                            <span className="text-white font-semibold">
+                              {post.author.charAt(0)}
+                            </span>
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2">
+                              <h4 className="font-semibold">{post.author}</h4>
+                              {post.verified && (
+                                <Badge variant="secondary" className="text-xs">Verified</Badge>
+                              )}
+                              <span className="text-gray-500">{post.username}</span>
+                              <span className="text-gray-500">·</span>
+                              <span className="text-gray-500">{post.time}</span>
+                            </div>
+                            <p className="mt-2 text-gray-900">{post.content}</p>
+                            <div className="mt-3 flex items-center space-x-6">
+                              <Button variant="ghost" size="sm" className="text-gray-500 hover:text-red-500">
+                                <Heart className="h-4 w-4 mr-1" />
+                                {post.likes}
+                              </Button>
+                              <Button variant="ghost" size="sm" className="text-gray-500 hover:text-blue-500">
+                                <MessageCircle className="h-4 w-4 mr-1" />
+                                {post.comments}
+                              </Button>
+                              <Button variant="ghost" size="sm" className="text-gray-500 hover:text-green-500">
+                                <Share className="h-4 w-4 mr-1" />
+                                {post.shares}
+                              </Button>
+                              <Button variant="ghost" size="sm" className="text-gray-500">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Right Sidebar */}
+          <div className="lg:col-span-1 space-y-4">
+            {/* Search */}
+            <Card>
+              <CardContent className="p-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search posts, people, topics..."
+                    className="pl-10"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Suggested Users */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Suggested for You</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {suggestedUsers.map((user, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-600 rounded-full flex items-center justify-center">
+                          <span className="text-white text-sm font-semibold">
+                            {user.name.charAt(0)}
+                          </span>
+                        </div>
+                        <div>
+                          <div className="flex items-center space-x-1">
+                            <p className="font-medium text-sm">{user.name}</p>
+                            {user.verified && (
+                              <Badge variant="secondary" className="text-xs px-1 py-0">✓</Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500">{user.followers} followers</p>
                         </div>
                       </div>
-                    </CardHeader>
-                    <CardContent>
-                      <ImprovedForumsList />
-                    </CardContent>
-                  </Card>
+                      <Button size="sm" variant="outline">
+                        <UserPlus className="h-3 w-3 mr-1" />
+                        Follow
+                      </Button>
+                    </div>
+                  ))}
                 </div>
+              </CardContent>
+            </Card>
 
-                <div className="space-y-6">
-                  <TrendingSidebar />
-                  <SuggestedUsers />
+            {/* Recent Activity */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Recent Activity</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3 text-sm">
+                  <p><span className="font-medium">Sarah</span> liked your post</p>
+                  <p><span className="font-medium">David</span> started following you</p>
+                  <p><span className="font-medium">Mike</span> commented on your post</p>
+                  <p>New members joined <span className="font-medium">Kenya Tech</span> group</p>
                 </div>
-              </div>
-            </TabsContent>
-
-            {/* TabsContent for Following */}
-            <TabsContent value="following" className="mt-0">
-              <FollowingFeed />
-            </TabsContent>
-
-            {/* TabsContent for Messages */}
-            <TabsContent value="messages" className="mt-0">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-1">
-                  <DirectMessages
-                    onSelectConversation={setSelectedConversation}
-                    selectedConversation={selectedConversation}
-                  />
-                </div>
-                <div className="lg:col-span-2">
-                  <ChatInterface
-                    selectedConversationId={selectedConversation}
-                    onBack={() => setSelectedConversation(null)}
-                  />
-                </div>
-              </div>
-            </TabsContent>
-
-            {/* TabsContent for Notifications */}
-            <TabsContent value="notifications" className="mt-0">
-              <NotificationCenter />
-            </TabsContent>
-
-            {/* TabsContent for Trending */}
-            <TabsContent value="trending" className="mt-0">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="w-6 h-6 text-orange-600" />
-                    Trending Topics
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ImprovedForumsList />
-                </CardContent>
-              </Card>
-            </TabsContent>
+              </CardContent>
+            </Card>
           </div>
         </div>
-
-        {/* Fixed Bottom Navigation - Only visible within the chat page */}
-        <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
-          <TabsList className="grid w-full grid-cols-5 h-16 bg-transparent p-0 rounded-none border-0">
-            
-            <TabsTrigger
-              value="fyp"
-              className="flex flex-col items-center justify-center gap-1 h-full
-                         data-[state=active]:bg-orange-50 data-[state=active]:text-orange-600
-                         data-[state=active]:border-t-2 data-[state=active]:border-orange-600 data-[state=active]:border-b-0
-                         text-gray-600 hover:text-orange-500 transition-colors rounded-none"
-            >
-              <Home className="w-5 h-5" />
-              <span className="text-xs font-medium">For You</span>
-            </TabsTrigger>
-
-            <TabsTrigger
-              value="following"
-              className="flex flex-col items-center justify-center gap-1 h-full
-                         data-[state=active]:bg-orange-50 data-[state=active]:text-orange-600
-                         data-[state=active]:border-t-2 data-[state=active]:border-orange-600 data-[state=active]:border-b-0
-                         text-gray-600 hover:text-orange-500 transition-colors rounded-none"
-            >
-              <Users className="w-5 h-5" />
-              <span className="text-xs font-medium">Following</span>
-            </TabsTrigger>
-
-            <TabsTrigger
-              value="messages"
-              className="flex flex-col items-center justify-center gap-1 h-full
-                         data-[state=active]:bg-orange-50 data-[state=active]:text-orange-600
-                         data-[state=active]:border-t-2 data-[state=active]:border-orange-600 data-[state=active]:border-b-0
-                         relative text-gray-600 hover:text-orange-500 transition-colors rounded-none"
-            >
-              <MessageCircle className="w-5 h-5" />
-              <span className="text-xs font-medium">Messages</span>
-            </TabsTrigger>
-
-            <TabsTrigger
-              value="notifications"
-              className="flex flex-col items-center justify-center gap-1 h-full
-                         data-[state=active]:bg-orange-50 data-[state=active]:text-orange-600
-                         data-[state=active]:border-t-2 data-[state=active]:border-orange-600 data-[state=active]:border-b-0
-                         relative text-gray-600 hover:text-orange-500 transition-colors rounded-none"
-            >
-              <Bell className="w-5 h-5" />
-              <span className="text-xs font-medium">Notifications</span>
-              {unreadNotifications > 0 && (
-                <Badge className="absolute -top-1 -right-1 w-5 h-5 p-0 text-xs bg-red-500 hover:bg-red-600 flex items-center justify-center rounded-full">
-                  {unreadNotifications > 99 ? '99+' : unreadNotifications}
-                </Badge>
-              )}
-            </TabsTrigger>
-
-            <TabsTrigger
-              value="trending"
-              className="flex flex-col items-center justify-center gap-1 h-full
-                         data-[state=active]:bg-orange-50 data-[state=active]:text-orange-600
-                         data-[state=active]:border-t-2 data-[state=active]:border-orange-600 data-[state=active]:border-b-0
-                         text-gray-600 hover:text-orange-500 transition-colors rounded-none"
-            >
-              <TrendingUp className="w-5 h-5" />
-              <span className="text-xs font-medium">Trending</span>
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
-      </Tabs>
+      </div>
     </div>
-  );
-};
-
-// Trending Sidebar Component - Now connects to real data
-const TrendingSidebar: React.FC = () => {
-  // TODO: Replace with actual trending topics from Supabase
-  const trendingTopics = [
-    { tag: '#SokkoSasa', posts: 1234 },
-    { tag: '#TechKenya', posts: 856 },
-    { tag: '#StartupLife', posts: 634 },
-    { tag: '#Nairobi', posts: 523 },
-  ];
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Trending Now</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {trendingTopics.map((topic, index) => (
-          <div key={index} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer">
-            <div>
-              <p className="font-medium text-orange-600">{topic.tag}</p>
-              <p className="text-sm text-gray-500">{topic.posts.toLocaleString()} posts</p>
-            </div>
-          </div>
-        ))}
-      </CardContent>
-    </Card>
-  );
-};
-
-// Suggested Users Component - Now connects to real data
-const SuggestedUsers: React.FC = () => {
-  // TODO: Replace with actual suggested users from Supabase
-  const suggestedUsers = [
-    { name: 'John Doe', username: '@johndoe', avatar: null },
-    { name: 'Jane Smith', username: '@janesmith', avatar: null },
-    { name: 'Tech Guru', username: '@techguru', avatar: null },
-  ];
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Suggested for You</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {suggestedUsers.map((user, index) => (
-          <div key={index} className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-600 rounded-full flex items-center justify-center text-white font-medium">
-                {user.name.charAt(0)}
-              </div>
-              <div>
-                <p className="font-medium">{user.name}</p>
-                <p className="text-sm text-gray-500">{user.username}</p>
-              </div>
-            </div>
-            <Button size="sm" variant="outline">
-              Follow
-            </Button>
-          </div>
-        ))}
-      </CardContent>
-    </Card>
   );
 };
 
