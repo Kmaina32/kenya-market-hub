@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -116,46 +117,46 @@ const ComprehensiveChatForums = () => {
     },
   });
 
-const useForumPosts = (categoryId?: string) => {
-  const { user } = useAuth();
-  
-  return useQuery({
-    queryKey: ['forum-posts', categoryId, user?.id],
-    queryFn: async () => {
-      let query = supabase
-        .from('forum_posts')
-        .select('*')
-        .order('created_at', { ascending: false });
+  const useForumPosts = (categoryId?: string) => {
+    const { user } = useAuth();
+    
+    return useQuery({
+      queryKey: ['forum-posts', categoryId, user?.id],
+      queryFn: async () => {
+        let query = supabase
+          .from('forum_posts')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (categoryId) {
-        query = query.eq('category_id', categoryId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('Error fetching forum posts:', error);
-        throw error;
-      }
-
-      // Transform data with simplified author info
-      const transformedData = (data || []).map((post) => ({
-        ...post,
-        has_liked: false, // Simplified for now
-        author_profile: { 
-          full_name: `User ${post.author_id.slice(0, 8)}`,
-          avatar_url: null 
-        },
-        category: { 
-          name: 'General',
-          color: '#3B82F6' // Default blue color
+        if (categoryId) {
+          query = query.eq('category_id', categoryId);
         }
-      }));
 
-      return transformedData as ForumPost[];
-    }
-  });
-};
+        const { data, error } = await query;
+
+        if (error) {
+          console.error('Error fetching forum posts:', error);
+          throw error;
+        }
+
+        // Transform data with simplified author info
+        const transformedData = (data || []).map((post) => ({
+          ...post,
+          has_liked: false, // Simplified for now
+          author_profile: { 
+            full_name: `User ${post.author_id.slice(0, 8)}`,
+            avatar_url: null 
+          },
+          category: { 
+            name: 'General',
+            color: '#3B82F6' // Default blue color
+          }
+        }));
+
+        return transformedData as ForumPost[];
+      }
+    });
+  };
 
   // Create post mutation
   const createPostMutation = useMutation({
@@ -208,33 +209,45 @@ const useForumPosts = (categoryId?: string) => {
 
   const { data: posts, isLoading: postsLoading } = useForumPosts(selectedCategory);
 
+  // Fetch suggested users from profiles
+  const { data: suggestedUsers } = useQuery({
+    queryKey: ['suggested-users'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .limit(5);
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Fetch recent activity from notifications
+  const { data: recentActivity } = useQuery({
+    queryKey: ['recent-activity'],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('title, message, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(4);
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
   const trendingTopics = [
     { tag: 'NairobiTech', posts: 234 },
     { tag: 'KenyanStartups', posts: 189 },
     { tag: 'DigitalKenya', posts: 156 },
     { tag: 'TechJobs', posts: 98 },
     { tag: 'Innovation', posts: 87 },
-  ];
-
-  const suggestedUsers = [
-    {
-      name: 'Grace Wanjiku',
-      username: '@gracewanjiku',
-      followers: '2.3K',
-      verified: true,
-    },
-    {
-      name: 'Mike Ochieng',
-      username: '@mikeochieng',
-      followers: '1.8K',
-      verified: false,
-    },
-    {
-      name: 'Innovation Hub',
-      username: '@innovationhub',
-      followers: '5.2K',
-      verified: true,
-    },
   ];
 
   const handleCreatePost = () => {
@@ -268,83 +281,67 @@ const useForumPosts = (categoryId?: string) => {
     post.content.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Left Sidebar */}
-          <div className="lg:col-span-1 space-y-4">
-            {/* Navigation */}
-            <Card>
-              <CardContent className="p-4">
-                <nav className="space-y-2">
-                  <Button
-                    variant={activeView === 'feed' ? 'default' : 'ghost'}
-                    className="w-full justify-start"
-                    onClick={() => setActiveView('feed')}
-                  >
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Feed
-                  </Button>
-                  <Button
-                    variant={activeView === 'groups' ? 'default' : 'ghost'}
-                    className="w-full justify-start"
-                    onClick={() => setActiveView('groups')}
-                  >
-                    <Users className="h-4 w-4 mr-2" />
-                    Groups
-                  </Button>
-                  <Button
-                    variant={activeView === 'trending' ? 'default' : 'ghost'}
-                    className="w-full justify-start"
-                    onClick={() => setActiveView('trending')}
-                  >
-                    <TrendingUp className="h-4 w-4 mr-2" />
-                    Trending
-                  </Button>
-                  <Button
-                    variant={activeView === 'events' ? 'default' : 'ghost'}
-                    className="w-full justify-start"
-                    onClick={() => setActiveView('events')}
-                  >
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Events
-                  </Button>
-                  <Button
-                    variant={activeView === 'chat' ? 'default' : 'ghost'}
-                    className="w-full justify-start"
-                    onClick={() => setActiveView('chat')}
-                  >
-                    <MessageSquare className="h-4 w-4 mr-2" />
-                    Direct Messages
-                  </Button>
-                </nav>
-              </CardContent>
-            </Card>
+  const handleNavigation = (view: string) => {
+    setActiveView(view);
+    
+    // Handle navigation to different pages for specific views
+    switch (view) {
+      case 'chat':
+        navigate('/chat');
+        break;
+      case 'events':
+        navigate('/events');
+        break;
+      case 'groups':
+        // You can navigate to groups page when available
+        toast({
+          title: 'Coming Soon',
+          description: 'Groups feature is coming soon!',
+        });
+        break;
+      default:
+        setActiveView(view);
+    }
+  };
 
-            {/* Trending Topics */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Trending Topics</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {trendingTopics.map((topic, index) => (
-                    <div key={index} className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-orange-600">#{topic.tag}</p>
-                        <p className="text-sm text-gray-500">{topic.posts} posts</p>
-                      </div>
-                      <Hash className="h-4 w-4 text-gray-400" />
+  const renderMainContent = () => {
+    switch (activeView) {
+      case 'trending':
+        return (
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold">Trending Topics</h2>
+            {trendingTopics.map((topic, index) => (
+              <Card key={index}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-orange-600">#{topic.tag}</h3>
+                      <p className="text-sm text-gray-500">{topic.posts} posts</p>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    <Hash className="h-6 w-6 text-gray-400" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-4">
+        );
+      case 'events':
+        return (
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold">Upcoming Events</h2>
+            <p className="text-gray-600">Events feature coming soon...</p>
+          </div>
+        );
+      case 'groups':
+        return (
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold">Discussion Groups</h2>
+            <p className="text-gray-600">Groups feature coming soon...</p>
+          </div>
+        );
+      default:
+        return (
+          <>
             {/* Create Post */}
             <Card>
               <CardContent className="p-4">
@@ -462,6 +459,89 @@ const useForumPosts = (categoryId?: string) => {
                 ))
               )}
             </div>
+          </>
+        );
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Left Sidebar */}
+          <div className="lg:col-span-1 space-y-4">
+            {/* Navigation */}
+            <Card>
+              <CardContent className="p-4">
+                <nav className="space-y-2">
+                  <Button
+                    variant={activeView === 'feed' ? 'default' : 'ghost'}
+                    className="w-full justify-start"
+                    onClick={() => handleNavigation('feed')}
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Feed
+                  </Button>
+                  <Button
+                    variant={activeView === 'groups' ? 'default' : 'ghost'}
+                    className="w-full justify-start"
+                    onClick={() => handleNavigation('groups')}
+                  >
+                    <Users className="h-4 w-4 mr-2" />
+                    Groups
+                  </Button>
+                  <Button
+                    variant={activeView === 'trending' ? 'default' : 'ghost'}
+                    className="w-full justify-start"
+                    onClick={() => handleNavigation('trending')}
+                  >
+                    <TrendingUp className="h-4 w-4 mr-2" />
+                    Trending
+                  </Button>
+                  <Button
+                    variant={activeView === 'events' ? 'default' : 'ghost'}
+                    className="w-full justify-start"
+                    onClick={() => handleNavigation('events')}
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Events
+                  </Button>
+                  <Button
+                    variant={activeView === 'chat' ? 'default' : 'ghost'}
+                    className="w-full justify-start"
+                    onClick={() => handleNavigation('chat')}
+                  >
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Direct Messages
+                  </Button>
+                </nav>
+              </CardContent>
+            </Card>
+
+            {/* Trending Topics */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Trending Topics</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {trendingTopics.map((topic, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-orange-600">#{topic.tag}</p>
+                        <p className="text-sm text-gray-500">{topic.posts} posts</p>
+                      </div>
+                      <Hash className="h-4 w-4 text-gray-400" />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-4">
+            {renderMainContent()}
           </div>
 
           {/* Right Sidebar */}
@@ -488,24 +568,19 @@ const useForumPosts = (categoryId?: string) => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {suggestedUsers.map((user, index) => (
+                  {suggestedUsers?.map((user, index) => (
                     <div key={index} className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-600 rounded-full flex items-center justify-center">
                           <span className="text-white text-sm font-semibold">
-                            {user.name.charAt(0)}
+                            {user.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
                           </span>
                         </div>
                         <div>
                           <div className="flex items-center space-x-1">
-                            <p className="font-medium text-sm">{user.name}</p>
-                            {user.verified && (
-                              <Badge variant="secondary" className="text-xs px-1 py-0">
-                                ✓
-                              </Badge>
-                            )}
+                            <p className="font-medium text-sm">{user.full_name || user.email}</p>
                           </div>
-                          <p className="text-xs text-gray-500">{user.followers} followers</p>
+                          <p className="text-xs text-gray-500">New user</p>
                         </div>
                       </div>
                       <Button size="sm" variant="outline">
@@ -514,6 +589,9 @@ const useForumPosts = (categoryId?: string) => {
                       </Button>
                     </div>
                   ))}
+                  {(!suggestedUsers || suggestedUsers.length === 0) && (
+                    <p className="text-sm text-gray-500">No suggestions available</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -525,18 +603,14 @@ const useForumPosts = (categoryId?: string) => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3 text-sm">
-                  <p>
-                    <span className="font-medium">Sarah</span> liked your post
-                  </p>
-                  <p>
-                    <span className="font-medium">David</span> started following you
-                  </p>
-                  <p>
-                    <span className="font-medium">Mike</span> commented on your post
-                  </p>
-                  <p>
-                    New members joined <span className="font-medium">Kenya Tech</span> group
-                  </p>
+                  {recentActivity?.map((activity, index) => (
+                    <p key={index}>
+                      <span className="font-medium">{activity.title}</span>: {activity.message}
+                    </p>
+                  ))}
+                  {(!recentActivity || recentActivity.length === 0) && (
+                    <p className="text-gray-500">No recent activity</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
