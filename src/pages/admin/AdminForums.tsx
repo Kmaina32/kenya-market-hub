@@ -21,8 +21,8 @@ const AdminForums = () => {
         .from('forum_posts')
         .select(`
           *,
-          forum_categories(name, color),
-          profiles(full_name)
+          forum_categories!inner(name, color),
+          profiles!inner(full_name)
         `)
         .order('created_at', { ascending: false });
       

@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import MainLayout from './components/MainLayout';
-import Home from './pages/Home';
+import Home from '@/pages/Home';
 import Shop from './pages/Shop';
 import Products from './pages/Products';
 import ProductDetail from './pages/ProductDetail';
@@ -36,11 +37,11 @@ import AdminJobs from './pages/admin/AdminJobs';
 import AdminRides from './pages/admin/AdminRides';
 import AdminServiceProviders from './pages/admin/AdminServiceProviders';
 import AdminServiceBookings from './pages/admin/AdminServiceBookings';
+import AdminTransactions from './pages/admin/AdminTransactions';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Settings from '@/pages/Settings';
 import AdminServices from '@/pages/admin/AdminServices';
 import AdminRestaurants from '@/pages/admin/AdminRestaurants';
-import AdminTransactions from '@/pages/admin/AdminTransactions';
 
 function App() {
   return (
