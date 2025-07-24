@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext } from 'react';
 import { useCart } from '@/hooks/useCart';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CartContextType {
   items: Array<{
@@ -23,6 +24,7 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
   const cartHook = useCart();
 
   const contextValue = {
@@ -57,6 +59,9 @@ export const useCartContext = () => {
   }
   return context;
 };
+
+// Export the context for use in useSafeCartContext
+export { CartContext };
 
 // Export the hook for backward compatibility
 export { useCart };

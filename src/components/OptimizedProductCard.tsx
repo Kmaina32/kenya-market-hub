@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Heart, ShoppingCart, Star, Eye } from 'lucide-react';
-import { useCartContext } from '@/contexts/CartContext';
+import { useSafeCartContext } from '@/hooks/useSafeCartContext';
 import { toast } from 'sonner';
 
 interface Product {
@@ -29,7 +28,7 @@ const OptimizedProductCard: React.FC<OptimizedProductCardProps> = ({
   product, 
   onViewDetails 
 }) => {
-  const { addToCart, isLoading } = useCartContext();
+  const { addToCart, isLoading, isAvailable } = useSafeCartContext();
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   const handleAddToCart = async (e: React.MouseEvent) => {
@@ -40,8 +39,12 @@ const OptimizedProductCard: React.FC<OptimizedProductCardProps> = ({
       return;
     }
 
+    if (!isAvailable) {
+      toast.warning('Please log in to add items to your cart');
+      return;
+    }
+
     try {
-      // Pass only the product ID to addToCart
       addToCart(product.id, 1);
     } catch (error) {
       console.error('Error adding to cart:', error);
@@ -77,7 +80,6 @@ const OptimizedProductCard: React.FC<OptimizedProductCardProps> = ({
           )}
         </div>
         
-        {/* Wishlist button */}
         <Button
           variant="ghost"
           size="sm"
@@ -91,7 +93,6 @@ const OptimizedProductCard: React.FC<OptimizedProductCardProps> = ({
           />
         </Button>
 
-        {/* Stock status badge */}
         {!product.in_stock && (
           <Badge 
             variant="destructive" 
@@ -104,22 +105,18 @@ const OptimizedProductCard: React.FC<OptimizedProductCardProps> = ({
 
       <CardContent className="p-4">
         <div className="space-y-2">
-          {/* Category badge */}
           <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 text-xs">
             {product.category}
           </Badge>
 
-          {/* Product name */}
           <h3 className="font-semibold text-gray-900 line-clamp-2 text-sm group-hover:text-orange-600 transition-colors">
             {product.name}
           </h3>
 
-          {/* Vendor */}
           {product.vendor && (
             <p className="text-xs text-gray-500">by {product.vendor}</p>
           )}
 
-          {/* Rating */}
           {product.rating && (
             <div className="flex items-center space-x-1">
               <div className="flex items-center">
@@ -140,14 +137,12 @@ const OptimizedProductCard: React.FC<OptimizedProductCardProps> = ({
             </div>
           )}
 
-          {/* Price */}
           <div className="flex items-center justify-between">
             <span className="text-lg font-bold text-orange-600">
               KSH {Number(product.price).toLocaleString()}
             </span>
           </div>
 
-          {/* Action buttons */}
           <div className="flex space-x-2 pt-2">
             <Button
               onClick={handleViewDetails}
@@ -160,7 +155,7 @@ const OptimizedProductCard: React.FC<OptimizedProductCardProps> = ({
             </Button>
             <Button
               onClick={handleAddToCart}
-              disabled={!product.in_stock || isLoading}
+              disabled={!product.in_stock || isLoading || !isAvailable}
               size="sm"
               className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white text-xs"
             >
