@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -21,7 +20,7 @@ interface MatchedDriver {
   rating: number;
   acceptance_rate: number;
   last_active: string;
-  vehicle_type: 'taxi' | 'motorbike';
+  vehicle_type: 'taxi' | 'motorbike' | 'delivery';
   vehicle_make: string;
   vehicle_model: string;
   license_plate: string;
