@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,34 +36,53 @@ const UsersManagement = () => {
   const [newRole, setNewRole] = useState<UserRole>('customer');
   const queryClient = useQueryClient();
 
-  // Fetch users with profiles and roles
+  // Fetch users with profiles and roles using separate queries
   const { data: users, isLoading } = useQuery({
     queryKey: ['admin-users', searchTerm, selectedRole],
     queryFn: async () => {
-      let query = supabase
-        .from('profiles')
-        .select(`
-          *,
-          user_roles(role)
-        `)
-        .order('created_at', { ascending: false });
+      try {
+        // First get all profiles
+        let profilesQuery = supabase
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (searchTerm) {
-        query = query.or(`full_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`);
-      }
+        if (searchTerm) {
+          profilesQuery = profilesQuery.or(`full_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`);
+        }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      
-      let filteredData = data || [];
-      
-      if (selectedRole && selectedRole !== 'all') {
-        filteredData = filteredData.filter(user => 
-          user.user_roles?.some((role: any) => role.role === selectedRole)
-        );
+        const { data: profiles, error: profilesError } = await profilesQuery;
+        if (profilesError) throw profilesError;
+
+        // Then get all user roles
+        const { data: userRoles, error: rolesError } = await supabase
+          .from('user_roles')
+          .select('*');
+
+        if (rolesError) {
+          console.error('Error fetching roles:', rolesError);
+          // If roles query fails, continue with just profiles
+        }
+
+        // Combine profiles with their roles
+        const usersWithRoles = profiles?.map(profile => {
+          const userRole = userRoles?.find(role => role.user_id === profile.id);
+          return {
+            ...profile,
+            role: userRole?.role || 'customer'
+          };
+        }) || [];
+
+        // Filter by role if specified
+        if (selectedRole && selectedRole !== 'all') {
+          return usersWithRoles.filter(user => user.role === selectedRole);
+        }
+        
+        return usersWithRoles;
+      } catch (error) {
+        console.error('Error in users query:', error);
+        throw error;
       }
-      
-      return filteredData;
     }
   });
 
@@ -134,7 +154,7 @@ const UsersManagement = () => {
 
   const handleEditRole = (user: any) => {
     setSelectedUser(user);
-    setNewRole(user.user_roles?.[0]?.role || 'customer');
+    setNewRole(user.role || 'customer');
     setIsEditRoleOpen(true);
   };
 
@@ -307,8 +327,8 @@ const UsersManagement = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className={getRoleBadgeColor(user.user_roles?.[0]?.role || 'customer')}>
-                          {user.user_roles?.[0]?.role || 'customer'}
+                        <Badge className={getRoleBadgeColor(user.role)}>
+                          {user.role}
                         </Badge>
                       </TableCell>
                       <TableCell>
