@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -113,13 +112,19 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
         if (properties) {
           console.log('Fetched properties for billboard:', properties);
           properties.forEach(property => {
+            // Safely handle the images property
+            let imageUrl: string | undefined;
+            if (property.images && Array.isArray(property.images) && property.images.length > 0) {
+              imageUrl = property.images[0] as string;
+            }
+
             advertisements.push({
               id: property.id,
               type: 'property',
               title: property.title,
               description: property.description || 'Premium property available',
               price: property.price,
-              image_url: property.images && property.images.length > 0 ? property.images[0] : undefined,
+              image_url: imageUrl,
               location: property.location_address,
               category: property.property_type
             });
