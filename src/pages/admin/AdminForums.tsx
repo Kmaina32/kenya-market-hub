@@ -22,7 +22,7 @@ const AdminForums = () => {
         .select(`
           *,
           forum_categories(name, color),
-          profiles(full_name)
+          profiles!forum_posts_author_id_fkey(full_name)
         `)
         .order('created_at', { ascending: false });
       
