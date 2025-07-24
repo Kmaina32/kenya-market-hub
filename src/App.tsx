@@ -18,7 +18,20 @@ import Services from "./pages/Services";
 import Events from "./pages/Events";
 import VendorDashboard from "./pages/VendorDashboard";
 import FoodDelivery from "./pages/FoodDelivery";
+import ChatForums from "./pages/ChatForums";
+import RealEstate from "./pages/RealEstate";
+import Medical from "./pages/Medical";
+import Jobs from "./pages/Jobs";
+import Insurance from "./pages/Insurance";
+import Rides from "./pages/Rides";
+import ServiceProviderHub from "./pages/ServiceProviderHub";
+import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminApp from "./pages/AdminApp";
+import VendorApp from "./pages/VendorApp";
+import DriverApp from "./pages/DriverApp";
+import PropertyOwnerApp from "./pages/PropertyOwnerApp";
+import ServicesApp from "./pages/ServicesApp";
 import { ErrorBoundary } from "react-error-boundary";
 
 const queryClient = new QueryClient({
@@ -57,17 +70,39 @@ const App = () => (
               <CartProviderWrapper>
                 <div className="min-h-screen bg-background font-sans antialiased">
                   <Routes>
+                    {/* Public routes */}
                     <Route path="/" element={<Index />} />
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/shop" element={<Shop />} />
-                    <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
-                    <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
-                    <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                     <Route path="/products" element={<Products />} />
                     <Route path="/services" element={<Services />} />
                     <Route path="/events" element={<Events />} />
-                    <Route path="/vendor-dashboard" element={<ProtectedRoute><VendorDashboard /></ProtectedRoute>} />
                     <Route path="/food-delivery" element={<FoodDelivery />} />
+                    <Route path="/chat-forums" element={<ChatForums />} />
+                    <Route path="/real-estate" element={<RealEstate />} />
+                    <Route path="/medical" element={<Medical />} />
+                    <Route path="/jobs" element={<Jobs />} />
+                    <Route path="/insurance" element={<Insurance />} />
+                    <Route path="/rides" element={<Rides />} />
+                    <Route path="/service-provider-hub" element={<ServiceProviderHub />} />
+                    
+                    {/* Protected customer routes */}
+                    <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+                    <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+                    <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                    
+                    {/* Legacy redirect routes */}
+                    <Route path="/vendor-dashboard" element={<VendorDashboard />} />
+                    
+                    {/* Specialized app routes */}
+                    <Route path="/admin/*" element={<AdminApp />} />
+                    <Route path="/vendor/*" element={<VendorApp />} />
+                    <Route path="/driver/*" element={<DriverApp />} />
+                    <Route path="/property-owner/*" element={<PropertyOwnerApp />} />
+                    <Route path="/services-app/*" element={<ServicesApp />} />
+                    
+                    {/* Catch-all 404 route */}
+                    <Route path="*" element={<NotFound />} />
                   </Routes>
                 </div>
                 <Toaster />

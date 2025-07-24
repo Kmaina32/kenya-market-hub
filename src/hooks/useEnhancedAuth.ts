@@ -86,8 +86,8 @@ export const useEnhancedAuth = () => {
     if (!user) return false;
 
     try {
-      // Use the new secure function instead of hardcoded check
-      const { data, error } = await supabase.rpc('is_current_user_admin');
+      // Use the correct function name that exists in Supabase
+      const { data, error } = await supabase.rpc('is_admin', { check_user_id: user.id });
 
       if (error) {
         console.error('Admin check failed:', error);

@@ -7,7 +7,7 @@ const VendorDashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Redirect to Service Provider Hub
+    // Redirect to Service Provider Hub instead of broken route
     navigate('/service-provider-hub', { replace: true });
   }, [navigate]);
 
