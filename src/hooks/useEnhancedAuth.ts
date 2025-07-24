@@ -25,7 +25,7 @@ export const useEnhancedAuth = () => {
 
   const handleLoginAttempt = async (email: string, password: string) => {
     // Rate limiting check
-    if (!SecureValidator.checkRateLimit(`login_${email}`, 5, 15 * 60 * 1000)) {
+    if (!SecureValidator.checkRateLimit(`login_${email}`, 3, 15 * 60 * 1000)) {
       logSecurityViolation('Rate limit exceeded', 'auth', email);
       throw new Error('Too many login attempts. Please try again later.');
     }
@@ -86,7 +86,8 @@ export const useEnhancedAuth = () => {
     if (!user) return false;
 
     try {
-      const { data, error } = await supabase.rpc('is_admin', { check_user_id: user.id });
+      // Use the new secure function instead of hardcoded check
+      const { data, error } = await supabase.rpc('is_current_user_admin');
 
       if (error) {
         console.error('Admin check failed:', error);

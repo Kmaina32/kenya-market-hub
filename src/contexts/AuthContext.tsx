@@ -32,15 +32,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
 
-  // Check if user has admin role
+  // Check if user has admin role using secure function
   const checkAdminStatus = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .eq('role', 'admin')
-        .single();
+      const { data, error } = await supabase.rpc('is_admin', { check_user_id: userId });
 
       if (error && error.code !== 'PGRST116') {
         console.error('Admin check failed:', error);
