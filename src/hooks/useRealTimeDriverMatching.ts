@@ -22,6 +22,9 @@ interface MatchedDriver {
   acceptance_rate: number;
   last_active: string;
   vehicle_type: 'taxi' | 'motorbike';
+  vehicle_make: string;
+  vehicle_model: string;
+  license_plate: string;
   phone_number: string;
   status: 'available' | 'busy' | 'offline';
   current_location: string;
@@ -109,7 +112,11 @@ export const useRealTimeDriverMatching = () => {
           distance_km: nearby.distance_km,
           estimated_pickup_minutes: nearby.estimated_pickup_minutes,
           score,
-          acceptance_rate: 0.85 // Mock data - would come from driver stats
+          acceptance_rate: 0.85, // Mock data - would come from driver stats
+          last_active: details.updated_at || new Date().toISOString(),
+          vehicle_make: details.vehicle_make || 'Unknown',
+          vehicle_model: details.vehicle_model || 'Unknown',
+          license_plate: details.license_plate || 'Unknown'
         };
       }).filter(Boolean).sort((a, b) => b.score - a.score);
 
