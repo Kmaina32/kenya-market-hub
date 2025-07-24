@@ -1,12 +1,12 @@
 
 import React from 'react';
 import MainLayout from '@/components/MainLayout';
-import ModernChatInterface from '@/components/chat/ModernChatInterface';
+import SimpleChatInterface from '@/components/chat/SimpleChatInterface';
 
 function ChatForums() {
   return (
     <MainLayout>
-      <ModernChatInterface />
+      <SimpleChatInterface />
     </MainLayout>
   );
 }
