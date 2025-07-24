@@ -23,9 +23,7 @@ export const useForumPosts = (categoryId?: string) => {
           reply_count,
           view_count,
           created_at,
-          updated_at,
-          author_profile:profiles!author_id(full_name, avatar_url),
-          category:forum_categories!category_id(name, color)
+          updated_at
         `)
         .order('created_at', { ascending: false });
 
@@ -33,15 +31,33 @@ export const useForumPosts = (categoryId?: string) => {
         query = query.eq('category_id', categoryId);
       }
 
-      const { data, error } = await query;
+      const { data: posts, error } = await query;
 
       if (error) {
         console.error('Error fetching forum posts:', error);
         throw error;
       }
 
+      if (!posts || posts.length === 0) {
+        return [];
+      }
+
+      // Fetch author profiles separately
+      const authorIds = [...new Set(posts.map(post => post.author_id))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', authorIds);
+
+      // Fetch categories separately
+      const categoryIds = [...new Set(posts.map(post => post.category_id))];
+      const { data: categories } = await supabase
+        .from('forum_categories')
+        .select('id, name, color')
+        .in('id', categoryIds);
+
       // Transform data and check if user has liked each post
-      const transformedData = await Promise.all((data || []).map(async (post) => {
+      const transformedData = await Promise.all(posts.map(async (post) => {
         let has_liked = false;
         
         if (user) {
@@ -56,11 +72,14 @@ export const useForumPosts = (categoryId?: string) => {
           has_liked = !!likeData;
         }
 
+        const authorProfile = profiles?.find(p => p.id === post.author_id);
+        const category = categories?.find(c => c.id === post.category_id);
+
         return {
           ...post,
           has_liked,
-          author_profile: post.author_profile || { full_name: 'Unknown User' },
-          category: post.category || { name: 'General', color: '#f59e0b' }
+          author_profile: authorProfile || { full_name: 'Unknown User', avatar_url: null },
+          category: category || { name: 'General', color: '#f59e0b' }
         };
       }));
 
