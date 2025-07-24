@@ -43,9 +43,16 @@ export const useSafeCartContext = (): SafeCartContextType => {
     const CartContextModule = require('@/contexts/CartContext');
     const context = useContext(CartContextModule.CartContext);
     
-    if (context) {
+    if (context && typeof context === 'object') {
       return {
-        ...context,
+        items: context.items || [],
+        addToCart: context.addToCart || (() => {}),
+        removeFromCart: context.removeFromCart || (() => {}),
+        updateQuantity: context.updateQuantity || (() => {}),
+        clearCart: context.clearCart || (() => {}),
+        getTotalPrice: context.getTotalPrice || (() => 0),
+        getTotalItems: context.getTotalItems || (() => 0),
+        isLoading: context.isLoading || false,
         isAvailable: true
       };
     }
