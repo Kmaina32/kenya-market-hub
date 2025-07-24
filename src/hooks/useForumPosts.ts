@@ -48,12 +48,27 @@ export const useForumPosts = (categoryId?: string) => {
         .select('id, full_name, avatar_url')
         .in('id', authorIds);
 
-      // Fetch categories separately
+      // Fetch categories separately with proper error handling
       const categoryIds = [...new Set(posts.map(post => post.category_id))];
-      const { data: categories } = await supabase
+      const { data: categories, error: categoryError } = await supabase
         .from('forum_categories')
         .select('id, name, color')
         .in('id', categoryIds);
+
+      // Handle the case where color column might not exist
+      let categoriesWithColor = categories;
+      if (categoryError && categoryError.message?.includes('column "color" does not exist')) {
+        console.warn('Color column does not exist yet, fetching without color');
+        const { data: categoriesWithoutColor } = await supabase
+          .from('forum_categories')
+          .select('id, name')
+          .in('id', categoryIds);
+        
+        categoriesWithColor = categoriesWithoutColor?.map(cat => ({
+          ...cat,
+          color: '#3b82f6' // Default color
+        }));
+      }
 
       // Transform data and check if user has liked each post
       const transformedData = await Promise.all(posts.map(async (post) => {
@@ -72,13 +87,13 @@ export const useForumPosts = (categoryId?: string) => {
         }
 
         const authorProfile = profiles?.find(p => p.id === post.author_id);
-        const category = categories?.find(c => c.id === post.category_id);
+        const category = categoriesWithColor?.find(c => c.id === post.category_id);
 
         return {
           ...post,
           has_liked,
           author_profile: authorProfile || { full_name: 'Unknown User', avatar_url: null },
-          category: category || { name: 'General', color: '#f59e0b' }
+          category: category || { name: 'General', color: '#3b82f6' }
         };
       }));
 
