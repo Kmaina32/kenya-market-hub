@@ -11,7 +11,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import UserProfile from './pages/UserProfile';
-import Admin from './pages/admin/Admin';
+import AdminApp from './pages/AdminApp';
 import AdminUsers from './pages/AdminUsers';
 import AdminVendors from './pages/AdminVendors';
 import AdminSettings from './pages/AdminSettings';
@@ -27,6 +27,8 @@ import RideBooking from './pages/RideBooking';
 import RideHistory from './pages/RideHistory';
 import DriverRegistration from './pages/DriverRegistration';
 import DriverDashboard from './pages/DriverDashboard';
+import DriverApp from './pages/DriverApp';
+import ServicesApp from './pages/ServicesApp';
 import DriverProfile from './pages/driver/DriverProfile';
 import DriverRides from './pages/driver/DriverRides';
 import DriverEarnings from './pages/driver/DriverEarnings';
@@ -54,6 +56,7 @@ import Pharmacy from './pages/Pharmacy';
 import MedicationDetail from './pages/MedicationDetail';
 import PrescriptionUpload from './pages/PrescriptionUpload';
 import Notifications from './pages/Notifications';
+import Cart from './pages/Cart';
 
 function App() {
   return (
@@ -69,7 +72,7 @@ function App() {
           <Route path="/account" element={<Account />} />
           <Route path="/services" element={<Services />} />
           <Route path="/chat" element={<Chat />} />
-          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/*" element={<AdminApp />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/vendors" element={<AdminVendors />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
@@ -86,7 +89,7 @@ function App() {
           <Route path="/ride-booking" element={<RideBooking />} />
           <Route path="/ride-history" element={<RideHistory />} />
           <Route path="/driver/register" element={<DriverRegistration />} />
-          <Route path="/driver" element={<DriverDashboard />} />
+          <Route path="/driver/*" element={<DriverApp />} />
           <Route path="/driver/profile" element={<DriverProfile />} />
           <Route path="/driver/rides" element={<DriverRides />} />
           <Route path="/driver/earnings" element={<DriverEarnings />} />
@@ -95,6 +98,7 @@ function App() {
           <Route path="/driver/analytics" element={<DriverAnalytics />} />
           <Route path="/driver/settings" element={<DriverSettings />} />
           <Route path="/driver/ratings" element={<DriverRatings />} />
+          <Route path="/services-app/*" element={<ServicesApp />} />
           <Route path="/forum" element={<Forum />} />
           <Route path="/forum/post/:id" element={<ForumPost />} />
           <Route path="/forum/create" element={<CreatePost />} />
@@ -112,6 +116,7 @@ function App() {
           <Route path="/pharmacy/medication/:id" element={<MedicationDetail />} />
           <Route path="/pharmacy/prescription/upload" element={<PrescriptionUpload />} />
           <Route path="/notifications" element={<Notifications />} />
+          <Route path="/cart" element={<Cart />} />
         </Routes>
       </Router>
     </CartProvider>
