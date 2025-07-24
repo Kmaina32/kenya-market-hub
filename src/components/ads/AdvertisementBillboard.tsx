@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, MapPin, Star, Eye } from 'lucide-react';
+import { ArrowRight, MapPin, Star, Eye, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import LazyImage from '@/components/LazyImage';
 
@@ -22,38 +23,27 @@ interface AdvertisementBillboardProps {
   className?: string;
   layout?: 'horizontal' | 'vertical';
   showCategories?: string[];
+  maxItems?: number;
 }
 
 const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({ 
   className = "",
   layout = 'horizontal',
-  showCategories = ['product', 'service', 'property']
+  showCategories = ['product', 'service', 'property'],
+  maxItems = 20
 }) => {
   const [ads, setAds] = useState<Advertisement[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetchAdvertisements();
-  }, [JSON.stringify(showCategories)]); // Fetch ads only when the content of showCategories changes
-
-  useEffect(() => {
-    if (ads.length > 0) { // Only start interval if there are ads
-      const interval = setInterval(() => {
-        setCurrentIndex((prev) => (prev + 1) % ads.length);
-      }, 30000); // Change every 30 seconds
-
-      return () => clearInterval(interval); // Clear interval on component unmount or when ads change
-    } else if (!isLoading) {
-      // If no ads fetched and not loading, clear interval just in case
-      const interval = setInterval(() => {}, 1000); // Dummy interval to get an ID
-      clearInterval(interval);
+  const shuffleArray = (array: Advertisement[]) => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
-
-    // This dependency array was causing the loop
-    // It's now correctly dependent on 'ads'
-  }, [ads, isLoading]); // Restart interval if ads array changes or loading state changes
-
+    return shuffled;
+  };
 
   const fetchAdvertisements = async () => {
     setIsLoading(true);
@@ -67,7 +57,7 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
           .select('*')
           .eq('in_stock', true)
           .order('created_at', { ascending: false })
-          .limit(5);
+          .limit(Math.ceil(maxItems * 0.6)); // 60% products
 
         if (products) {
           console.log('Fetched products for billboard:', products);
@@ -94,10 +84,10 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
           .select('*')
           .eq('status', 'open')
           .order('created_at', { ascending: false })
-          .limit(3);
+          .limit(Math.ceil(maxItems * 0.3)); // 30% services
 
         if (services) {
-           console.log('Fetched services for billboard:', services);
+          console.log('Fetched services for billboard:', services);
           services.forEach(service => {
             advertisements.push({
               id: service.id.toString(),
@@ -111,12 +101,58 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
         }
       }
 
-      setAds(advertisements);
+      // Fetch properties if included
+      if (showCategories.includes('property')) {
+        const { data: properties } = await supabase
+          .from('properties')
+          .select('*')
+          .eq('status', 'available')
+          .order('created_at', { ascending: false })
+          .limit(Math.ceil(maxItems * 0.1)); // 10% properties
+
+        if (properties) {
+          console.log('Fetched properties for billboard:', properties);
+          properties.forEach(property => {
+            advertisements.push({
+              id: property.id,
+              type: 'property',
+              title: property.title,
+              description: property.description || 'Premium property available',
+              price: property.price,
+              image_url: property.image_url,
+              location: property.location,
+              category: property.property_type
+            });
+          });
+        }
+      }
+
+      // Shuffle the advertisements for randomization
+      const shuffledAds = shuffleArray(advertisements);
+      setAds(shuffledAds.slice(0, maxItems));
     } catch (error) {
       console.error('Error fetching billboard advertisements:', error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchAdvertisements();
+  }, [JSON.stringify(showCategories), maxItems]);
+
+  useEffect(() => {
+    if (ads.length > 0) {
+      const interval = setInterval(() => {
+        setCurrentIndex((prev) => (prev + 1) % ads.length);
+      }, 5000); // Change every 5 seconds for better engagement
+
+      return () => clearInterval(interval);
+    }
+  }, [ads]);
+
+  const refreshAds = () => {
+    fetchAdvertisements();
   };
 
   console.log('AdvertisementBillboard ads length:', ads.length);
@@ -125,13 +161,31 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
     return (
       <div className={`${className} animate-pulse`}>
         <div className="bg-gray-200 rounded-xl h-64 flex items-center justify-center">
-          <p className="text-gray-500">Loading advertisements...</p>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-2"></div>
+            <p className="text-gray-500">Loading advertisements...</p>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (ads.length === 0) return null;
+  if (ads.length === 0) {
+    return (
+      <div className={`${className}`}>
+        <div className="bg-gradient-to-r from-gray-100 to-gray-200 rounded-xl h-64 flex items-center justify-center">
+          <div className="text-center">
+            <Eye className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600 mb-4">No advertisements available</p>
+            <Button onClick={refreshAds} variant="outline" size="sm">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const currentAd = ads[currentIndex];
 
@@ -141,6 +195,15 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
       case 'property': return 'from-blue-500/90 to-cyan-600/90';
       case 'service': return 'from-green-500/90 to-emerald-600/90';
       default: return 'from-gray-500/90 to-gray-600/90';
+    }
+  };
+
+  const getAdTypeIcon = (type: string) => {
+    switch (type) {
+      case 'product': return '🛍️';
+      case 'property': return '🏠';
+      case 'service': return '💼';
+      default: return '📦';
     }
   };
 
@@ -164,18 +227,21 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
 
         {/* Content */}
         <div className="relative z-10 p-4 sm:p-6 lg:p-12 text-white">
-          <div className={`${layout === 'horizontal' ? 'flex flex-col lg:flex-row items-center justify-between' : 'space-y-6'}`}> {/* Added flex classes for responsiveness */}
-            <div className={`${layout === 'horizontal' ? 'flex-1 pr-0 lg:pr-8' : ''}`}> {/* Adjusted padding for responsiveness */}
+          <div className={`${layout === 'horizontal' ? 'flex flex-col lg:flex-row items-center justify-between' : 'space-y-6'}`}>
+            <div className={`${layout === 'horizontal' ? 'flex-1 pr-0 lg:pr-8' : ''}`}>
               {/* Header */}
               <div className="flex items-center space-x-2 sm:space-x-3 mb-3 sm:mb-4">
                 <Badge variant="secondary" className="bg-white/20 text-white border-white/30 text-xs">
-                  {currentAd.type.toUpperCase()}
+                  {getAdTypeIcon(currentAd.type)} {currentAd.type.toUpperCase()}
                 </Badge>
                 {currentAd.category && (
                   <Badge variant="outline" className="border-white/30 text-white text-xs">
                     {currentAd.category}
                   </Badge>
                 )}
+                <Badge variant="outline" className="border-white/30 text-white text-xs">
+                  {currentIndex + 1} of {ads.length}
+                </Badge>
               </div>
 
               {/* Title and Description */}
@@ -217,20 +283,32 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
                 )}
               </div>
 
-              {/* CTA Button */}
-              <Button 
-                size="lg"
-                className="bg-white text-gray-900 hover:bg-gray-100 font-semibold px-8 py-3 text-lg group"
-              >
-                <Eye className="h-5 w-5 mr-2" />
-                Explore Now
-                <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Button>
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button 
+                  size="lg"
+                  className="bg-white text-gray-900 hover:bg-gray-100 font-semibold px-8 py-3 text-lg group"
+                >
+                  <Eye className="h-5 w-5 mr-2" />
+                  Explore Now
+                  <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                </Button>
+                
+                <Button 
+                  size="lg"
+                  variant="outline"
+                  className="border-white text-white hover:bg-white hover:text-gray-900 font-semibold px-6 py-3 text-lg"
+                  onClick={refreshAds}
+                >
+                  <RefreshCw className="h-5 w-5 mr-2" />
+                  More Ads
+                </Button>
+              </div>
             </div>
 
             {/* Image (visible on all screen sizes in horizontal layout) */}
             {layout === 'horizontal' && currentAd.image_url && (
-              <div className="flex-shrink-0 w-full lg:w-80 h-48 lg:h-64 rounded-lg overflow-hidden bg-white/10 backdrop-blur-sm mt-4 lg:mt-0"> {/* Removed hidden lg:block and adjusted size/margin */}
+              <div className="flex-shrink-0 w-full lg:w-80 h-48 lg:h-64 rounded-lg overflow-hidden bg-white/10 backdrop-blur-sm mt-4 lg:mt-0">
                 <LazyImage 
                   src={currentAd.image_url} 
                   alt={currentAd.title}
@@ -260,7 +338,7 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
 
         {/* Ad Label */}
         <div className="absolute top-4 right-4 bg-black/50 text-white text-xs px-3 py-1 rounded-full">
-          Advertisement
+          Advertisement {currentIndex + 1}/{ads.length}
         </div>
       </div>
     </div>
