@@ -119,8 +119,8 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
               title: property.title,
               description: property.description || 'Premium property available',
               price: property.price,
-              image_url: property.image_url,
-              location: property.location,
+              image_url: property.images && property.images.length > 0 ? property.images[0] : undefined,
+              location: property.location_address,
               category: property.property_type
             });
           });
