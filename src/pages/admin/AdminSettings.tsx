@@ -1,33 +1,36 @@
 
 import React from 'react';
-import AdminLayout from '@/layouts/AdminLayout';
+import MainLayout from '@/components/MainLayout';
 import AdminSettingsManager from '@/components/admin/AdminSettingsManager';
-import { useIsAdmin } from '@/hooks/useUserRole';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
-import { Shield, AlertTriangle, Loader2 } from 'lucide-react';
+import { Shield, AlertTriangle } from 'lucide-react';
 
 const AdminSettings = () => {
-  const { isAdmin, isLoading } = useIsAdmin();
+  const { user } = useAuth();
 
-  if (isLoading) {
+  // Check if user is admin
+  const isAdmin = user?.email === 'gmaina424@gmail.com';
+
+  if (!user) {
     return (
-      <AdminLayout>
+      <MainLayout>
         <div className="container mx-auto px-4 py-8">
           <Card>
             <CardContent className="p-8 text-center">
-              <Loader2 className="h-16 w-16 text-gray-400 mx-auto mb-4 animate-spin" />
-              <h3 className="text-xl font-semibold mb-2">Loading...</h3>
-              <p className="text-gray-600">Checking permissions</p>
+              <Shield className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Authentication Required</h3>
+              <p className="text-gray-600">Please log in to access admin settings</p>
             </CardContent>
           </Card>
         </div>
-      </AdminLayout>
+      </MainLayout>
     );
   }
 
   if (!isAdmin) {
     return (
-      <AdminLayout>
+      <MainLayout>
         <div className="container mx-auto px-4 py-8">
           <Card>
             <CardContent className="p-8 text-center">
@@ -37,16 +40,16 @@ const AdminSettings = () => {
             </CardContent>
           </Card>
         </div>
-      </AdminLayout>
+      </MainLayout>
     );
   }
 
   return (
-    <AdminLayout>
+    <MainLayout>
       <div className="container mx-auto px-4 py-8">
         <AdminSettingsManager />
       </div>
-    </AdminLayout>
+    </MainLayout>
   );
 };
 

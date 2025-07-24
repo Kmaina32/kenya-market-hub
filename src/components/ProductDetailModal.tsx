@@ -28,10 +28,9 @@ const ProductDetailModal = ({ open, onOpenChange, product }: ProductDetailModalP
 
   useEffect(() => {
     if (open && product && user) {
-      console.log('Adding to recently viewed:', product.id);
       addToRecentlyViewed.mutate(product.id);
     }
-  }, [open, product, user, addToRecentlyViewed]);
+  }, [open, product, user]);
 
   useEffect(() => {
     setCurrentImageIndex(0);

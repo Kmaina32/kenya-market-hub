@@ -59,7 +59,7 @@ const CreatePropertyModal: React.FC<CreatePropertyModalProps> = ({ isOpen, onClo
     contact_email: ''
   };
 
-  const { values, errors, handleChange, handleBlur, validateForm, resetForm } = useFormValidation(
+  const { values, errors, handleChange, handleBlur, validateForm, reset } = useFormValidation(
     initialValues,
     validationSchema
   );
@@ -87,7 +87,7 @@ const CreatePropertyModal: React.FC<CreatePropertyModalProps> = ({ isOpen, onClo
       handleSuccess('Property created successfully!');
       queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
       onClose();
-      resetForm();
+      reset();
     },
     onError: (error: any) => {
       handleError(error, { customMessage: 'Failed to create property' });
