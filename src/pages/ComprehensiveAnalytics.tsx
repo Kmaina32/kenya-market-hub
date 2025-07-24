@@ -25,6 +25,10 @@ const ComprehensiveAnalytics = () => {
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | '1y'>('30d');
   const { data: analytics, isLoading, refetch } = useAnalytics(timeRange);
 
+  const handleTimeRangeChange = (value: string) => {
+    setTimeRange(value as '7d' | '30d' | '90d' | '1y');
+  };
+
   const handleExportData = () => {
     // Mock export functionality
     const dataStr = JSON.stringify(analytics, null, 2);
@@ -95,7 +99,7 @@ const ComprehensiveAnalytics = () => {
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 <Calendar className="h-4 w-4 text-gray-500" />
-                <Select value={timeRange} onValueChange={setTimeRange}>
+                <Select value={timeRange} onValueChange={handleTimeRangeChange}>
                   <SelectTrigger className="w-40">
                     <SelectValue />
                   </SelectTrigger>
