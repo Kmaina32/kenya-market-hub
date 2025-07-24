@@ -865,6 +865,7 @@ export type Database = {
       }
       forum_categories: {
         Row: {
+          color: string | null
           created_at: string
           description: string | null
           id: string
@@ -873,6 +874,7 @@ export type Database = {
           post_count: number | null
         }
         Insert: {
+          color?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -881,6 +883,7 @@ export type Database = {
           post_count?: number | null
         }
         Update: {
+          color?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -2816,31 +2819,29 @@ export type Database = {
       user_roles: {
         Row: {
           created_at: string | null
-          id: string
-          role: Database["public"]["Enums"]["user_role"]
+          id: number
+          is_active: boolean | null
+          role: string
+          updated_at: string | null
           user_id: string
         }
         Insert: {
           created_at?: string | null
-          id?: string
-          role?: Database["public"]["Enums"]["user_role"]
+          id?: never
+          is_active?: boolean | null
+          role: string
+          updated_at?: string | null
           user_id: string
         }
         Update: {
           created_at?: string | null
-          id?: string
-          role?: Database["public"]["Enums"]["user_role"]
+          id?: never
+          is_active?: boolean | null
+          role?: string
+          updated_at?: string | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "fk_user_roles_to_profiles"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       vendor_applications: {
         Row: {
@@ -3153,6 +3154,14 @@ export type Database = {
         Args: Record<PropertyKey, never> | { check_user_id?: string }
         Returns: boolean
       }
+      is_admin_user: {
+        Args: { check_user_id: string }
+        Returns: boolean
+      }
+      is_user_admin: {
+        Args: { check_email: string }
+        Returns: boolean
+      }
       list_backups: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -3199,6 +3208,45 @@ export type Database = {
       update_product_rating: {
         Args: { product_id: number; rating: number }
         Returns: undefined
+      }
+      update_profile: {
+        Args: {
+          input_full_name?: string
+          input_avatar_url?: string
+          input_phone?: string
+        }
+        Returns: {
+          address: string | null
+          avatar_url: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string | null
+        }
+      }
+      upsert_profile: {
+        Args: {
+          p_user_id: string
+          p_email: string
+          p_full_name?: string
+          p_avatar_url?: string
+        }
+        Returns: {
+          address: string | null
+          avatar_url: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string | null
+        }[]
       }
       upsert_recently_viewed: {
         Args: { p_user_id: string; p_product_id: string }
