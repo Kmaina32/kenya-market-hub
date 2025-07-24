@@ -22,6 +22,25 @@ interface SafeCartContextType {
   isAvailable: boolean;
 }
 
+// Define the expected cart context type
+interface CartContextType {
+  items?: Array<{
+    id: string;
+    name: string;
+    price: number;
+    quantity: number;
+    image?: string;
+    vendor?: string;
+  }>;
+  addToCart?: (productId: string, quantity?: number) => void;
+  removeFromCart?: (productId: string) => void;
+  updateQuantity?: (productId: string, quantity: number) => void;
+  clearCart?: () => void;
+  getTotalPrice?: () => number;
+  getTotalItems?: () => number;
+  isLoading?: boolean;
+}
+
 // Default safe state when context is not available
 const defaultCartState: SafeCartContextType = {
   items: [],
@@ -35,6 +54,11 @@ const defaultCartState: SafeCartContextType = {
   isAvailable: false
 };
 
+// Type guard to check if context has cart properties
+const isCartContext = (context: any): context is CartContextType => {
+  return context && typeof context === 'object';
+};
+
 export const useSafeCartContext = (): SafeCartContextType => {
   const { user } = useAuth();
   
@@ -43,7 +67,7 @@ export const useSafeCartContext = (): SafeCartContextType => {
     const CartContextModule = require('@/contexts/CartContext');
     const context = useContext(CartContextModule.CartContext);
     
-    if (context && typeof context === 'object') {
+    if (isCartContext(context)) {
       return {
         items: context.items || [],
         addToCart: context.addToCart || (() => {}),
