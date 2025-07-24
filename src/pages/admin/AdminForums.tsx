@@ -12,7 +12,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { MessageSquare, Users, Eye, ThumbsUp, Plus, Edit, Trash2, Pin, Lock } from 'lucide-react';
-import AdminLayout from '@/components/layouts/AdminLayout';
+import AdminLayout from '@/layouts/AdminLayout';
 
 const AdminForums = () => {
   const { toast } = useToast();
@@ -35,7 +35,7 @@ const AdminForums = () => {
     },
   });
 
-  // Fetch forum posts with proper join
+  // Fetch forum posts with author information
   const { data: posts, isLoading: postsLoading } = useQuery({
     queryKey: ['forum-posts'],
     queryFn: async () => {
@@ -43,13 +43,29 @@ const AdminForums = () => {
         .from('forum_posts')
         .select(`
           *,
-          forum_categories(name),
-          profiles!forum_posts_author_id_fkey(full_name)
+          forum_categories(name)
         `)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data;
+      
+      // Get author information separately
+      const postsWithAuthors = await Promise.all(
+        (data || []).map(async (post) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', post.author_id)
+            .single();
+          
+          return {
+            ...post,
+            author_name: profile?.full_name || 'Unknown'
+          };
+        })
+      );
+      
+      return postsWithAuthors;
     },
   });
 
@@ -197,7 +213,7 @@ const AdminForums = () => {
                       {category.name}
                     </CardTitle>
                     <Badge variant="secondary">
-                      {category.post_count} posts
+                      {category.post_count || 0} posts
                     </Badge>
                   </div>
                 </CardHeader>
@@ -206,11 +222,11 @@ const AdminForums = () => {
                   <div className="flex items-center gap-4 text-sm text-gray-500">
                     <div className="flex items-center gap-1">
                       <MessageSquare className="h-4 w-4" />
-                      <span>{category.post_count}</span>
+                      <span>{category.post_count || 0}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Users className="h-4 w-4" />
-                      <span>{category.member_count}</span>
+                      <span>{category.member_count || 0}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -238,19 +254,19 @@ const AdminForums = () => {
                         {post.is_locked && <Lock className="h-4 w-4 text-red-500" />}
                       </div>
                       <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <span>By: {post.profiles?.full_name || 'Unknown'}</span>
-                        <span>Category: {post.forum_categories?.name}</span>
+                        <span>By: {post.author_name}</span>
+                        <span>Category: {post.forum_categories?.name || 'Uncategorized'}</span>
                         <div className="flex items-center gap-1">
                           <Eye className="h-3 w-3" />
-                          <span>{post.view_count}</span>
+                          <span>{post.view_count || 0}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <ThumbsUp className="h-3 w-3" />
-                          <span>{post.like_count}</span>
+                          <span>{post.like_count || 0}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <MessageSquare className="h-3 w-3" />
-                          <span>{post.reply_count}</span>
+                          <span>{post.reply_count || 0}</span>
                         </div>
                       </div>
                     </div>

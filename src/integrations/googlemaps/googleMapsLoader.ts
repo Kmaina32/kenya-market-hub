@@ -73,7 +73,7 @@ export class GoogleMapsLoader {
   }
 
   isGoogleMapsLoaded(): boolean {
-    return this.isLoaded && typeof google !== 'undefined' && google.maps;
+    return this.isLoaded && typeof google !== 'undefined' && !!google.maps;
   }
 }
 
