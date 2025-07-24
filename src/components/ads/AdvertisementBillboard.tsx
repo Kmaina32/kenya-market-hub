@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, MapPin, Star, Eye, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 import LazyImage from '@/components/LazyImage';
 
 interface Advertisement {
@@ -34,6 +36,7 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
   const [ads, setAds] = useState<Advertisement[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   const shuffleArray = (array: Advertisement[]) => {
     const shuffled = [...array];
@@ -56,10 +59,9 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
           .select('*')
           .eq('in_stock', true)
           .order('created_at', { ascending: false })
-          .limit(Math.ceil(maxItems * 0.6)); // 60% products
+          .limit(Math.ceil(maxItems * 0.6));
 
         if (products) {
-          console.log('Fetched products for billboard:', products);
           products.forEach(product => {
             advertisements.push({
               id: product.id,
@@ -83,10 +85,9 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
           .select('*')
           .eq('status', 'open')
           .order('created_at', { ascending: false })
-          .limit(Math.ceil(maxItems * 0.3)); // 30% services
+          .limit(Math.ceil(maxItems * 0.3));
 
         if (services) {
-          console.log('Fetched services for billboard:', services);
           services.forEach(service => {
             advertisements.push({
               id: service.id.toString(),
@@ -107,12 +108,10 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
           .select('*')
           .eq('status', 'available')
           .order('created_at', { ascending: false })
-          .limit(Math.ceil(maxItems * 0.1)); // 10% properties
+          .limit(Math.ceil(maxItems * 0.1));
 
         if (properties) {
-          console.log('Fetched properties for billboard:', properties);
           properties.forEach(property => {
-            // Safely handle the images property
             let imageUrl: string | undefined;
             if (property.images && Array.isArray(property.images) && property.images.length > 0) {
               imageUrl = property.images[0] as string;
@@ -132,7 +131,6 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
         }
       }
 
-      // Shuffle the advertisements for randomization
       const shuffledAds = shuffleArray(advertisements);
       setAds(shuffledAds.slice(0, maxItems));
     } catch (error) {
@@ -150,7 +148,7 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
     if (ads.length > 0) {
       const interval = setInterval(() => {
         setCurrentIndex((prev) => (prev + 1) % ads.length);
-      }, 5000); // Change every 5 seconds for better engagement
+      }, 5000);
 
       return () => clearInterval(interval);
     }
@@ -160,7 +158,24 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
     fetchAdvertisements();
   };
 
-  console.log('AdvertisementBillboard ads length:', ads.length);
+  const handleExploreNow = () => {
+    const currentAd = ads[currentIndex];
+    if (currentAd) {
+      switch (currentAd.type) {
+        case 'product':
+          navigate('/products');
+          break;
+        case 'property':
+          navigate('/properties');
+          break;
+        case 'service':
+          navigate('/jobs');
+          break;
+        default:
+          navigate('/');
+      }
+    }
+  };
 
   if (isLoading) {
     return (
@@ -244,9 +259,6 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
                     {currentAd.category}
                   </Badge>
                 )}
-                <Badge variant="outline" className="border-white/30 text-white text-xs">
-                  {currentIndex + 1} of {ads.length}
-                </Badge>
               </div>
 
               {/* Title and Description */}
@@ -292,6 +304,7 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button 
                   size="lg"
+                  onClick={handleExploreNow}
                   className="bg-white text-gray-900 hover:bg-gray-100 font-semibold px-8 py-3 text-lg group"
                 >
                   <Eye className="h-5 w-5 mr-2" />
@@ -340,11 +353,6 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
             ))}
           </div>
         )}
-
-        {/* Ad Label */}
-        <div className="absolute top-4 right-4 bg-black/50 text-white text-xs px-3 py-1 rounded-full">
-          Advertisement {currentIndex + 1}/{ads.length}
-        </div>
       </div>
     </div>
   );
