@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -140,8 +141,8 @@ const Shop = () => {
   return (
     <MainLayout>
       <div className="space-y-8">
-        {/* Hero Section */}
-        <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl p-8">
+        {/* Hero Section - Made sticky */}
+        <div className="sticky top-0 z-30 bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl p-8 shadow-sm">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Shop</h1>
           <p className="text-gray-600 text-lg">Discover amazing products from trusted vendors across Kenya</p>
         </div>
