@@ -1,17 +1,19 @@
 
 import React from 'react';
-import { useCartContext } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 
 const CartQuantityBadge = () => {
   const { user } = useAuth();
   
-  // Only use cart context if user is authenticated
+  // Only show badge if user is authenticated
   if (!user) return null;
 
+  // Use a conditional hook approach to avoid context errors
   try {
+    // Dynamically import the cart context only when needed
+    const { useCartContext } = require('@/contexts/CartContext');
     const { items } = useCartContext();
-    const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+    const totalItems = items.reduce((sum: number, item: any) => sum + item.quantity, 0);
 
     if (totalItems === 0) return null;
 

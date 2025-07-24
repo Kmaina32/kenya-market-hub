@@ -10,11 +10,7 @@ interface CartProviderWrapperProps {
 const CartProviderWrapper: React.FC<CartProviderWrapperProps> = ({ children }) => {
   const { user, loading } = useAuth();
 
-  // Don't render CartProvider until auth is resolved
-  if (loading) {
-    return <div>{children}</div>;
-  }
-
+  // Always render CartProvider, but it will handle auth state internally
   return (
     <CartProvider>
       {children}

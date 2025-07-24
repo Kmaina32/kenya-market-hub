@@ -2,30 +2,31 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, Menu, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCartContext } from '@/contexts/CartContext';
 import CartQuantityBadge from './CartQuantityBadge';
 
 const NavigationBar = () => {
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
-
-  // Only use cart context if user is authenticated
-  const cartContext = user ? useCartContext() : null;
 
   const navItems = [
     { label: 'Home', path: '/' },
     { label: 'Shop', path: '/shop' },
     { label: 'Products', path: '/products' },
-    { label: 'Properties', path: '/properties' },
     { label: 'Services', path: '/services' },
     { label: 'Events', path: '/events' },
-    { label: 'Forums', path: '/forums' },
     { label: 'Food Delivery', path: '/food-delivery' },
   ];
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   return (
     <nav className="bg-white shadow-sm border-b sticky top-0 z-50">
@@ -75,7 +76,7 @@ const NavigationBar = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={logout}
+                    onClick={handleSignOut}
                     className="text-red-600 hover:text-red-700"
                   >
                     Logout
