@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,19 +13,7 @@ export const useForumPosts = (categoryId?: string) => {
     queryFn: async () => {
       let query = supabase
         .from('forum_posts')
-        .select(`
-          id,
-          title,
-          content,
-          category_id,
-          author_id,
-          like_count,
-          reply_count,
-          view_count,
-          created_at,
-          updated_at,
-          image_url
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (categoryId) {
@@ -42,40 +31,23 @@ export const useForumPosts = (categoryId?: string) => {
         return [];
       }
 
+      // Get unique author IDs and category IDs
       const authorIds = [...new Set(posts.map(post => post.author_id))];
+      const categoryIds = [...new Set(posts.map(post => post.category_id))];
+      
+      // Fetch profiles separately
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, full_name, avatar_url')
         .in('id', authorIds);
 
-      const categoryIds = [...new Set(posts.map(post => post.category_id))];
-      
-      let categoriesWithColor;
-      try {
-        const { data: categories, error: categoryError } = await supabase
-          .from('forum_categories')
-          .select('id, name, color')
-          .in('id', categoryIds);
+      // Fetch categories separately
+      const { data: categories } = await supabase
+        .from('forum_categories')
+        .select('id, name, color')
+        .in('id', categoryIds);
 
-        if (categoryError && categoryError.message?.includes('column "color" does not exist')) {
-          console.warn('Color column does not exist yet, fetching without color');
-          const { data: categoriesWithoutColor } = await supabase
-            .from('forum_categories')
-            .select('id, name')
-            .in('id', categoryIds);
-          
-          categoriesWithColor = categoriesWithoutColor?.map(cat => ({
-            ...cat,
-            color: '#3b82f6'
-          }));
-        } else {
-          categoriesWithColor = categories;
-        }
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-        categoriesWithColor = [];
-      }
-
+      // Transform posts with author profiles and categories
       const transformedData = await Promise.all(posts.map(async (post) => {
         let has_liked = false;
         
@@ -92,13 +64,19 @@ export const useForumPosts = (categoryId?: string) => {
         }
 
         const authorProfile = profiles?.find(p => p.id === post.author_id);
-        const category = categoriesWithColor?.find(c => c.id === post.category_id);
+        const category = categories?.find(c => c.id === post.category_id);
 
         return {
           ...post,
           has_liked,
-          author_profile: authorProfile || { full_name: 'Unknown User', avatar_url: null },
-          category: category || { name: 'General', color: '#3b82f6' }
+          author_profile: authorProfile || { 
+            full_name: 'Unknown User', 
+            avatar_url: null 
+          },
+          category: category || { 
+            name: 'General', 
+            color: '#3b82f6' 
+          }
         };
       }));
 

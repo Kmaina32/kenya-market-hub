@@ -9,17 +9,40 @@ export const useForumComments = (postId: string) => {
   return useQuery({
     queryKey: ['forum-comments', postId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: comments, error } = await supabase
         .from('forum_post_comments')
-        .select(`
-          *,
-          author_profile:profiles!author_id(full_name, avatar_url)
-        `)
+        .select('*')
         .eq('post_id', postId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      return data as ForumComment[];
+
+      if (!comments || comments.length === 0) {
+        return [];
+      }
+
+      // Get unique author IDs
+      const authorIds = [...new Set(comments.map(comment => comment.author_id))];
+      
+      // Fetch profiles separately
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', authorIds);
+
+      // Combine comments with author profiles
+      const commentsWithProfiles = comments.map(comment => {
+        const authorProfile = profiles?.find(p => p.id === comment.author_id);
+        return {
+          ...comment,
+          author_profile: authorProfile || { 
+            full_name: 'Unknown User', 
+            avatar_url: null 
+          }
+        };
+      });
+
+      return commentsWithProfiles as ForumComment[];
     },
     enabled: !!postId
   });
