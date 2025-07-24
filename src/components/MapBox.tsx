@@ -1,8 +1,7 @@
-
 // src/components/MapBox.tsx
 
 import React, { useEffect, useRef, useState } from 'react';
-import { loadGoogleMapsScript, createAdvancedMarker, createMarkerPin } from '@/integrations/googlemaps/googleMapsLoader';
+import { loadGoogleMapsScript } from '@/integrations/googlemaps/googleMapsLoader'; // Import our loader
 
 interface MapBoxProps {
   center?: google.maps.LatLngLiteral;
@@ -21,6 +20,7 @@ interface MapBoxProps {
     path?: google.maps.LatLng[];
   };
   className?: string;
+  // FIX: Add style prop to interface
   style?: React.CSSProperties; 
 }
 
@@ -31,11 +31,11 @@ const MapBox: React.FC<MapBoxProps> = ({
   onMapClick,
   showRoute,
   className = "w-full h-96",
-  style
+  style // Receive the style prop
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
-  const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
+  const markersRef = useRef<google.maps.Marker[]>([]);
   const polylineRef = useRef<google.maps.Polyline | null>(null);
 
   const [mapLoaded, setMapLoaded] = useState(false);
@@ -51,10 +51,8 @@ const MapBox: React.FC<MapBoxProps> = ({
       const mapOptions: google.maps.MapOptions = {
         center: center,
         zoom: zoom,
+        mapId: 'YOUR_MAP_ID_HERE', // Check this again, or comment out if not using custom style
         disableDefaultUI: false,
-        mapTypeControl: true,
-        streetViewControl: true,
-        fullscreenControl: true,
       };
 
       mapRef.current = new googleMaps.Map(mapContainerRef.current, mapOptions);
@@ -76,11 +74,7 @@ const MapBox: React.FC<MapBoxProps> = ({
       if (polylineRef.current) {
         polylineRef.current.setMap(null);
       }
-      markersRef.current.forEach(marker => {
-        if (marker.map) {
-          marker.map = null;
-        }
-      });
+      markersRef.current.forEach(marker => marker.setMap(null));
       markersRef.current = [];
     };
   }, []);
@@ -88,30 +82,19 @@ const MapBox: React.FC<MapBoxProps> = ({
   useEffect(() => {
     if (!mapRef.current || !mapLoaded) return;
 
-    // Clear existing markers
-    markersRef.current.forEach(marker => {
-      if (marker.map) {
-        marker.map = null;
-      }
-    });
+    markersRef.current.forEach(marker => marker.setMap(null));
     markersRef.current = [];
 
-    // Create new markers using AdvancedMarkerElement
     markers.forEach(markerData => {
-      const pinElement = createMarkerPin(markerData.color || '#FF0000');
-      const marker = createAdvancedMarker(
-        markerData.position,
-        mapRef.current!,
-        markerData.title,
-        pinElement
-      );
-
-      if (marker) {
-        if (markerData.onClick) {
-          marker.addListener('click', markerData.onClick);
-        }
-        markersRef.current.push(marker);
+      const marker = new google.maps.Marker({
+        position: markerData.position,
+        map: mapRef.current,
+        title: markerData.title,
+      });
+      if (markerData.onClick) {
+        marker.addListener('click', markerData.onClick);
       }
+      markersRef.current.push(marker);
     });
   }, [markers, mapLoaded]);
 
@@ -136,6 +119,7 @@ const MapBox: React.FC<MapBoxProps> = ({
 
         const bounds = new google.maps.LatLngBounds();
         showRoute.path.forEach(point => bounds.extend(point));
+        // FIX: Change padding object literal to use directional properties
         mapRef.current.fitBounds(bounds, { top: 50, bottom: 50, left: 50, right: 50 }); 
 
       } else {
@@ -162,6 +146,7 @@ const MapBox: React.FC<MapBoxProps> = ({
               polylineRef.current.setMap(mapRef.current);
               const bounds = new google.maps.LatLngBounds();
               path.forEach(point => bounds.extend(point));
+              // FIX: Change padding object literal to use directional properties
               mapRef.current.fitBounds(bounds, { top: 50, bottom: 50, left: 50, right: 50 });
             } else {
               console.error('Directions request failed due to ' + status);
@@ -172,6 +157,7 @@ const MapBox: React.FC<MapBoxProps> = ({
     }
   }, [showRoute, mapLoaded]);
 
+  // Pass the style prop directly to the div
   return <div ref={mapContainerRef} className={className} style={style} />;
 };
 

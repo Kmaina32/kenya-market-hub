@@ -1,4 +1,3 @@
-
 // src/integrations/googlemaps/googleMapsLoader.ts
 
 import { Loader } from '@googlemaps/js-api-loader';
@@ -24,7 +23,7 @@ export const loadGoogleMapsScript = async (): Promise<typeof google.maps | null>
     loader = new Loader({
       apiKey: API_KEY,
       version: 'weekly',
-      libraries: ['places', 'geometry', 'marker'], // Add marker library for AdvancedMarkerElement
+      libraries: ['places', 'geometry'], 
       language: 'en',
       region: 'KE', 
     });
@@ -69,27 +68,8 @@ export const geocodeAddress = async (address: string): Promise<{ lat: number; ln
     return null;
   }
 
-  // Add better address formatting for Kenya
-  const formattedAddress = address.trim();
-  if (!formattedAddress) {
-    console.error('Address cannot be empty');
-    return null;
-  }
-
-  // Only add Kenya context if the address doesn't already contain location context
-  const hasLocationContext = formattedAddress.toLowerCase().includes('kenya') || 
-                            formattedAddress.toLowerCase().includes('nairobi') ||
-                            formattedAddress.toLowerCase().includes('mombasa') ||
-                            formattedAddress.toLowerCase().includes('kisumu');
-
-  const searchAddress = hasLocationContext ? formattedAddress : `${formattedAddress}, Nairobi, Kenya`;
-
   return new Promise((resolve) => {
-    geocoder.geocode({ 
-      address: searchAddress,
-      region: 'KE', // Bias results to Kenya
-      componentRestrictions: { country: 'KE' } // Restrict to Kenya
-    }, (results, status) => {
+    geocoder.geocode({ address: address }, (results, status) => {
       if (status === 'OK' && results && results[0]) {
         const location = results[0].geometry.location;
         resolve({
@@ -98,25 +78,8 @@ export const geocodeAddress = async (address: string): Promise<{ lat: number; ln
           formattedAddress: results[0].formatted_address,
         });
       } else {
-        console.warn(`Geocoding failed for "${address}": ${status}`);
-        
-        // Try with just the original address as fallback
-        if (searchAddress !== formattedAddress) {
-          geocoder.geocode({ address: formattedAddress }, (fallbackResults, fallbackStatus) => {
-            if (fallbackStatus === 'OK' && fallbackResults && fallbackResults[0]) {
-              const location = fallbackResults[0].geometry.location;
-              resolve({
-                lat: location.lat(),
-                lng: location.lng(),
-                formattedAddress: fallbackResults[0].formatted_address,
-              });
-            } else {
-              resolve(null);
-            }
-          });
-        } else {
-          resolve(null);
-        }
+        console.error('Geocoding failed due to:', status);
+        resolve(null);
       }
     });
   });
@@ -152,49 +115,5 @@ export const getRouteDetails = async (
         }
       }
     );
-  });
-};
-
-// Helper function to create AdvancedMarkerElement
-export const createAdvancedMarker = (
-  position: google.maps.LatLngLiteral,
-  map: google.maps.Map,
-  title?: string,
-  pinElement?: google.maps.marker.PinElement
-): google.maps.marker.AdvancedMarkerElement | null => {
-  if (!googleMapsInstance?.marker?.AdvancedMarkerElement) {
-    console.error('AdvancedMarkerElement not available');
-    return null;
-  }
-
-  const markerOptions: any = {
-    position,
-    map,
-    title
-  };
-
-  // Fix: Use pinElement.element instead of pinElement directly
-  if (pinElement) {
-    markerOptions.content = pinElement.element;
-  }
-
-  return new google.maps.marker.AdvancedMarkerElement(markerOptions);
-};
-
-// Helper function to create marker pin element
-export const createMarkerPin = (
-  color: string = '#FF0000',
-  scale: number = 1
-): google.maps.marker.PinElement | null => {
-  if (!googleMapsInstance?.marker?.PinElement) {
-    console.error('PinElement not available');
-    return null;
-  }
-
-  return new google.maps.marker.PinElement({
-    background: color,
-    scale,
-    borderColor: '#FFFFFF',
-    glyphColor: '#FFFFFF'
   });
 };
