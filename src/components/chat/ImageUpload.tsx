@@ -48,25 +48,32 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `forum-images/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('hero-images')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
 
       const { data } = supabase.storage
         .from('hero-images')
         .getPublicUrl(filePath);
 
-      onImageUpload(data.publicUrl);
-      
-      toast({
-        title: 'Image uploaded',
-        description: 'Your image has been uploaded successfully.',
-      });
+      if (data.publicUrl) {
+        onImageUpload(data.publicUrl);
+        toast({
+          title: 'Image uploaded',
+          description: 'Your image has been uploaded successfully.',
+        });
+      }
     } catch (error) {
       console.error('Error uploading image:', error);
       toast({
@@ -76,6 +83,10 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       });
     } finally {
       setIsUploading(false);
+      // Reset the input
+      if (event.target) {
+        event.target.value = '';
+      }
     }
   };
 
@@ -86,13 +97,13 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           <img
             src={imageUrl}
             alt="Post image"
-            className="w-full max-h-64 object-cover rounded-lg"
+            className="w-full max-h-48 sm:max-h-64 object-cover rounded-lg"
           />
           <Button
             variant="destructive"
             size="sm"
             onClick={onRemoveImage}
-            className="absolute top-2 right-2"
+            className="absolute top-2 right-2 h-8 w-8 p-0"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -107,20 +118,20 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             className="hidden"
             id="image-upload"
           />
-          <label htmlFor="image-upload">
+          <label htmlFor="image-upload" className="cursor-pointer">
             <Button
               type="button"
               variant="outline"
               size="sm"
               disabled={isUploading}
-              className="cursor-pointer"
+              className="cursor-pointer text-xs sm:text-sm"
               asChild
             >
               <span>
                 {isUploading ? (
-                  <Upload className="h-4 w-4 mr-2 animate-spin" />
+                  <Upload className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
                 ) : (
-                  <Image className="h-4 w-4 mr-2" />
+                  <Image className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                 )}
                 {isUploading ? 'Uploading...' : 'Add Image'}
               </span>
