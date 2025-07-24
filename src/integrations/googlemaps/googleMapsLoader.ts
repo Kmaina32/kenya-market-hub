@@ -76,10 +76,13 @@ export const geocodeAddress = async (address: string): Promise<{ lat: number; ln
     return null;
   }
 
-  // Add Kenya context if not already present
-  const searchAddress = formattedAddress.toLowerCase().includes('kenya') 
-    ? formattedAddress 
-    : `${formattedAddress}, Kenya`;
+  // Only add Kenya context if the address doesn't already contain location context
+  const hasLocationContext = formattedAddress.toLowerCase().includes('kenya') || 
+                            formattedAddress.toLowerCase().includes('nairobi') ||
+                            formattedAddress.toLowerCase().includes('mombasa') ||
+                            formattedAddress.toLowerCase().includes('kisumu');
+
+  const searchAddress = hasLocationContext ? formattedAddress : `${formattedAddress}, Nairobi, Kenya`;
 
   return new Promise((resolve) => {
     geocoder.geocode({ 
@@ -157,19 +160,25 @@ export const createAdvancedMarker = (
   position: google.maps.LatLngLiteral,
   map: google.maps.Map,
   title?: string,
-  content?: HTMLElement
+  pinElement?: google.maps.marker.PinElement
 ): google.maps.marker.AdvancedMarkerElement | null => {
   if (!googleMapsInstance?.marker?.AdvancedMarkerElement) {
     console.error('AdvancedMarkerElement not available');
     return null;
   }
 
-  return new google.maps.marker.AdvancedMarkerElement({
+  const markerOptions: any = {
     position,
     map,
-    title,
-    content
-  });
+    title
+  };
+
+  // Fix: Use pinElement.element instead of pinElement directly
+  if (pinElement) {
+    markerOptions.content = pinElement.element;
+  }
+
+  return new google.maps.marker.AdvancedMarkerElement(markerOptions);
 };
 
 // Helper function to create marker pin element

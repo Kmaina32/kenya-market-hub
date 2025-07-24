@@ -8,12 +8,12 @@ declare namespace google.maps {
         position: google.maps.LatLngLiteral;
         map: google.maps.Map;
         title?: string;
-        content?: HTMLElement | google.maps.marker.PinElement;
+        content?: HTMLElement;
       });
       map: google.maps.Map | null;
       position: google.maps.LatLngLiteral;
       title?: string;
-      content?: HTMLElement | google.maps.marker.PinElement;
+      content?: HTMLElement;
       addListener(eventName: string, handler: () => void): void;
     }
 
@@ -24,6 +24,7 @@ declare namespace google.maps {
         borderColor?: string;
         glyphColor?: string;
       });
+      element: HTMLElement;
     }
   }
 }
