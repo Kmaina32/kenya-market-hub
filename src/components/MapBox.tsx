@@ -1,8 +1,6 @@
 
-// src/components/MapBox.tsx
-
 import React, { useEffect, useRef, useState } from 'react';
-import { loadGoogleMapsScript, createAdvancedMarker, createMarkerPin } from '@/integrations/googlemaps/googleMapsLoader';
+import { googleMapsLoader } from '@/integrations/googlemaps/googleMapsLoader';
 
 interface MapBoxProps {
   center?: google.maps.LatLngLiteral;
@@ -35,37 +33,38 @@ const MapBox: React.FC<MapBoxProps> = ({
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
-  const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
+  const markersRef = useRef<google.maps.Marker[]>([]);
   const polylineRef = useRef<google.maps.Polyline | null>(null);
 
   const [mapLoaded, setMapLoaded] = useState(false);
 
   useEffect(() => {
     const initMap = async () => {
-      const googleMaps = await loadGoogleMapsScript();
-      if (!googleMaps || !mapContainerRef.current) {
-        console.error('Failed to load Google Maps or map container not found.');
-        return;
-      }
-
-      const mapOptions: google.maps.MapOptions = {
-        center: center,
-        zoom: zoom,
-        disableDefaultUI: false,
-        mapTypeControl: true,
-        streetViewControl: true,
-        fullscreenControl: true,
-      };
-
-      mapRef.current = new googleMaps.Map(mapContainerRef.current, mapOptions);
-
-      mapRef.current.addListener('click', (e: google.maps.MapMouseEvent) => {
-        if (onMapClick && e.latLng) {
-          onMapClick(e.latLng.toJSON());
+      try {
+        const googleMaps = await googleMapsLoader.loadGoogleMaps();
+        if (!googleMaps || !mapContainerRef.current) {
+          console.error('Failed to load Google Maps or map container not found.');
+          return;
         }
-      });
 
-      setMapLoaded(true);
+        const mapOptions: google.maps.MapOptions = {
+          center: center,
+          zoom: zoom,
+          disableDefaultUI: false,
+        };
+
+        mapRef.current = new googleMaps.Map(mapContainerRef.current, mapOptions);
+
+        mapRef.current.addListener('click', (e: google.maps.MapMouseEvent) => {
+          if (onMapClick && e.latLng) {
+            onMapClick(e.latLng.toJSON());
+          }
+        });
+
+        setMapLoaded(true);
+      } catch (error) {
+        console.error('Error initializing map:', error);
+      }
     };
 
     if (!mapRef.current) {
@@ -76,11 +75,7 @@ const MapBox: React.FC<MapBoxProps> = ({
       if (polylineRef.current) {
         polylineRef.current.setMap(null);
       }
-      markersRef.current.forEach(marker => {
-        if (marker.map) {
-          marker.map = null;
-        }
-      });
+      markersRef.current.forEach(marker => marker.setMap(null));
       markersRef.current = [];
     };
   }, []);
@@ -88,30 +83,19 @@ const MapBox: React.FC<MapBoxProps> = ({
   useEffect(() => {
     if (!mapRef.current || !mapLoaded) return;
 
-    // Clear existing markers
-    markersRef.current.forEach(marker => {
-      if (marker.map) {
-        marker.map = null;
-      }
-    });
+    markersRef.current.forEach(marker => marker.setMap(null));
     markersRef.current = [];
 
-    // Create new markers using AdvancedMarkerElement
     markers.forEach(markerData => {
-      const pinElement = createMarkerPin(markerData.color || '#FF0000');
-      const marker = createAdvancedMarker(
-        markerData.position,
-        mapRef.current!,
-        markerData.title,
-        pinElement
-      );
-
-      if (marker) {
-        if (markerData.onClick) {
-          marker.addListener('click', markerData.onClick);
-        }
-        markersRef.current.push(marker);
+      const marker = new google.maps.Marker({
+        position: markerData.position,
+        map: mapRef.current,
+        title: markerData.title,
+      });
+      if (markerData.onClick) {
+        marker.addListener('click', markerData.onClick);
       }
+      markersRef.current.push(marker);
     });
   }, [markers, mapLoaded]);
 

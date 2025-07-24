@@ -20,6 +20,8 @@ interface InputFieldProps extends BaseFieldProps {
   onBlur?: () => void;
   placeholder?: string;
   step?: string;
+  min?: string;
+  max?: string;
 }
 
 interface TextareaFieldProps extends BaseFieldProps {
@@ -48,7 +50,9 @@ export const InputField: React.FC<InputFieldProps> = ({
   onChange,
   onBlur,
   placeholder,
-  step
+  step,
+  min,
+  max
 }) => {
   return (
     <div className={className}>
@@ -64,6 +68,8 @@ export const InputField: React.FC<InputFieldProps> = ({
         onBlur={onBlur}
         placeholder={placeholder}
         step={step}
+        min={min}
+        max={max}
         className={error ? 'border-red-500 focus:border-red-500' : ''}
       />
       {error && <p className="text-sm text-red-500 mt-1">{error}</p>}

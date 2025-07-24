@@ -1,10 +1,14 @@
 
 import React from 'react';
-import { useCartContext } from '@/contexts/CartContext';
+import { useSafeCartContext } from '@/hooks/useSafeCartContext';
 
 const CartQuantityBadge = () => {
-  const { items } = useCartContext();
-  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+  const { getTotalItems, isAvailable } = useSafeCartContext();
+  
+  // Only show badge if cart context is available
+  if (!isAvailable) return null;
+
+  const totalItems = getTotalItems();
 
   if (totalItems === 0) return null;
 

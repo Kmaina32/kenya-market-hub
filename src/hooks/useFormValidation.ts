@@ -6,6 +6,8 @@ interface ValidationRule {
   minLength?: number;
   maxLength?: number;
   pattern?: RegExp;
+  min?: number;
+  max?: number;
   custom?: (value: any) => string | null;
 }
 
@@ -40,6 +42,17 @@ export const useFormValidation = <T extends Record<string, any>>(
 
       if (rule.pattern && !rule.pattern.test(value)) {
         return `${name} format is invalid`;
+      }
+    }
+
+    if (typeof value === 'number' || (typeof value === 'string' && !isNaN(Number(value)))) {
+      const numValue = Number(value);
+      if (rule.min !== undefined && numValue < rule.min) {
+        return `${name} must be at least ${rule.min}`;
+      }
+
+      if (rule.max !== undefined && numValue > rule.max) {
+        return `${name} must not exceed ${rule.max}`;
       }
     }
 
@@ -82,7 +95,7 @@ export const useFormValidation = <T extends Record<string, any>>(
     }
   }, [values, validateField]);
 
-  const reset = useCallback(() => {
+  const resetForm = useCallback(() => {
     setValues(initialValues);
     setErrors({});
     setTouched({});
@@ -95,7 +108,7 @@ export const useFormValidation = <T extends Record<string, any>>(
     handleChange,
     handleBlur,
     validateForm,
-    reset,
+    resetForm,
     isValid: Object.keys(errors).length === 0
   };
 };

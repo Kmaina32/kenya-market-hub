@@ -253,10 +253,8 @@ export const useTrendingTopics = () => {
       posts?.forEach(post => {
         const hashtags = post.content.match(/#\w+/g) || [];
         hashtags.forEach(tag => {
-          if (typeof tag === 'string') {
-            const cleanTag = tag.toLowerCase();
-            hashtagCounts[cleanTag] = (hashtagCounts[cleanTag] || 0) + 1;
-          }
+          const cleanTag = tag.toLowerCase();
+          hashtagCounts[cleanTag] = (hashtagCounts[cleanTag] || 0) + 1;
         });
       });
 
