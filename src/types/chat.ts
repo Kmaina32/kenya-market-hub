@@ -23,6 +23,7 @@ export interface ForumPost {
   reply_count: number;
   is_pinned: boolean;
   is_locked: boolean;
+  image_url?: string;
   author_profile?: {
     full_name: string;
     avatar_url?: string;
