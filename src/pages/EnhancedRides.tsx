@@ -4,13 +4,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Navigation, MapPin, Clock, Car } from 'lucide-react';
 import FrontendLayout from '@/components/layouts/FrontendLayout';
-import EnhancedRideBooking from '@/components/rides/EnhancedRideBooking';
+import RideBookingTab from '@/components/rides/RideBookingTab';
 import DriverLocationTracker from '@/components/rides/DriverLocationTracker';
+import RideHistory from '@/components/rides/RideHistory';
 import { useAuth } from '@/contexts/AuthContext';
 
 const EnhancedRides: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('book');
+
+  const handleRideBooked = (rideId: string) => {
+    console.log('Ride booked:', rideId);
+    // Could switch to tracking tab or show confirmation
+  };
 
   return (
     <FrontendLayout>
@@ -48,30 +54,14 @@ const EnhancedRides: React.FC = () => {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="book" className="space-y-6">
-              <EnhancedRideBooking />
-            </TabsContent>
+            <RideBookingTab onRideBooked={handleRideBooked} />
 
             <TabsContent value="track" className="space-y-6">
               <DriverLocationTracker />
             </TabsContent>
 
             <TabsContent value="history" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-orange-500" />
-                    Recent Rides
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8 text-gray-500">
-                    <Car className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No recent rides found.</p>
-                    <p className="text-sm">Your ride history will appear here.</p>
-                  </div>
-                </CardContent>
-              </Card>
+              <RideHistory />
             </TabsContent>
           </Tabs>
         </div>

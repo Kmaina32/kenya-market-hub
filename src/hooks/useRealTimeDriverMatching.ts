@@ -115,7 +115,8 @@ export const useRealTimeDriverMatching = () => {
           last_active: details.updated_at || new Date().toISOString(),
           vehicle_make: details.vehicle_make || 'Unknown',
           vehicle_model: details.vehicle_model || 'Unknown',
-          license_plate: details.license_plate || 'Unknown'
+          license_plate: details.license_plate || 'Unknown',
+          current_location: details.current_location ? details.current_location.toString() : 'Unknown'
         };
       }).filter(Boolean).sort((a, b) => b.score - a.score);
 
