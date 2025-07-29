@@ -153,7 +153,7 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
     if (currentAd) {
       switch (currentAd.type) {
         case 'product':
-          navigate(`/products/${currentAd.id}`);
+          navigate('/shop');
           break;
         case 'property':
           navigate(`/properties/${currentAd.id}`);
