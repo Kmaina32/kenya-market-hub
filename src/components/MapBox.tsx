@@ -1,6 +1,7 @@
+// src/components/MapBox.tsx
 
 import React, { useEffect, useRef, useState } from 'react';
-import { googleMapsLoader } from '@/integrations/googlemaps/googleMapsLoader';
+import { loadGoogleMapsScript } from '@/integrations/googlemaps/googleMapsLoader'; // Import our loader
 
 interface MapBoxProps {
   center?: google.maps.LatLngLiteral;
@@ -19,6 +20,7 @@ interface MapBoxProps {
     path?: google.maps.LatLng[];
   };
   className?: string;
+  // FIX: Add style prop to interface
   style?: React.CSSProperties; 
 }
 
@@ -29,7 +31,7 @@ const MapBox: React.FC<MapBoxProps> = ({
   onMapClick,
   showRoute,
   className = "w-full h-96",
-  style
+  style // Receive the style prop
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -40,31 +42,28 @@ const MapBox: React.FC<MapBoxProps> = ({
 
   useEffect(() => {
     const initMap = async () => {
-      try {
-        const googleMaps = await googleMapsLoader.loadGoogleMaps();
-        if (!googleMaps || !mapContainerRef.current) {
-          console.error('Failed to load Google Maps or map container not found.');
-          return;
-        }
-
-        const mapOptions: google.maps.MapOptions = {
-          center: center,
-          zoom: zoom,
-          disableDefaultUI: false,
-        };
-
-        mapRef.current = new googleMaps.Map(mapContainerRef.current, mapOptions);
-
-        mapRef.current.addListener('click', (e: google.maps.MapMouseEvent) => {
-          if (onMapClick && e.latLng) {
-            onMapClick(e.latLng.toJSON());
-          }
-        });
-
-        setMapLoaded(true);
-      } catch (error) {
-        console.error('Error initializing map:', error);
+      const googleMaps = await loadGoogleMapsScript();
+      if (!googleMaps || !mapContainerRef.current) {
+        console.error('Failed to load Google Maps or map container not found.');
+        return;
       }
+
+      const mapOptions: google.maps.MapOptions = {
+        center: center,
+        zoom: zoom,
+        mapId: 'YOUR_MAP_ID_HERE', // Check this again, or comment out if not using custom style
+        disableDefaultUI: false,
+      };
+
+      mapRef.current = new googleMaps.Map(mapContainerRef.current, mapOptions);
+
+      mapRef.current.addListener('click', (e: google.maps.MapMouseEvent) => {
+        if (onMapClick && e.latLng) {
+          onMapClick(e.latLng.toJSON());
+        }
+      });
+
+      setMapLoaded(true);
     };
 
     if (!mapRef.current) {
@@ -120,6 +119,7 @@ const MapBox: React.FC<MapBoxProps> = ({
 
         const bounds = new google.maps.LatLngBounds();
         showRoute.path.forEach(point => bounds.extend(point));
+        // FIX: Change padding object literal to use directional properties
         mapRef.current.fitBounds(bounds, { top: 50, bottom: 50, left: 50, right: 50 }); 
 
       } else {
@@ -146,6 +146,7 @@ const MapBox: React.FC<MapBoxProps> = ({
               polylineRef.current.setMap(mapRef.current);
               const bounds = new google.maps.LatLngBounds();
               path.forEach(point => bounds.extend(point));
+              // FIX: Change padding object literal to use directional properties
               mapRef.current.fitBounds(bounds, { top: 50, bottom: 50, left: 50, right: 50 });
             } else {
               console.error('Directions request failed due to ' + status);
@@ -156,6 +157,7 @@ const MapBox: React.FC<MapBoxProps> = ({
     }
   }, [showRoute, mapLoaded]);
 
+  // Pass the style prop directly to the div
   return <div ref={mapContainerRef} className={className} style={style} />;
 };
 

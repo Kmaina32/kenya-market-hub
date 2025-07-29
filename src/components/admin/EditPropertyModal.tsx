@@ -64,7 +64,7 @@ const EditPropertyModal: React.FC<EditPropertyModalProps> = ({
     contact_email: propertyData?.contact_email || ''
   };
 
-  const { values, errors, handleChange, handleBlur, validateForm, resetForm } = useFormValidation(
+  const { values, errors, handleChange, handleBlur, validateForm, reset } = useFormValidation(
     initialValues,
     validationSchema
   );

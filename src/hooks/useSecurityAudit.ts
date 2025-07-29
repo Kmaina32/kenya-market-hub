@@ -1,37 +1,81 @@
 
+import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+interface SecurityEvent {
+  action: string;
+  resourceType: string;
+  resourceId?: string;
+  success?: boolean;
+  errorMessage?: string;
+  metadata?: Record<string, any>;
+}
+
 export const useSecurityAudit = () => {
-  const logFailedLogin = async (email: string, reason: string) => {
-    try {
-      console.warn(`Failed login attempt for ${email}: ${reason}`);
-      // In a real implementation, this would log to a security audit table
-    } catch (error) {
-      console.error('Failed to log security event:', error);
+  const logSecurityEvent = useMutation({
+    mutationFn: async (event: SecurityEvent) => {
+      const { error } = await supabase
+        .from('security_audit_log')
+        .insert({
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+          action: event.action,
+          resource_type: event.resourceType,
+          resource_id: event.resourceId,
+          success: event.success ?? true,
+          error_message: event.errorMessage,
+          metadata: event.metadata || {}
+        });
+
+      if (error) {
+        console.error('Failed to log security event:', error);
+      }
     }
+  });
+
+  const logFailedLogin = (email: string, reason: string) => {
+    logSecurityEvent.mutate({
+      action: 'login_failed',
+      resourceType: 'auth',
+      resourceId: email,
+      success: false,
+      errorMessage: reason,
+      metadata: { timestamp: new Date().toISOString() }
+    });
   };
 
-  const logSuccessfulLogin = async (userId: string) => {
-    try {
-      console.log(`Successful login for user ${userId}`);
-      // In a real implementation, this would log to a security audit table
-    } catch (error) {
-      console.error('Failed to log security event:', error);
-    }
+  const logSuccessfulLogin = (userId: string) => {
+    logSecurityEvent.mutate({
+      action: 'login_success',
+      resourceType: 'auth',
+      resourceId: userId,
+      success: true
+    });
   };
 
-  const logSecurityViolation = async (violation: string, type: string, userId?: string) => {
-    try {
-      console.warn(`Security violation: ${violation} (${type}) for user ${userId || 'unknown'}`);
-      // In a real implementation, this would log to a security audit table
-    } catch (error) {
-      console.error('Failed to log security violation:', error);
-    }
+  const logDataAccess = (resourceType: string, resourceId: string, action: string) => {
+    logSecurityEvent.mutate({
+      action: `${action}_${resourceType}`,
+      resourceType,
+      resourceId,
+      success: true
+    });
+  };
+
+  const logAdminAction = (action: string, resourceType: string, resourceId?: string) => {
+    logSecurityEvent.mutate({
+      action: `admin_${action}`,
+      resourceType,
+      resourceId,
+      success: true,
+      metadata: { admin: true }
+    });
   };
 
   return {
     logFailedLogin,
     logSuccessfulLogin,
-    logSecurityViolation
+    logDataAccess,
+    logAdminAction,
+    logSecurityEvent: logSecurityEvent.mutate
   };
 };
