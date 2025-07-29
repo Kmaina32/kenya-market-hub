@@ -2,6 +2,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useSecurityAudit } from './useSecurityAudit';
+import type { Json } from '@/integrations/supabase/types';
 
 interface SecurityAlert {
   id: string;
@@ -9,7 +10,7 @@ interface SecurityAlert {
   alert_type: 'suspicious_login' | 'multiple_failed_attempts' | 'unusual_activity' | 'potential_breach';
   severity: 'low' | 'medium' | 'high' | 'critical';
   message: string;
-  metadata: Record<string, any>;
+  metadata: Json;
   created_at: string;
   resolved: boolean;
 }
@@ -82,7 +83,7 @@ export const useSecurityMonitoring = () => {
         .gte('created_at', oneHourAgo)
         .limit(10);
 
-      const mockAlerts: SecurityAlert[] = (suspiciousActivities || []).map((activity, index) => ({
+      const mockAlerts: SecurityAlert[] = (suspiciousActivities || []).map((activity) => ({
         id: `alert-${activity.id}`,
         user_id: activity.user_id,
         alert_type: 'suspicious_login' as const,
