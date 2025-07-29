@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -26,15 +27,18 @@ import SEOManager from '@/components/seo/SEOManager';
 import JobApplicationModal from '@/components/JobApplicationModal';
 
 interface Job {
-  id: string;
+  id: number;
   title: string;
   description: string;
   location: string;
-  type: string;
-  salary: number;
+  job_type: string;
+  salary: string;
   company: string;
-  posted_at: string;
+  created_at: string;
   category: string;
+  status: string;
+  posted_by: string;
+  updated_at: string;
 }
 
 const JOB_CATEGORIES = ['Technology', 'Marketing', 'Finance', 'Healthcare', 'Education', 'Engineering', 'Sales', 'Customer Service'];
@@ -52,7 +56,8 @@ const Jobs: React.FC = () => {
     queryFn: async () => {
       let query = supabase
         .from('jobs')
-        .select('*');
+        .select('*')
+        .eq('status', 'open');
 
       if (searchTerm) {
         query = query.or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
@@ -61,10 +66,10 @@ const Jobs: React.FC = () => {
         query = query.eq('category', selectedCategory);
       }
       if (selectedType !== 'all') {
-        query = query.eq('type', selectedType);
+        query = query.eq('job_type', selectedType);
       }
 
-      const { data, error } = await query;
+      const { data, error } = await query.order('created_at', { ascending: false });
       if (error) {
         console.error("Error fetching jobs:", error.message);
         throw error;
@@ -79,7 +84,7 @@ const Jobs: React.FC = () => {
     const matchesSearch = searchRegex.test(job.title) || searchRegex.test(job.description);
 
     const matchesCategory = selectedCategory === 'all' || job.category === selectedCategory;
-    const matchesType = selectedType === 'all' || job.type === selectedType;
+    const matchesType = selectedType === 'all' || job.job_type === selectedType;
 
     return matchesSearch && matchesCategory && matchesType;
   }) : [];
@@ -176,13 +181,14 @@ const Jobs: React.FC = () => {
 
                     <div className="flex items-center space-x-2 mt-1">
                       <Clock className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-700">{job.type}</span>
+                      <span className="text-sm text-gray-700">{job.job_type}</span>
                     </div>
 
                     <div className="flex items-center space-x-2 mt-1">
                       <DollarSign className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-700">KSH {job.salary.toLocaleString()} / month</span>
+                      <span className="text-sm text-gray-700">{job.salary}</span>
                     </div>
+                    
                     <div className="flex justify-between items-center mt-4">
                       <div className="flex space-x-2">
                         <Badge>{job.category}</Badge>

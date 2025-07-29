@@ -9,10 +9,25 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Upload, Loader2 } from 'lucide-react';
 
+interface Job {
+  id: number;
+  title: string;
+  description: string;
+  location: string;
+  job_type: string;
+  salary: string;
+  company: string;
+  created_at: string;
+  category: string;
+  status: string;
+  posted_by: string;
+  updated_at: string;
+}
+
 interface JobApplicationModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  job: any;
+  job: Job | null;
 }
 
 const JobApplicationModal = ({ open, onOpenChange, job }: JobApplicationModalProps) => {
@@ -33,6 +48,8 @@ const JobApplicationModal = ({ open, onOpenChange, job }: JobApplicationModalPro
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!job) return;
+    
     setIsSubmitting(true);
 
     try {
