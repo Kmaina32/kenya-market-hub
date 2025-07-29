@@ -62,6 +62,7 @@ interface ServiceProvider {
   verification_status: string;
   created_at: string;
   updated_at: string;
+  provider_type: string;
 }
 
 interface BookingRequest {
@@ -176,7 +177,7 @@ const ServiceHubUnified = () => {
 
     // Category filter
     if (selectedCategory !== 'all') {
-      filtered = filtered.filter(provider => provider.category === selectedCategory);
+      filtered = filtered.filter(provider => provider.provider_type === selectedCategory);
     }
 
     // Location filter
