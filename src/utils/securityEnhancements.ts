@@ -1,3 +1,4 @@
+import { supabase } from '@/integrations/supabase/client';
 
 // Enhanced security utilities and headers
 export const SecurityHeaders = {

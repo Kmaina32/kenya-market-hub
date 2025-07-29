@@ -5,7 +5,7 @@ import { useSecurityAudit } from './useSecurityAudit';
 
 interface SecurityAlert {
   id: string;
-  user_id: string;
+  user_id: string | null;
   alert_type: 'suspicious_login' | 'multiple_failed_attempts' | 'unusual_activity' | 'potential_breach';
   severity: 'low' | 'medium' | 'high' | 'critical';
   message: string;
@@ -41,9 +41,9 @@ export const useSecurityMonitoring = () => {
 
       const failedAttempts = data?.length || 0;
       
-      // Alert if more than 5 failed attempts in an hour
+      // Create alert if more than 5 failed attempts in an hour
       if (failedAttempts >= 5) {
-        await supabase
+        const { error: alertError } = await supabase
           .from('security_alerts')
           .insert({
             user_id: null,
@@ -52,6 +52,10 @@ export const useSecurityMonitoring = () => {
             message: `${failedAttempts} failed login attempts detected for ${email}`,
             metadata: { email, failed_attempts: failedAttempts }
           });
+
+        if (alertError) {
+          console.error('Failed to create security alert:', alertError);
+        }
       }
 
       return failedAttempts;
@@ -82,7 +86,7 @@ export const useSecurityMonitoring = () => {
         failed_logins_last_hour: failedLogins?.length || 0,
         active_sessions: 0, // Would need session tracking
         suspicious_activities: 0, // Would need activity analysis
-        security_alerts: alerts || []
+        security_alerts: (alerts || []) as SecurityAlert[]
       };
     },
     refetchInterval: 30000, // Refresh every 30 seconds
@@ -123,7 +127,7 @@ export const useSecurityMonitoring = () => {
 
       // Alert if more than 20 of the same action in 5 minutes
       if ((recentActions?.length || 0) > 20) {
-        await supabase
+        const { error: alertError } = await supabase
           .from('security_alerts')
           .insert({
             user_id: activity.userId,
@@ -136,6 +140,10 @@ export const useSecurityMonitoring = () => {
               timeframe: '5_minutes'
             }
           });
+
+        if (alertError) {
+          console.error('Failed to create security alert:', alertError);
+        }
       }
     }
   });
