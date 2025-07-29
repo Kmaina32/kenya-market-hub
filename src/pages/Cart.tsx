@@ -1,13 +1,15 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Plus, Minus, ShoppingCart, ShoppingBag } from 'lucide-react'; // Added ShoppingBag icon
+import { Trash2, Plus, Minus, ShoppingCart, ShoppingBag } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
+import PageContainer from '@/components/shared/PageContainer';
+import HeroSection from '@/components/shared/HeroSection';
 import { useCartContext } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, useNavigate } from 'react-router-dom';
-// import HeroSection from '@/components/shared/HeroSection'; // Removed HeroSection import as it's no longer used directly
 
 const Cart = () => {
   const { user } = useAuth();
@@ -22,37 +24,14 @@ const Cart = () => {
     navigate('/checkout');
   };
 
-  // Define the image URL and the hero content directly
-  const heroImageUrl = 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=2070&q=80';
-  const heroTitle = 'Shopping Cart';
-  const heroSubtitle = 'Review Your Items';
-  const heroDescription = 'Review your selected items and proceed to checkout.';
-
-
   return (
     <MainLayout>
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        {/* Custom Hero Section with Image Backdrop and Gradient */}
-        <div
-          className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-600 to-red-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4 px-4 sm:px-6 lg:px-8 shadow-xl"
-          style={{
-            backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('${heroImageUrl}')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }}
-        >
-          <div className="relative z-10 flex items-center justify-center h-full px-6 sm:px-8 lg:px-12">
-            <div className="text-center text-white max-w-3xl mx-auto">
-              {/* Using ShoppingBag icon for consistency with shop/events page visual theme */}
-              <ShoppingBag className="h-16 w-16 mx-auto mb-4 text-orange-100 drop-shadow-lg" />
-              <h1 className="text-3xl md:text-4xl font-bold mb-3 drop-shadow-lg">{heroTitle}</h1>
-              <p className="text-lg text-orange-100 font-light leading-relaxed">
-                {heroSubtitle}
-                {heroDescription && <span className="block">{heroDescription}</span>}
-              </p>
-            </div>
-          </div>
-        </div>
+      <PageContainer>
+        <HeroSection
+          title="Shopping Cart"
+          subtitle="Review your selected items and proceed to checkout."
+          icon={ShoppingBag}
+        />
 
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           {items.length === 0 ? (
@@ -180,7 +159,7 @@ const Cart = () => {
             </div>
           )}
         </div>
-      </div>
+      </PageContainer>
     </MainLayout>
   );
 };

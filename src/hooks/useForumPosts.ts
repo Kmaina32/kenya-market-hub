@@ -13,35 +13,42 @@ export const useForumPosts = (categoryId?: string) => {
     queryFn: async () => {
       let query = supabase
         .from('forum_posts')
-        .select(`
-          id,
-          title,
-          content,
-          category_id,
-          author_id,
-          like_count,
-          reply_count,
-          view_count,
-          created_at,
-          updated_at,
-          author_profile:profiles!author_id(full_name, avatar_url),
-          category:forum_categories!category_id(name, color)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (categoryId) {
         query = query.eq('category_id', categoryId);
       }
 
-      const { data, error } = await query;
+      const { data: posts, error } = await query;
 
       if (error) {
         console.error('Error fetching forum posts:', error);
         throw error;
       }
 
-      // Transform data and check if user has liked each post
-      const transformedData = await Promise.all((data || []).map(async (post) => {
+      if (!posts || posts.length === 0) {
+        return [];
+      }
+
+      // Get unique author IDs and category IDs
+      const authorIds = [...new Set(posts.map(post => post.author_id))];
+      const categoryIds = [...new Set(posts.map(post => post.category_id))];
+      
+      // Fetch profiles separately
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', authorIds);
+
+      // Fetch categories separately
+      const { data: categories } = await supabase
+        .from('forum_categories')
+        .select('id, name, color')
+        .in('id', categoryIds);
+
+      // Transform posts with author profiles and categories
+      const transformedData = await Promise.all(posts.map(async (post) => {
         let has_liked = false;
         
         if (user) {
@@ -56,11 +63,20 @@ export const useForumPosts = (categoryId?: string) => {
           has_liked = !!likeData;
         }
 
+        const authorProfile = profiles?.find(p => p.id === post.author_id);
+        const category = categories?.find(c => c.id === post.category_id);
+
         return {
           ...post,
           has_liked,
-          author_profile: post.author_profile || { full_name: 'Unknown User' },
-          category: post.category || { name: 'General', color: '#f59e0b' }
+          author_profile: authorProfile || { 
+            full_name: 'Unknown User', 
+            avatar_url: null 
+          },
+          category: category || { 
+            name: 'General', 
+            color: '#3b82f6' 
+          }
         };
       }));
 
@@ -78,11 +94,13 @@ export const useCreateForumPost = () => {
     mutationFn: async ({ 
       title, 
       content, 
-      categoryId 
+      categoryId,
+      imageUrl
     }: {
       title: string;
       content: string;
       categoryId: string;
+      imageUrl?: string;
     }) => {
       if (!user) throw new Error('User not authenticated');
 
@@ -92,7 +110,8 @@ export const useCreateForumPost = () => {
           title,
           content,
           category_id: categoryId,
-          author_id: user.id
+          author_id: user.id,
+          image_url: imageUrl
         }])
         .select()
         .single();
@@ -119,6 +138,41 @@ export const useCreateForumPost = () => {
   });
 };
 
+export const useDeleteForumPost = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (postId: string) => {
+      if (!user) throw new Error('User not authenticated');
+
+      const { error } = await supabase
+        .from('forum_posts')
+        .delete()
+        .eq('id', postId)
+        .eq('author_id', user.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['forum-posts'] });
+      toast({
+        title: 'Post Deleted',
+        description: 'Your post has been deleted successfully.'
+      });
+    },
+    onError: (error: any) => {
+      console.error('Error deleting post:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete post. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  });
+};
+
 export const useTogglePostLike = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -128,7 +182,6 @@ export const useTogglePostLike = () => {
     mutationFn: async (postId: string) => {
       if (!user) throw new Error('User not authenticated');
 
-      // Check if user already liked the post
       const { data: existingLike } = await supabase
         .from('forum_post_reactions')
         .select('id')
@@ -138,7 +191,6 @@ export const useTogglePostLike = () => {
         .single();
 
       if (existingLike) {
-        // Unlike the post
         const { error } = await supabase
           .from('forum_post_reactions')
           .delete()
@@ -147,7 +199,6 @@ export const useTogglePostLike = () => {
         if (error) throw error;
         return { action: 'unliked' };
       } else {
-        // Like the post
         const { error } = await supabase
           .from('forum_post_reactions')
           .insert({
@@ -197,7 +248,6 @@ export const useTrendingTopics = () => {
 
       if (error) throw error;
 
-      // Extract hashtags from posts
       const hashtagCounts: Record<string, number> = {};
       
       posts?.forEach(post => {
@@ -208,7 +258,6 @@ export const useTrendingTopics = () => {
         });
       });
 
-      // Convert to array and sort by count
       return Object.entries(hashtagCounts)
         .map(([tag, count]) => ({ tag: tag.substring(1), posts: count }))
         .sort((a, b) => b.posts - a.posts)

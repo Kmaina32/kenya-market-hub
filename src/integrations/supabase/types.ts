@@ -735,6 +735,39 @@ export type Database = {
         }
         Relationships: []
       }
+      emergency_contacts: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_primary: boolean | null
+          name: string
+          phone: string
+          relationship: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          name: string
+          phone: string
+          relationship: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          name?: string
+          phone?: string
+          relationship?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           created_at: string | null
@@ -865,6 +898,7 @@ export type Database = {
       }
       forum_categories: {
         Row: {
+          color: string | null
           created_at: string
           description: string | null
           id: string
@@ -873,6 +907,7 @@ export type Database = {
           post_count: number | null
         }
         Insert: {
+          color?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -881,6 +916,7 @@ export type Database = {
           post_count?: number | null
         }
         Update: {
+          color?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -977,6 +1013,7 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          image_url: string | null
           is_locked: boolean | null
           is_pinned: boolean | null
           like_count: number | null
@@ -991,6 +1028,7 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          image_url?: string | null
           is_locked?: boolean | null
           is_pinned?: boolean | null
           like_count?: number | null
@@ -1005,6 +1043,7 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          image_url?: string | null
           is_locked?: boolean | null
           is_pinned?: boolean | null
           like_count?: number | null
@@ -2383,6 +2422,104 @@ export type Database = {
           },
         ]
       }
+      safety_alerts: {
+        Row: {
+          created_at: string | null
+          id: string
+          location: Json | null
+          message: string | null
+          metadata: Json | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          location?: Json | null
+          message?: string | null
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          location?: Json | null
+          message?: string | null
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      safety_reports: {
+        Row: {
+          created_at: string | null
+          description: string
+          evidence: Json | null
+          id: string
+          location: Json | null
+          report_type: string
+          reported_user_id: string | null
+          reporter_id: string
+          resolved_at: string | null
+          resolved_by: string | null
+          ride_id: string | null
+          severity: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          evidence?: Json | null
+          id?: string
+          location?: Json | null
+          report_type: string
+          reported_user_id?: string | null
+          reporter_id: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          ride_id?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          evidence?: Json | null
+          id?: string
+          location?: Json | null
+          report_type?: string
+          reported_user_id?: string | null
+          reporter_id?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          ride_id?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safety_reports_ride_id_fkey"
+            columns: ["ride_id"]
+            isOneToOne: false
+            referencedRelation: "rides"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       security_audit_log: {
         Row: {
           action: string
@@ -2564,6 +2701,47 @@ export type Database = {
           verification_status?: string | null
         }
         Relationships: []
+      }
+      shared_rides: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          permission_level: string
+          ride_id: string
+          shared_by_user_id: string
+          shared_with_user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          permission_level?: string
+          ride_id: string
+          shared_by_user_id: string
+          shared_with_user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          permission_level?: string
+          ride_id?: string
+          shared_by_user_id?: string
+          shared_with_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_rides_ride_id_fkey"
+            columns: ["ride_id"]
+            isOneToOne: false
+            referencedRelation: "rides"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shop_categories: {
         Row: {
@@ -2816,31 +2994,29 @@ export type Database = {
       user_roles: {
         Row: {
           created_at: string | null
-          id: string
-          role: Database["public"]["Enums"]["user_role"]
+          id: number
+          is_active: boolean | null
+          role: string
+          updated_at: string | null
           user_id: string
         }
         Insert: {
           created_at?: string | null
-          id?: string
-          role?: Database["public"]["Enums"]["user_role"]
+          id?: never
+          is_active?: boolean | null
+          role: string
+          updated_at?: string | null
           user_id: string
         }
         Update: {
           created_at?: string | null
-          id?: string
-          role?: Database["public"]["Enums"]["user_role"]
+          id?: never
+          is_active?: boolean | null
+          role?: string
+          updated_at?: string | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "fk_user_roles_to_profiles"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       vendor_applications: {
         Row: {
@@ -3153,6 +3329,14 @@ export type Database = {
         Args: Record<PropertyKey, never> | { check_user_id?: string }
         Returns: boolean
       }
+      is_admin_user: {
+        Args: { check_user_id: string }
+        Returns: boolean
+      }
+      is_user_admin: {
+        Args: { check_email: string }
+        Returns: boolean
+      }
       list_backups: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -3199,6 +3383,45 @@ export type Database = {
       update_product_rating: {
         Args: { product_id: number; rating: number }
         Returns: undefined
+      }
+      update_profile: {
+        Args: {
+          input_full_name?: string
+          input_avatar_url?: string
+          input_phone?: string
+        }
+        Returns: {
+          address: string | null
+          avatar_url: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string | null
+        }
+      }
+      upsert_profile: {
+        Args: {
+          p_user_id: string
+          p_email: string
+          p_full_name?: string
+          p_avatar_url?: string
+        }
+        Returns: {
+          address: string | null
+          avatar_url: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string | null
+        }[]
       }
       upsert_recently_viewed: {
         Args: { p_user_id: string; p_product_id: string }

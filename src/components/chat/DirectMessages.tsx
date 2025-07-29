@@ -1,21 +1,14 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import {
-  Search,
-  MessageCircle,
-  Plus,
-  MoreHorizontal,
-  Pin,
-  Loader2,
-  X
-} from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { useConversations } from '@/hooks/useChat';
+import { Search, MessageCircle, Plus } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface DirectMessagesProps {
   onSelectConversation: (conversationId: string) => void;
@@ -26,29 +19,62 @@ const DirectMessages: React.FC<DirectMessagesProps> = ({
   onSelectConversation,
   selectedConversation
 }) => {
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const { data: conversations, isLoading, error } = useConversations();
+
+  const { data: conversations } = useQuery({
+    queryKey: ['chat-conversations', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from('chat_conversations')
+        .select('*')
+        .or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`)
+        .order('last_message_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Get participant profiles
+      const participantIds = data?.flatMap(conv => [conv.participant1_id, conv.participant2_id]) || [];
+      const uniqueParticipantIds = [...new Set(participantIds)];
+
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', uniqueParticipantIds);
+
+      return data?.map(conv => {
+        const otherParticipantId = conv.participant1_id === user.id ? conv.participant2_id : conv.participant1_id;
+        const otherParticipant = profiles?.find(p => p.id === otherParticipantId);
+        
+        return {
+          ...conv,
+          other_participant: otherParticipant || { full_name: 'Unknown User', avatar_url: null }
+        };
+      }) || [];
+    },
+    enabled: !!user
+  });
 
   const filteredConversations = conversations?.filter(conv =>
-    conv.participant1?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    conv.participant2?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+    conv.other_participant?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <MessageCircle className="w-5 h-5 text-orange-600" />
-            Messages
-          </CardTitle>
-          <Button size="sm" className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
-            <Plus className="w-4 h-4" />
+    <div className="h-full flex flex-col bg-white">
+      {/* Header */}
+      <div className="p-4 border-b">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">Messages</h2>
+          <Button size="sm" className="bg-orange-500 hover:bg-orange-600">
+            <Plus className="h-4 w-4 mr-2" />
+            New Chat
           </Button>
         </div>
-
-        <div className="relative mt-4">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             placeholder="Search conversations..."
             value={searchTerm}
@@ -56,89 +82,61 @@ const DirectMessages: React.FC<DirectMessagesProps> = ({
             className="pl-10"
           />
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent className="p-0 flex-grow overflow-y-auto">
-        <div className="space-y-1">
-          {isLoading ? (
-            <div className="p-4 text-center text-gray-500">
-              <Loader2 className="w-6 h-6 mx-auto animate-spin mb-2" />
-              Loading conversations...
-            </div>
-          ) : error ? (
-            <div className="p-8 text-center text-red-600">
-              <X className="w-12 h-12 mx-auto mb-4" />
-              <h3 className="font-medium mb-2">Error loading conversations</h3>
-              <p>Failed to load conversations. Please try again.</p>
-              <Button onClick={() => window.location.reload()} className="mt-4">Reload</Button>
-            </div>
-          ) : filteredConversations.length === 0 ? (
-            <div className="p-8 text-center">
-              <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="font-medium text-gray-900 mb-2">No conversations</h3>
-              <p className="text-gray-600 text-sm mb-4">
-                {searchTerm ? 'No conversations match your search' : 'Start a new conversation'}
-              </p>
-              <Button size="sm" className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
-                <Plus className="w-4 h-4 mr-2" />
-                New Message
-              </Button>
-            </div>
-          ) : (
-            filteredConversations.map((conversation) => {
-              const otherParticipant = conversation.participant1 || conversation.participant2;
-              
-              return (
-                <div
-                  key={conversation.id}
-                  onClick={() => onSelectConversation(conversation.id)}
-                  className={`flex items-center gap-3 p-4 hover:bg-gray-50 cursor-pointer transition-colors border-l-4 group ${
-                    selectedConversation === conversation.id
-                      ? 'bg-orange-50 border-l-orange-500'
-                      : 'border-l-transparent'
-                  }`}
-                >
-                  <div className="relative">
+      {/* Conversations List */}
+      <div className="flex-1 overflow-y-auto">
+        {filteredConversations?.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-gray-500">
+            <MessageCircle className="h-16 w-16 mb-4 text-gray-300" />
+            <p className="text-center">No conversations yet</p>
+            <p className="text-sm text-center mt-2">Start a new conversation to connect with others</p>
+          </div>
+        ) : (
+          <div className="space-y-1 p-2">
+            {filteredConversations?.map((conversation) => (
+              <Card 
+                key={conversation.id}
+                className={`cursor-pointer transition-colors hover:bg-gray-50 ${
+                  selectedConversation === conversation.id ? 'bg-blue-50 border-blue-200' : ''
+                }`}
+                onClick={() => onSelectConversation(conversation.id)}
+              >
+                <CardContent className="p-3">
+                  <div className="flex items-center space-x-3">
                     <Avatar className="w-12 h-12">
-                      <AvatarImage src={otherParticipant?.avatar_url || undefined} />
-                      <AvatarFallback className="bg-gradient-to-r from-orange-500 to-red-600 text-white">
-                        {otherParticipant?.full_name?.charAt(0) || '?'}
+                      <AvatarImage src={conversation.other_participant?.avatar_url} />
+                      <AvatarFallback className="bg-orange-100 text-orange-600">
+                        {conversation.other_participant?.full_name?.charAt(0) || 'U'}
                       </AvatarFallback>
                     </Avatar>
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-medium truncate">
-                          {otherParticipant?.full_name || 'Unknown User'}
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-medium text-gray-900 truncate">
+                          {conversation.other_participant?.full_name || 'Unknown User'}
                         </h3>
+                        {conversation.last_message_at && (
+                          <span className="text-xs text-gray-500">
+                            {new Date(conversation.last_message_at).toLocaleDateString()}
+                          </span>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm text-gray-600 truncate flex-1">
-                        {conversation.last_message || 'No messages yet'}
-                      </p>
-                      {conversation.last_message_at && (
-                        <span className="text-xs text-gray-500 ml-2 whitespace-nowrap">
-                          {formatDistanceToNow(new Date(conversation.last_message_at), { addSuffix: true })}
-                        </span>
+                      
+                      {conversation.last_message && (
+                        <p className="text-sm text-gray-600 truncate mt-1">
+                          {conversation.last_message}
+                        </p>
                       )}
                     </div>
                   </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </CardContent>
-    </Card>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

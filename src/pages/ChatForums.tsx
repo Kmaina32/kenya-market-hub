@@ -1,14 +1,12 @@
-// In src/pages/ChatForums.tsx
+
 import React from 'react';
 import MainLayout from '@/components/MainLayout';
-import ComprehensiveChatForums from '@/components/chat/ComprehensiveChatForums';
+import SocialMediaChatInterface from '@/components/chat/SocialMediaChatInterface';
 
 function ChatForums() {
   return (
     <MainLayout>
-      <div className="container mx-auto px-4 py-8">
-        <ComprehensiveChatForums />
-      </div>
+      <SocialMediaChatInterface />
     </MainLayout>
   );
 }

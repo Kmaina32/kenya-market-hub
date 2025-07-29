@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,6 +35,8 @@ import {
   Pin,
   Lock,
   Filter,
+  Menu,
+  X,
 } from 'lucide-react';
 import {
   Dialog,
@@ -60,6 +63,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useForumPosts, useCreateForumPost, useTrendingTopics } from '@/hooks/useForumPosts';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Define interfaces
 interface ForumCategory {
@@ -98,10 +102,12 @@ const ComprehensiveChatForums = () => {
   const [newPostContent, setNewPostContent] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
 
   // Fetch categories
   const { data: categories, isLoading: categoriesLoading } = useQuery({
@@ -191,6 +197,7 @@ const ComprehensiveChatForums = () => {
 
   const handleNavigation = (view: string) => {
     setActiveView(view);
+    setSidebarOpen(false);
     
     // Handle navigation to different pages for specific views
     switch (view) {
@@ -201,7 +208,6 @@ const ComprehensiveChatForums = () => {
         navigate('/events');
         break;
       case 'groups':
-        // You can navigate to groups page when available
         toast({
           title: 'Coming Soon',
           description: 'Groups feature is coming soon!',
@@ -219,17 +225,39 @@ const ComprehensiveChatForums = () => {
     setShowNewPost(false);
   };
 
+  const extractHashtags = (content: string) => {
+    const hashtagRegex = /#\w+/g;
+    return content.match(hashtagRegex) || [];
+  };
+
   const renderMainContent = () => {
     switch (activeView) {
       case 'trending':
         return (
           <div className="space-y-4">
-            <h2 className="text-xl font-bold">Trending Topics</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold">Trending Topics</h2>
+              {isMobile && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSidebarOpen(true)}
+                  className="md:hidden"
+                >
+                  <Menu className="h-5 w-5" />
+                </Button>
+              )}
+            </div>
             {trendingTopics.length === 0 ? (
-              <p className="text-gray-600">No trending topics yet. Be the first to use hashtags!</p>
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <Hash className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600">No trending topics yet. Be the first to use hashtags!</p>
+                </CardContent>
+              </Card>
             ) : (
               trendingTopics.map((topic, index) => (
-                <Card key={index}>
+                <Card key={index} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div>
@@ -247,42 +275,91 @@ const ComprehensiveChatForums = () => {
       case 'events':
         return (
           <div className="space-y-4">
-            <h2 className="text-xl font-bold">Upcoming Events</h2>
-            <p className="text-gray-600">Events feature coming soon...</p>
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold">Upcoming Events</h2>
+              {isMobile && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSidebarOpen(true)}
+                  className="md:hidden"
+                >
+                  <Menu className="h-5 w-5" />
+                </Button>
+              )}
+            </div>
+            <Card>
+              <CardContent className="p-8 text-center">
+                <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600">Events feature coming soon...</p>
+              </CardContent>
+            </Card>
           </div>
         );
       case 'groups':
         return (
           <div className="space-y-4">
-            <h2 className="text-xl font-bold">Discussion Groups</h2>
-            <p className="text-gray-600">Groups feature coming soon...</p>
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold">Discussion Groups</h2>
+              {isMobile && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSidebarOpen(true)}
+                  className="md:hidden"
+                >
+                  <Menu className="h-5 w-5" />
+                </Button>
+              )}
+            </div>
+            <Card>
+              <CardContent className="p-8 text-center">
+                <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600">Groups feature coming soon...</p>
+              </CardContent>
+            </Card>
           </div>
         );
       default:
         return (
           <>
+            {isMobile && (
+              <div className="flex items-center justify-between mb-4">
+                <h1 className="text-xl font-bold">Community Feed</h1>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSidebarOpen(true)}
+                  className="md:hidden"
+                >
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </div>
+            )}
+            
             {/* Create Post */}
             <Card>
               <CardContent className="p-4">
                 <div className="flex space-x-3">
-                  <Avatar className="w-10 h-10">
+                  <Avatar className="w-10 h-10 flex-shrink-0">
                     <AvatarImage src={user?.user_metadata?.avatar_url} alt="User" />
                     <AvatarFallback>{user?.email?.charAt(0)?.toUpperCase() || 'U'}</AvatarFallback>
                   </Avatar>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <Textarea
                       placeholder="What's happening in your community? Use #hashtags to join trending topics!"
-                      className="min-h-[80px] resize-none border-0 p-0 text-lg placeholder:text-gray-500 focus:ring-0"
+                      className="min-h-[80px] resize-none border-0 p-0 text-base placeholder:text-gray-500 focus:ring-0"
                       onClick={() => setShowNewPost(true)}
                       value={newPostContent}
                       onChange={(e) => setNewPostContent(e.target.value)}
                     />
                     {showNewPost && (
-                      <div className="mt-3 space-y-2">
+                      <div className="mt-3 space-y-3">
                         <Input
                           placeholder="Post Title"
                           value={newPostTitle}
                           onChange={(e) => setNewPostTitle(e.target.value)}
+                          className="text-base"
                         />
                         <Select onValueChange={setSelectedCategory}>
                           <SelectTrigger className="w-full">
@@ -300,20 +377,27 @@ const ComprehensiveChatForums = () => {
                             )}
                           </SelectContent>
                         </Select>
-                        <div className="flex items-center justify-between">
-                          <div className="flex space-x-2">
-                            <Badge variant="outline"># Add hashtags in your content</Badge>
+                        <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+                          <div className="flex flex-wrap gap-2">
+                            <Badge variant="outline" className="text-xs"># Add hashtags in your content</Badge>
+                            {extractHashtags(newPostContent).map((tag, index) => (
+                              <Badge key={index} variant="secondary" className="text-xs">{tag}</Badge>
+                            ))}
                           </div>
                           <div className="flex space-x-2">
-                            <Button variant="outline" onClick={() => setShowNewPost(false)}>
+                            <Button 
+                              variant="outline" 
+                              onClick={() => setShowNewPost(false)}
+                              className="flex-1 sm:flex-none"
+                            >
                               Cancel
                             </Button>
                             <Button
-                              className="bg-orange-600 hover:bg-orange-700"
+                              className="bg-orange-600 hover:bg-orange-700 flex-1 sm:flex-none"
                               onClick={handleCreatePost}
                               disabled={createPostMutation.isPending}
                             >
-                              Post
+                              {createPostMutation.isPending ? 'Posting...' : 'Post'}
                             </Button>
                           </div>
                         </div>
@@ -327,49 +411,61 @@ const ComprehensiveChatForums = () => {
             {/* Posts Feed */}
             <div className="space-y-4">
               {postsLoading ? (
-                <div className="text-center py-8">Loading posts...</div>
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
+                  <p className="mt-2 text-gray-500">Loading posts...</p>
+                </div>
               ) : filteredPosts?.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">No posts found</div>
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">No posts found</p>
+                  </CardContent>
+                </Card>
               ) : (
                 filteredPosts?.map((post) => (
-                  <Card key={post.id}>
+                  <Card key={post.id} className="hover:shadow-md transition-shadow">
                     <CardContent className="p-4">
                       <div className="flex space-x-3">
-                        <Avatar className="w-10 h-10">
+                        <Avatar className="w-10 h-10 flex-shrink-0">
                           <AvatarImage src={post.author_profile.avatar_url || "https://github.com/shadcn.png"} alt={post.author_profile.full_name} />
                           <AvatarFallback>{post.author_profile.full_name.charAt(0)}</AvatarFallback>
                         </Avatar>
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2">
-                            <h4 className="font-semibold">{post.title}</h4>
-                            <Badge variant="secondary" className="text-xs">
-                              {post.category.name}
-                            </Badge>
-                            <span className="text-gray-500">
-                              {post.author_profile.full_name}
-                            </span>
-                            <span className="text-gray-500">·</span>
-                            <span className="text-gray-500">
-                              {new Date(post.created_at).toLocaleDateString()}
-                            </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-col space-y-1 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2 mb-2">
+                            <h4 className="font-semibold text-base truncate">{post.title}</h4>
+                            <div className="flex items-center space-x-2 text-sm text-gray-500">
+                              <Badge variant="secondary" className="text-xs">
+                                {post.category.name}
+                              </Badge>
+                              <span className="hidden sm:inline">•</span>
+                              <span className="truncate">{post.author_profile.full_name}</span>
+                              <span className="hidden sm:inline">•</span>
+                              <span className="text-xs">
+                                {new Date(post.created_at).toLocaleDateString()}
+                              </span>
+                            </div>
                           </div>
-                          <p className="mt-2 text-gray-900">{post.content}</p>
-                          <div className="mt-3 flex items-center space-x-6">
-                            <Button variant="ghost" size="sm" className="text-gray-500 hover:text-red-500">
-                              <Heart className="h-4 w-4 mr-1" />
-                              {post.like_count}
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-gray-500 hover:text-blue-500">
-                              <MessageCircle className="h-4 w-4 mr-1" />
-                              {post.reply_count}
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-gray-500 hover:text-green-500">
-                              <Share className="h-4 w-4 mr-1" />
-                              Share
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-gray-500">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
+                          <p className="text-gray-900 text-sm sm:text-base mb-3 line-clamp-3">{post.content}</p>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                              <Button variant="ghost" size="sm" className="text-gray-500 hover:text-red-500 px-2">
+                                <Heart className="h-4 w-4 mr-1" />
+                                <span className="text-xs">{post.like_count}</span>
+                              </Button>
+                              <Button variant="ghost" size="sm" className="text-gray-500 hover:text-blue-500 px-2">
+                                <MessageCircle className="h-4 w-4 mr-1" />
+                                <span className="text-xs">{post.reply_count}</span>
+                              </Button>
+                              <Button variant="ghost" size="sm" className="text-gray-500 hover:text-green-500 px-2">
+                                <Share className="h-4 w-4 mr-1" />
+                                <span className="text-xs hidden sm:inline">Share</span>
+                              </Button>
+                            </div>
+                            <div className="flex items-center text-xs text-gray-500">
+                              <Eye className="h-3 w-3 mr-1" />
+                              {post.view_count}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -387,79 +483,102 @@ const ComprehensiveChatForums = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Left Sidebar */}
-          <div className="lg:col-span-1 space-y-4">
-            {/* Navigation */}
-            <Card>
-              <CardContent className="p-4">
-                <nav className="space-y-2">
-                  <Button
-                    variant={activeView === 'feed' ? 'default' : 'ghost'}
-                    className="w-full justify-start"
-                    onClick={() => handleNavigation('feed')}
-                  >
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Feed
-                  </Button>
-                  <Button
-                    variant={activeView === 'groups' ? 'default' : 'ghost'}
-                    className="w-full justify-start"
-                    onClick={() => handleNavigation('groups')}
-                  >
-                    <Users className="h-4 w-4 mr-2" />
-                    Groups
-                  </Button>
-                  <Button
-                    variant={activeView === 'trending' ? 'default' : 'ghost'}
-                    className="w-full justify-start"
-                    onClick={() => handleNavigation('trending')}
-                  >
-                    <TrendingUp className="h-4 w-4 mr-2" />
-                    Trending
-                  </Button>
-                  <Button
-                    variant={activeView === 'events' ? 'default' : 'ghost'}
-                    className="w-full justify-start"
-                    onClick={() => handleNavigation('events')}
-                  >
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Events
-                  </Button>
-                  <Button
-                    variant={activeView === 'chat' ? 'default' : 'ghost'}
-                    className="w-full justify-start"
-                    onClick={() => handleNavigation('chat')}
-                  >
-                    <MessageSquare className="h-4 w-4 mr-2" />
-                    Direct Messages
-                  </Button>
-                </nav>
-              </CardContent>
-            </Card>
+          {/* Mobile Sidebar Overlay */}
+          {isMobile && sidebarOpen && (
+            <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+          )}
 
-            {/* Trending Topics */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Trending Topics</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {trendingTopics.length === 0 ? (
-                    <p className="text-sm text-gray-500">No trending topics yet</p>
-                  ) : (
-                    trendingTopics.map((topic, index) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium text-orange-600">#{topic.tag}</p>
-                          <p className="text-sm text-gray-500">{topic.posts} posts</p>
+          {/* Left Sidebar */}
+          <div className={`lg:col-span-1 space-y-4 ${
+            isMobile 
+              ? `fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-lg transform transition-transform duration-300 ease-in-out ${
+                  sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+                } lg:relative lg:translate-x-0 lg:shadow-none lg:w-auto lg:z-auto`
+              : ''
+          }`}>
+            {/* Mobile Close Button */}
+            {isMobile && (
+              <div className="flex items-center justify-between p-4 border-b lg:hidden">
+                <h3 className="font-semibold text-lg">Navigation</h3>
+                <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+            )}
+
+            <div className="p-4 lg:p-0 space-y-4">
+              {/* Navigation */}
+              <Card>
+                <CardContent className="p-4">
+                  <nav className="space-y-2">
+                    <Button
+                      variant={activeView === 'feed' ? 'default' : 'ghost'}
+                      className="w-full justify-start text-left"
+                      onClick={() => handleNavigation('feed')}
+                    >
+                      <MessageCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+                      Feed
+                    </Button>
+                    <Button
+                      variant={activeView === 'groups' ? 'default' : 'ghost'}
+                      className="w-full justify-start text-left"
+                      onClick={() => handleNavigation('groups')}
+                    >
+                      <Users className="h-4 w-4 mr-2 flex-shrink-0" />
+                      Groups
+                    </Button>
+                    <Button
+                      variant={activeView === 'trending' ? 'default' : 'ghost'}
+                      className="w-full justify-start text-left"
+                      onClick={() => handleNavigation('trending')}
+                    >
+                      <TrendingUp className="h-4 w-4 mr-2 flex-shrink-0" />
+                      Trending
+                    </Button>
+                    <Button
+                      variant={activeView === 'events' ? 'default' : 'ghost'}
+                      className="w-full justify-start text-left"
+                      onClick={() => handleNavigation('events')}
+                    >
+                      <Calendar className="h-4 w-4 mr-2 flex-shrink-0" />
+                      Events
+                    </Button>
+                    <Button
+                      variant={activeView === 'chat' ? 'default' : 'ghost'}
+                      className="w-full justify-start text-left"
+                      onClick={() => handleNavigation('chat')}
+                    >
+                      <MessageSquare className="h-4 w-4 mr-2 flex-shrink-0" />
+                      Direct Messages
+                    </Button>
+                  </nav>
+                </CardContent>
+              </Card>
+
+              {/* Trending Topics */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Trending Topics</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {trendingTopics.length === 0 ? (
+                      <p className="text-sm text-gray-500">No trending topics yet</p>
+                    ) : (
+                      trendingTopics.slice(0, 3).map((topic, index) => (
+                        <div key={index} className="flex items-center justify-between">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-orange-600 truncate">#{topic.tag}</p>
+                            <p className="text-sm text-gray-500">{topic.posts} posts</p>
+                          </div>
+                          <Hash className="h-4 w-4 text-gray-400 flex-shrink-0 ml-2" />
                         </div>
-                        <Hash className="h-4 w-4 text-gray-400" />
-                      </div>
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                      ))
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
           {/* Main Content */}
@@ -493,21 +612,21 @@ const ComprehensiveChatForums = () => {
                 <div className="space-y-4">
                   {suggestedUsers?.map((user, index) => (
                     <div key={index} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="w-8 h-8">
+                      <div className="flex items-center space-x-3 min-w-0 flex-1">
+                        <Avatar className="w-8 h-8 flex-shrink-0">
                           <AvatarImage src={user.avatar_url} />
                           <AvatarFallback className="bg-gradient-to-r from-orange-500 to-red-600 text-white text-xs">
                             {user.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
                           </AvatarFallback>
                         </Avatar>
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <div className="flex items-center space-x-1">
-                            <p className="font-medium text-sm">{user.full_name || user.email}</p>
+                            <p className="font-medium text-sm truncate">{user.full_name || user.email}</p>
                           </div>
-                          <p className="text-xs text-gray-500">@{user.full_name?.toLowerCase().replace(/\s+/g, '') || 'user'}</p>
+                          <p className="text-xs text-gray-500 truncate">@{user.full_name?.toLowerCase().replace(/\s+/g, '') || 'user'}</p>
                         </div>
                       </div>
-                      <Button size="sm" variant="outline">
+                      <Button size="sm" variant="outline" className="flex-shrink-0">
                         <UserPlus className="h-3 w-3 mr-1" />
                         Follow
                       </Button>
@@ -528,9 +647,9 @@ const ComprehensiveChatForums = () => {
               <CardContent>
                 <div className="space-y-3 text-sm">
                   {recentActivity?.map((activity, index) => (
-                    <div key={index}>
+                    <div key={index} className="border-l-2 border-orange-200 pl-3">
                       <p className="font-medium">{activity.title}</p>
-                      <p className="text-gray-600">{activity.message}</p>
+                      <p className="text-gray-600 text-xs">{activity.message}</p>
                       <p className="text-xs text-gray-400">{new Date(activity.created_at).toLocaleDateString()}</p>
                     </div>
                   ))}

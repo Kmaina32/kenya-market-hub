@@ -1,6 +1,8 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { UtensilsCrossed, Star, Clock, MapPin, Phone, ShoppingCart, Search, Filter, Loader2, DollarSign, List, Grid } from 'lucide-react';
+import React, { useState, useCallback, useEffect } from 'react';
+import { UtensilsCrossed, Star, Clock, MapPin, Phone, ShoppingCart, Search, Filter, Loader2, DollarSign, List } from 'lucide-react';
 import FrontendLayout from '@/components/layouts/FrontendLayout';
+import PageContainer from '@/components/shared/PageContainer';
+import HeroSection from '@/components/shared/HeroSection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -190,26 +192,13 @@ const FoodDelivery: React.FC = () => {
 
   return (
     <FrontendLayout>
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        {/* Hero Section */}
-        <div 
-          className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-600 to-red-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4 px-4 sm:px-6 lg:px-8 shadow-xl" 
-          style={{
-            backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }}
-        >
-          <div className="relative z-10 flex items-center justify-center h-full px-6 sm:px-8 lg:px-12">
-            <div className="text-center text-white max-w-3xl mx-auto">
-              <UtensilsCrossed className="h-16 w-16 mx-auto mb-4 text-orange-100 drop-shadow-lg" />
-              <h1 className="text-3xl md:text-4xl font-bold mb-3 drop-shadow-lg">Delicious Food, Delivered Fast</h1>
-              <p className="text-lg text-orange-100 font-light leading-relaxed">
-                Order from your favorite local restaurants across Kenya and enjoy hot meals at your doorstep.
-              </p>
-            </div>
-          </div>
-        </div>
+      <PageContainer>
+        <HeroSection
+          title="Delicious Food, Delivered Fast"
+          subtitle="Order from your favorite local restaurants across Kenya and enjoy hot meals at your doorstep."
+          icon={UtensilsCrossed}
+          backgroundImage="https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"
+        />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           {/* Filters and Search Bar */}
@@ -397,7 +386,7 @@ const FoodDelivery: React.FC = () => {
               </Button>
             </div>
           ) : (
-            <div className={`grid gap-6 grid-cols-1`}> {/* Always use a single column grid for list view */}
+            <div className={`grid gap-6 grid-cols-1`}>
               {restaurants && restaurants.map((restaurant) => (
                 <RestaurantCard key={restaurant.id} restaurant={restaurant} />
               ))}
@@ -410,7 +399,7 @@ const FoodDelivery: React.FC = () => {
           onOpenChange={setIsMenuModalOpen} 
           restaurant={selectedRestaurant} 
         />
-      </div>
+      </PageContainer>
     </FrontendLayout>
   );
 };
