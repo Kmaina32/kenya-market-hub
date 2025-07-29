@@ -1,36 +1,12 @@
+// src/integrations/googlemaps/googleMapsLoader.ts
 
 import { Loader } from '@googlemaps/js-api-loader';
-import { supabase } from '@/integrations/supabase/client';
+
+// Use the provided Google Maps API key
+const API_KEY = 'AIzaSyAFIC4z-WvYA6DYbJPMwrXxQTdIG4K-F_8';
 
 let loader: Loader | null = null;
 let googleMapsInstance: typeof google.maps | null = null;
-let apiKeyCache: string | null = null;
-
-// Securely fetch Google Maps API key from Supabase edge function
-const getGoogleMapsApiKey = async (): Promise<string | null> => {
-  if (apiKeyCache) {
-    return apiKeyCache;
-  }
-
-  try {
-    const { data, error } = await supabase.functions.invoke('google-maps-config');
-    
-    if (error) {
-      console.error('Error fetching Google Maps API key:', error);
-      return null;
-    }
-
-    if (data?.apiKey) {
-      apiKeyCache = data.apiKey;
-      return data.apiKey;
-    }
-
-    return null;
-  } catch (error) {
-    console.error('Error fetching Google Maps API key:', error);
-    return null;
-  }
-};
 
 // Function to load the Google Maps API
 export const loadGoogleMapsScript = async (): Promise<typeof google.maps | null> => {
@@ -38,16 +14,14 @@ export const loadGoogleMapsScript = async (): Promise<typeof google.maps | null>
     return googleMapsInstance; // Already loaded
   }
 
-  const apiKey = await getGoogleMapsApiKey();
-  
-  if (!apiKey) {
-    console.error('Google Maps API Key could not be retrieved securely.');
+  if (!API_KEY) {
+    console.error('Google Maps API Key is not set.');
     return null;
   }
 
   if (!loader) {
     loader = new Loader({
-      apiKey: apiKey,
+      apiKey: API_KEY,
       version: 'weekly',
       libraries: ['places', 'geometry'], 
       language: 'en',
