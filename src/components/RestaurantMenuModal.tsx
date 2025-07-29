@@ -3,8 +3,11 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Star, Clock, MapPin, Phone, ShoppingCart, Plus, Minus } from 'lucide-react';
+import { Star, Clock, MapPin, Phone, ShoppingCart, Plus, Minus, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useMenuItems } from '@/hooks/useMenuItems';
+import { useCartContext } from '@/contexts/CartContext';
+import { useNavigate } from 'react-router-dom';
 
 interface RestaurantMenuModalProps {
   open: boolean;
@@ -13,75 +16,50 @@ interface RestaurantMenuModalProps {
 }
 
 const RestaurantMenuModal = ({ open, onOpenChange, restaurant }: RestaurantMenuModalProps) => {
-  const [cart, setCart] = useState<any[]>([]);
-
-  // Mock menu items
-  const menuItems = [
-    {
-      id: 1,
-      name: 'Margherita Pizza',
-      description: 'Fresh mozzarella, tomato sauce, and basil',
-      price: 1200,
-      category: 'Pizza',
-      image: 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=200'
-    },
-    {
-      id: 2,
-      name: 'Chicken Tikka',
-      description: 'Grilled chicken with spices and yogurt marinade',
-      price: 1500,
-      category: 'Main Course',
-      image: 'https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=200'
-    },
-    {
-      id: 3,
-      name: 'Caesar Salad',
-      description: 'Fresh lettuce with Caesar dressing and croutons',
-      price: 800,
-      category: 'Salads',
-      image: 'https://images.unsplash.com/photo-1551248429-40975aa4de74?w=200'
-    }
-  ];
+  const navigate = useNavigate();
+  const { addToCart, items: cartItems, getTotalPrice } = useCartContext();
+  const [localQuantities, setLocalQuantities] = useState<Record<string, number>>({});
+  
+  const { data: menuItems, isLoading } = useMenuItems(restaurant?.id);
 
   const addToCart = (item: any) => {
-    const existingItem = cart.find(cartItem => cartItem.id === item.id);
-    if (existingItem) {
-      setCart(cart.map(cartItem => 
-        cartItem.id === item.id 
-          ? { ...cartItem, quantity: cartItem.quantity + 1 }
-          : cartItem
-      ));
-    } else {
-      setCart([...cart, { ...item, quantity: 1 }]);
-    }
+    const currentQuantity = localQuantities[item.id] || 0;
+    const newQuantity = currentQuantity + 1;
+    
+    setLocalQuantities(prev => ({
+      ...prev,
+      [item.id]: newQuantity
+    }));
+
+    // Add to global cart context
+    addToCart(item.id, 1);
     toast.success(`${item.name} added to cart`);
   };
 
-  const removeFromCart = (itemId: number) => {
-    const existingItem = cart.find(cartItem => cartItem.id === itemId);
-    if (existingItem && existingItem.quantity > 1) {
-      setCart(cart.map(cartItem => 
-        cartItem.id === itemId 
-          ? { ...cartItem, quantity: cartItem.quantity - 1 }
-          : cartItem
-      ));
-    } else {
-      setCart(cart.filter(cartItem => cartItem.id !== itemId));
+  const removeFromCart = (itemId: string) => {
+    const currentQuantity = localQuantities[itemId] || 0;
+    if (currentQuantity > 0) {
+      const newQuantity = currentQuantity - 1;
+      setLocalQuantities(prev => ({
+        ...prev,
+        [itemId]: newQuantity
+      }));
     }
   };
 
-  const getCartTotal = () => {
-    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+  const getItemQuantity = (itemId: string) => {
+    return localQuantities[itemId] || 0;
   };
 
-  const handleOrder = () => {
-    if (cart.length === 0) {
+  const handleCheckout = () => {
+    const hasItems = Object.values(localQuantities).some(qty => qty > 0);
+    if (!hasItems) {
       toast.error('Please add items to your cart');
       return;
     }
-    toast.success(`Order placed for KSh ${getCartTotal().toLocaleString()}`);
-    setCart([]);
+    
     onOpenChange(false);
+    navigate('/cart');
   };
 
   if (!restaurant) return null;
@@ -93,26 +71,28 @@ const RestaurantMenuModal = ({ open, onOpenChange, restaurant }: RestaurantMenuM
           <div className="flex items-start space-x-4">
             <div className="flex-1">
               <DialogTitle className="text-2xl font-bold text-gray-900">
-                {restaurant.business_name}
+                {restaurant.name}
               </DialogTitle>
-              <p className="text-gray-600 mt-1">{restaurant.business_description}</p>
+              <p className="text-gray-600 mt-1">{restaurant.description}</p>
               
               <div className="flex items-center gap-4 mt-3 text-sm text-gray-600">
                 <div className="flex items-center">
                   <Star className="h-4 w-4 text-yellow-500 mr-1" />
-                  <span>4.5</span>
+                  <span>{restaurant.rating || '4.5'}</span>
                 </div>
                 <div className="flex items-center">
                   <Clock className="h-4 w-4 mr-1" />
-                  <span>25-35 min</span>
+                  <span>{restaurant.delivery_time_minutes || 30}-{(restaurant.delivery_time_minutes || 30) + 15} min</span>
                 </div>
                 <div className="flex items-center">
                   <MapPin className="h-4 w-4 mr-1" />
-                  <span>{restaurant.business_address}</span>
+                  <span>{restaurant.address}</span>
                 </div>
               </div>
             </div>
-            <Badge className="bg-green-100 text-green-800">Open</Badge>
+            <Badge className="bg-green-100 text-green-800">
+              {restaurant.is_active ? 'Open' : 'Closed'}
+            </Badge>
           </div>
         </DialogHeader>
 
@@ -120,61 +100,75 @@ const RestaurantMenuModal = ({ open, onOpenChange, restaurant }: RestaurantMenuM
           {/* Menu Items */}
           <div className="lg:col-span-2">
             <h3 className="text-xl font-semibold mb-4">Menu</h3>
-            <div className="space-y-4">
-              {menuItems.map((item) => (
-                <div key={item.id} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg hover:border-orange-300 transition-colors bg-white">
-                  <img 
-                    src={item.image} 
-                    alt={item.name}
-                    className="w-20 h-20 rounded-lg object-cover"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h4 className="font-semibold text-gray-900">{item.name}</h4>
-                        <p className="text-sm text-gray-600 mt-1">{item.description}</p>
-                        <p className="text-lg font-bold text-green-600 mt-2">
-                          KSh {item.price.toLocaleString()}
-                        </p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {cart.find(cartItem => cartItem.id === item.id) ? (
-                          <div className="flex items-center space-x-2">
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => removeFromCart(item.id)}
-                              className="h-8 w-8 p-0"
-                            >
-                              <Minus className="h-4 w-4" />
-                            </Button>
-                            <span className="font-medium min-w-[2rem] text-center">
-                              {cart.find(cartItem => cartItem.id === item.id)?.quantity || 0}
-                            </span>
+            
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+                <span className="ml-2">Loading menu...</span>
+              </div>
+            ) : menuItems && menuItems.length > 0 ? (
+              <div className="space-y-4">
+                {menuItems.map((item) => (
+                  <div key={item.id} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg hover:border-orange-300 transition-colors bg-white">
+                    <img 
+                      src={item.image_url || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=200'} 
+                      alt={item.name}
+                      className="w-20 h-20 rounded-lg object-cover"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="font-semibold text-gray-900">{item.name}</h4>
+                          <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                          <Badge variant="outline" className="text-xs mt-1">{item.category}</Badge>
+                          <p className="text-lg font-bold text-orange-600 mt-2">
+                            KSh {item.price.toLocaleString()}
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          {getItemQuantity(item.id) > 0 ? (
+                            <div className="flex items-center space-x-2">
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => removeFromCart(item.id)}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Minus className="h-4 w-4" />
+                              </Button>
+                              <span className="font-medium min-w-[2rem] text-center">
+                                {getItemQuantity(item.id)}
+                              </span>
+                              <Button 
+                                size="sm" 
+                                onClick={() => addToCart(item)}
+                                className="h-8 w-8 p-0 bg-orange-500 hover:bg-orange-600"
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ) : (
                             <Button 
                               size="sm" 
                               onClick={() => addToCart(item)}
-                              className="h-8 w-8 p-0 bg-orange-500 hover:bg-orange-600"
+                              className="bg-orange-500 hover:bg-orange-600"
+                              disabled={!item.is_available}
                             >
-                              <Plus className="h-4 w-4" />
+                              <Plus className="h-4 w-4 mr-1" />
+                              Add
                             </Button>
-                          </div>
-                        ) : (
-                          <Button 
-                            size="sm" 
-                            onClick={() => addToCart(item)}
-                            className="bg-orange-500 hover:bg-orange-600"
-                          >
-                            <Plus className="h-4 w-4 mr-1" />
-                            Add
-                          </Button>
-                        )}
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No menu items available</p>
+              </div>
+            )}
           </div>
 
           {/* Cart Summary */}
@@ -186,20 +180,18 @@ const RestaurantMenuModal = ({ open, onOpenChange, restaurant }: RestaurantMenuM
                   Your Order
                 </h3>
                 
-                {cart.length === 0 ? (
-                  <p className="text-gray-500 text-center py-4">Your cart is empty</p>
-                ) : (
+                {Object.values(localQuantities).some(qty => qty > 0) ? (
                   <div className="space-y-3">
-                    {cart.map((item) => (
+                    {menuItems?.filter(item => getItemQuantity(item.id) > 0).map((item) => (
                       <div key={item.id} className="flex items-center justify-between">
                         <div className="flex-1">
                           <p className="font-medium text-sm">{item.name}</p>
                           <p className="text-sm text-gray-600">
-                            KSh {item.price.toLocaleString()} x {item.quantity}
+                            KSh {item.price.toLocaleString()} x {getItemQuantity(item.id)}
                           </p>
                         </div>
                         <p className="font-semibold">
-                          KSh {(item.price * item.quantity).toLocaleString()}
+                          KSh {(item.price * getItemQuantity(item.id)).toLocaleString()}
                         </p>
                       </div>
                     ))}
@@ -207,26 +199,30 @@ const RestaurantMenuModal = ({ open, onOpenChange, restaurant }: RestaurantMenuM
                     <div className="border-t pt-3 mt-3">
                       <div className="flex items-center justify-between font-bold text-lg">
                         <span>Total:</span>
-                        <span className="text-green-600">
-                          KSh {getCartTotal().toLocaleString()}
+                        <span className="text-orange-600">
+                          KSh {menuItems?.reduce((total, item) => 
+                            total + (item.price * getItemQuantity(item.id)), 0
+                          ).toLocaleString()}
                         </span>
                       </div>
                     </div>
 
                     <Button 
-                      onClick={handleOrder}
+                      onClick={handleCheckout}
                       className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 mt-4"
                     >
-                      Place Order
+                      Proceed to Checkout
                     </Button>
                   </div>
+                ) : (
+                  <p className="text-gray-500 text-center py-4">Your cart is empty</p>
                 )}
 
                 <div className="mt-4 pt-4 border-t border-gray-200">
                   <Button 
                     variant="outline" 
                     className="w-full border-orange-300 text-orange-700 hover:bg-orange-50 bg-white"
-                    onClick={() => window.location.href = `tel:${restaurant.business_phone}`}
+                    onClick={() => window.location.href = `tel:${restaurant.phone}`}
                   >
                     <Phone className="h-4 w-4 mr-2" />
                     Call Restaurant
