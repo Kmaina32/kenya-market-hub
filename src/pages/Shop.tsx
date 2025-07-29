@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,7 +34,6 @@ import { toast } from 'sonner';
 import { Slider } from '@/components/ui/slider';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import SEOManager from '@/components/seo/SEOManager';
-import ProductDetailModal from '@/components/ProductDetailModal';
 
 interface Product {
   id: string;
@@ -68,7 +68,6 @@ const Shop: React.FC = () => {
   const [sortBy, setSortBy] = useState<string>('newest');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]);
 
   const { addToWishlist, isInWishlist } = useWishlist();
@@ -128,17 +127,9 @@ const Shop: React.FC = () => {
     handleAddToCart(product);
   }, [handleAddToCart]);
 
-  const handleProductClick = useCallback((product: Product) => {
-    setSelectedProduct(product);
-    setIsDetailModalOpen(true);
-  }, []);
-
   const ProductCard = React.memo(({ product }: { product: Product }) => (
     <Card className="group hover:shadow-lg transition-all duration-200 border border-gray-200 bg-white">
-      <div 
-        className="aspect-square bg-gray-100 relative overflow-hidden cursor-pointer"
-        onClick={() => handleProductClick(product)}
-      >
+      <div className="aspect-square bg-gray-100 relative overflow-hidden">
         {product.image_url ? (
           <img
             src={product.image_url}
@@ -170,10 +161,7 @@ const Shop: React.FC = () => {
 
       <CardContent className="p-4">
         <div className="space-y-2">
-          <h3 
-            className="font-medium text-gray-900 line-clamp-2 text-sm leading-5 cursor-pointer hover:text-orange-600"
-            onClick={() => handleProductClick(product)}
-          >
+          <h3 className="font-medium text-gray-900 line-clamp-2 text-sm leading-5">
             {product.name}
           </h3>
           
@@ -329,12 +317,6 @@ const Shop: React.FC = () => {
           onClose={() => setIsQuickViewOpen(false)}
           onAddToCart={handleAddToCartCallback}
           onAddToWishlist={handleAddToWishlistCallback}
-        />
-
-        <ProductDetailModal
-          open={isDetailModalOpen}
-          onOpenChange={setIsDetailModalOpen}
-          product={selectedProduct}
         />
       </div>
     </MainLayout>
