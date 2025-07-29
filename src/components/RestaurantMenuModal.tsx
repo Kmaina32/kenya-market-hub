@@ -17,12 +17,12 @@ interface RestaurantMenuModalProps {
 
 const RestaurantMenuModal = ({ open, onOpenChange, restaurant }: RestaurantMenuModalProps) => {
   const navigate = useNavigate();
-  const { addToCart, items: cartItems, getTotalPrice } = useCartContext();
+  const { addToCart: addItemToCart, items: cartItems, getTotalPrice } = useCartContext();
   const [localQuantities, setLocalQuantities] = useState<Record<string, number>>({});
   
   const { data: menuItems, isLoading } = useMenuItems(restaurant?.id);
 
-  const addToCart = (item: any) => {
+  const handleAddToCart = (item: any) => {
     const currentQuantity = localQuantities[item.id] || 0;
     const newQuantity = currentQuantity + 1;
     
@@ -31,8 +31,8 @@ const RestaurantMenuModal = ({ open, onOpenChange, restaurant }: RestaurantMenuM
       [item.id]: newQuantity
     }));
 
-    // Add to global cart context
-    addToCart(item.id, 1);
+    // Add to global cart context using the item ID
+    addItemToCart(item.id, 1);
     toast.success(`${item.name} added to cart`);
   };
 
@@ -141,7 +141,7 @@ const RestaurantMenuModal = ({ open, onOpenChange, restaurant }: RestaurantMenuM
                               </span>
                               <Button 
                                 size="sm" 
-                                onClick={() => addToCart(item)}
+                                onClick={() => handleAddToCart(item)}
                                 className="h-8 w-8 p-0 bg-orange-500 hover:bg-orange-600"
                               >
                                 <Plus className="h-4 w-4" />
@@ -150,7 +150,7 @@ const RestaurantMenuModal = ({ open, onOpenChange, restaurant }: RestaurantMenuM
                           ) : (
                             <Button 
                               size="sm" 
-                              onClick={() => addToCart(item)}
+                              onClick={() => handleAddToCart(item)}
                               className="bg-orange-500 hover:bg-orange-600"
                               disabled={!item.is_available}
                             >
