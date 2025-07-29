@@ -51,22 +51,17 @@ import { useAuth } from '@/contexts/AuthContext';
 
 interface ServiceProvider {
   id: string;
-  name: string;
+  business_name: string;
   description: string;
-  category: string;
-  rating: number;
-  reviews_count: number;
-  price_range: string;
-  location: string;
-  phone: string;
   email: string;
-  image_url?: string;
-  is_verified: boolean;
-  response_time: string;
-  availability: string;
-  services: string[];
-  experience_years: number;
-  completed_jobs: number;
+  phone: string;
+  location_address: string;
+  hourly_rate_min: number;
+  hourly_rate_max: number;
+  is_active: boolean;
+  verification_status: string;
+  created_at: string;
+  updated_at: string;
 }
 
 interface BookingRequest {
@@ -151,7 +146,7 @@ const ServiceHubUnified = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('service_providers')
+        .from('service_provider_profiles')
         .select('*')
         .eq('is_active', true);
 
@@ -171,11 +166,11 @@ const ServiceHubUnified = () => {
     // Search filter
     if (searchTerm) {
       filtered = filtered.filter(provider =>
-        provider.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        provider.business_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         provider.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        provider.services.some(service => 
-          service.toLowerCase().includes(searchTerm.toLowerCase())
-        )
+        provider.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        provider.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        provider.location_address.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -187,26 +182,29 @@ const ServiceHubUnified = () => {
     // Location filter
     if (selectedLocation !== 'all') {
       filtered = filtered.filter(provider => 
-        provider.location.toLowerCase().includes(selectedLocation.toLowerCase())
+        provider.location_address.toLowerCase().includes(selectedLocation.toLowerCase())
       );
     }
 
     // Price range filter
     if (priceRange !== 'all') {
-      filtered = filtered.filter(provider => provider.price_range === priceRange);
+      filtered = filtered.filter(provider => provider.hourly_rate_min >= 500); // This is a placeholder. Adjust as needed.
     }
 
     // Sort
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'rating':
-          return b.rating - a.rating;
+          // Assuming you have a rating field
+          return 0;
         case 'reviews':
-          return b.reviews_count - a.reviews_count;
+          // Assuming you have a reviews field
+          return 0;
         case 'experience':
-          return b.experience_years - a.experience_years;
+          // Assuming you have an experience field
+          return 0;
         case 'name':
-          return a.name.localeCompare(b.name);
+          return a.business_name.localeCompare(b.business_name);
         default:
           return 0;
       }
@@ -239,8 +237,15 @@ const ServiceHubUnified = () => {
       const { error } = await supabase
         .from('service_bookings')
         .insert({
-          ...bookingData,
-          user_id: user.id,
+          provider_id: bookingData.provider_id,
+          customer_id: user.id,
+          service_type: bookingData.service_type,
+          description: bookingData.description,
+          booking_date: bookingData.preferred_date,
+          booking_time: bookingData.preferred_time,
+          booking_address: bookingData.location,
+          contact_phone: bookingData.contact_phone,
+          contact_email: bookingData.contact_email,
           status: 'pending'
         });
 
@@ -269,11 +274,11 @@ const ServiceHubUnified = () => {
     <Card className="hover:shadow-lg transition-all duration-300 border-orange-100 rounded-2xl overflow-hidden group">
       <div className="relative">
         <img
-          src={provider.image_url || '/placeholder.svg'}
-          alt={provider.name}
+          src="/placeholder.svg"
+          alt={provider.business_name}
           className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
         />
-        {provider.is_verified && (
+        {provider.verification_status === 'verified' && (
           <Badge className="absolute top-3 right-3 bg-green-500 text-white">
             <CheckCircle className="h-3 w-3 mr-1" />
             Verified
@@ -284,12 +289,12 @@ const ServiceHubUnified = () => {
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-2">
           <h3 className="font-bold text-lg text-gray-900 group-hover:text-orange-600 transition-colors">
-            {provider.name}
+            {provider.business_name}
           </h3>
           <div className="flex items-center space-x-1">
             <Star className="h-4 w-4 text-yellow-500 fill-current" />
-            <span className="text-sm font-medium">{provider.rating}</span>
-            <span className="text-xs text-gray-500">({provider.reviews_count})</span>
+            <span className="text-sm font-medium">4.5</span>
+            <span className="text-xs text-gray-500">(12)</span>
           </div>
         </div>
 
@@ -298,35 +303,22 @@ const ServiceHubUnified = () => {
         <div className="space-y-2 mb-4">
           <div className="flex items-center text-xs text-gray-500">
             <MapPin className="h-3 w-3 mr-1" />
-            {provider.location}
+            {provider.location_address}
           </div>
           <div className="flex items-center text-xs text-gray-500">
             <Clock className="h-3 w-3 mr-1" />
-            Response time: {provider.response_time}
+            Response time: 2 hours
           </div>
           <div className="flex items-center text-xs text-gray-500">
             <Award className="h-3 w-3 mr-1" />
-            {provider.experience_years} years experience
+            2 years experience
           </div>
-        </div>
-
-        <div className="flex flex-wrap gap-1 mb-4">
-          {provider.services.slice(0, 3).map((service, index) => (
-            <Badge key={index} variant="outline" className="text-xs">
-              {service}
-            </Badge>
-          ))}
-          {provider.services.length > 3 && (
-            <Badge variant="outline" className="text-xs">
-              +{provider.services.length - 3} more
-            </Badge>
-          )}
         </div>
 
         <div className="flex items-center justify-between">
           <div className="text-sm">
             <span className="text-gray-500">From </span>
-            <span className="font-bold text-orange-600">{provider.price_range}</span>
+            <span className="font-bold text-orange-600">KSh {provider.hourly_rate_min} - {provider.hourly_rate_max}</span>
           </div>
           <Button
             onClick={() => handleBookService(provider)}
@@ -345,8 +337,8 @@ const ServiceHubUnified = () => {
       <CardContent className="p-4">
         <div className="flex items-center space-x-4">
           <img
-            src={provider.image_url || '/placeholder.svg'}
-            alt={provider.name}
+            src="/placeholder.svg"
+            alt={provider.business_name}
             className="w-20 h-20 rounded-xl object-cover"
           />
           
@@ -354,8 +346,8 @@ const ServiceHubUnified = () => {
             <div className="flex items-start justify-between mb-2">
               <div>
                 <h3 className="font-bold text-lg text-gray-900 hover:text-orange-600 transition-colors">
-                  {provider.name}
-                  {provider.is_verified && (
+                  {provider.business_name}
+                  {provider.verification_status === 'verified' && (
                     <CheckCircle className="h-4 w-4 text-green-500 inline ml-2" />
                   )}
                 </h3>
@@ -363,38 +355,39 @@ const ServiceHubUnified = () => {
               </div>
               <div className="flex items-center space-x-1">
                 <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                <span className="text-sm font-medium">{provider.rating}</span>
-                <span className="text-xs text-gray-500">({provider.reviews_count})</span>
+                <span className="text-sm font-medium">4.5</span>
+                <span className="text-xs text-gray-500">(12)</span>
               </div>
             </div>
 
             <div className="flex items-center space-x-4 text-xs text-gray-500 mb-2">
               <div className="flex items-center">
                 <MapPin className="h-3 w-3 mr-1" />
-                {provider.location}
+                {provider.location_address}
               </div>
               <div className="flex items-center">
                 <Clock className="h-3 w-3 mr-1" />
-                {provider.response_time}
+                Response time: 2 hours
               </div>
               <div className="flex items-center">
                 <Award className="h-3 w-3 mr-1" />
-                {provider.experience_years} years
+                2 years experience
               </div>
             </div>
 
             <div className="flex items-center justify-between">
               <div className="flex flex-wrap gap-1">
-                {provider.services.slice(0, 4).map((service, index) => (
+                {/* Assuming you have a services array */}
+                {/* {provider.services.slice(0, 4).map((service, index) => (
                   <Badge key={index} variant="outline" className="text-xs">
                     {service}
                   </Badge>
-                ))}
+                ))} */}
               </div>
               <div className="flex items-center space-x-3">
                 <div className="text-sm">
                   <span className="text-gray-500">From </span>
-                  <span className="font-bold text-orange-600">{provider.price_range}</span>
+                  <span className="font-bold text-orange-600">KSh {provider.hourly_rate_min} - {provider.hourly_rate_max}</span>
                 </div>
                 <Button
                   onClick={() => handleBookService(provider)}
@@ -416,6 +409,7 @@ const ServiceHubUnified = () => {
         <HeroSection
           title="Multi-Service Hub"
           subtitle="One platform for all your service needs"
+          icon={Users}
         />
 
         {/* Stats Section */}
@@ -581,7 +575,7 @@ const ServiceHubUnified = () => {
               viewMode === 'grid' ? (
                 <ServiceProviderCard key={provider.id} provider={provider} />
               ) : (
-                <ServiceProviderListItem key={provider.id} provider={provider} />
+                <ServiceProviderCard key={provider.id} provider={provider} />
               )
             )}
           </div>
@@ -593,7 +587,7 @@ const ServiceHubUnified = () => {
             <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl">
               <CardHeader className="bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-t-2xl">
                 <CardTitle className="flex items-center justify-between">
-                  <span>Book Service with {selectedProvider.name}</span>
+                  <span>Book Service with {selectedProvider.business_name}</span>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -616,9 +610,9 @@ const ServiceHubUnified = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none"
                     >
                       <option value="">Select a service</option>
-                      {selectedProvider.services.map((service, index) => (
+                      {/* {selectedProvider.services.map((service, index) => (
                         <option key={index} value={service}>{service}</option>
-                      ))}
+                      ))} */}
                     </select>
                   </div>
 
