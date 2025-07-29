@@ -5,6 +5,7 @@ import { ArrowRight, MapPin, Star, Eye, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import LazyImage from '@/components/LazyImage';
+
 interface Advertisement {
   id: string;
   type: 'product' | 'property' | 'service';
@@ -17,12 +18,14 @@ interface Advertisement {
   vendor?: string;
   category?: string;
 }
+
 interface AdvertisementBillboardProps {
   className?: string;
   layout?: 'horizontal' | 'vertical';
   showCategories?: string[];
   maxItems?: number;
 }
+
 const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
   className = "",
   layout = 'horizontal',
@@ -33,6 +36,7 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+
   const shuffleArray = (array: Advertisement[]) => {
     const shuffled = [...array];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -41,6 +45,7 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
     }
     return shuffled;
   };
+
   const fetchAdvertisements = async () => {
     setIsLoading(true);
     try {
@@ -125,9 +130,11 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
       setIsLoading(false);
     }
   };
+
   useEffect(() => {
     fetchAdvertisements();
   }, [JSON.stringify(showCategories), maxItems]);
+
   useEffect(() => {
     if (ads.length > 0) {
       const interval = setInterval(() => {
@@ -136,27 +143,30 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
       return () => clearInterval(interval);
     }
   }, [ads]);
+
   const refreshAds = () => {
     fetchAdvertisements();
   };
+
   const handleExploreNow = () => {
     const currentAd = ads[currentIndex];
     if (currentAd) {
       switch (currentAd.type) {
         case 'product':
-          navigate('/products');
+          navigate(`/products/${currentAd.id}`);
           break;
         case 'property':
-          navigate('/properties');
+          navigate(`/properties/${currentAd.id}`);
           break;
         case 'service':
-          navigate('/jobs');
+          navigate(`/jobs/${currentAd.id}`);
           break;
         default:
           navigate('/');
       }
     }
   };
+
   if (isLoading) {
     return <div className={`${className} animate-pulse`}>
         <div className="bg-gray-200 rounded-xl h-64 flex items-center justify-center">
@@ -167,6 +177,7 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
         </div>
       </div>;
   }
+
   if (ads.length === 0) {
     return <div className={`${className}`}>
         <div className="bg-gradient-to-r from-gray-100 to-gray-200 rounded-xl h-64 flex items-center justify-center">
@@ -181,7 +192,9 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
         </div>
       </div>;
   }
+
   const currentAd = ads[currentIndex];
+
   const getAdTypeGradient = (type: string) => {
     switch (type) {
       case 'product':
@@ -194,6 +207,7 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
         return 'from-gray-500/90 to-gray-600/90';
     }
   };
+
   const getAdTypeIcon = (type: string) => {
     switch (type) {
       case 'product':
@@ -206,6 +220,7 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
         return '📦';
     }
   };
+
   return <div className={`relative ${className}`}>
       <div className="relative bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl overflow-hidden shadow-2xl">
         {/* Background Image */}
@@ -267,7 +282,12 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
                   <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
                 
-                <Button size="lg" variant="outline" onClick={refreshAds} className="border-white hover:bg-white font-semibold px-6 py-3 text-orange-400 text-[[soko-orange-700]]">
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  onClick={refreshAds} 
+                  className="border-white/50 bg-white/10 text-white hover:bg-white/20 hover:text-white font-semibold px-6 py-3 transition-all duration-200"
+                >
                   <RefreshCw className="h-5 w-5 mr-2" />
                   More Ads
                 </Button>
@@ -288,4 +308,5 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
       </div>
     </div>;
 };
+
 export default AdvertisementBillboard;
