@@ -41,21 +41,20 @@ export const useSecurityMonitoring = () => {
 
       const failedAttempts = data?.length || 0;
       
-      // Create alert if more than 5 failed attempts in an hour
+      // Log security event instead of creating alert in non-existent table
       if (failedAttempts >= 5) {
-        const { error: alertError } = await supabase
-          .from('security_alerts')
-          .insert({
-            user_id: null,
-            alert_type: 'multiple_failed_attempts',
+        logSecurityEvent({
+          action: 'multiple_failed_attempts',
+          resourceType: 'authentication',
+          resourceId: email,
+          success: false,
+          metadata: { 
+            email, 
+            failed_attempts: failedAttempts,
             severity: 'high',
-            message: `${failedAttempts} failed login attempts detected for ${email}`,
-            metadata: { email, failed_attempts: failedAttempts }
-          });
-
-        if (alertError) {
-          console.error('Failed to create security alert:', alertError);
-        }
+            message: `${failedAttempts} failed login attempts detected for ${email}`
+          }
+        });
       }
 
       return failedAttempts;
@@ -75,18 +74,30 @@ export const useSecurityMonitoring = () => {
         .eq('action', 'login_failed')
         .gte('created_at', oneHourAgo);
 
-      // Get active security alerts
-      const { data: alerts } = await supabase
-        .from('security_alerts')
+      // Since security_alerts table doesn't exist, we'll create mock alerts from audit log
+      const { data: suspiciousActivities } = await supabase
+        .from('security_audit_log')
         .select('*')
-        .eq('resolved', false)
-        .order('created_at', { ascending: false });
+        .eq('success', false)
+        .gte('created_at', oneHourAgo)
+        .limit(10);
+
+      const mockAlerts: SecurityAlert[] = (suspiciousActivities || []).map((activity, index) => ({
+        id: `alert-${activity.id}`,
+        user_id: activity.user_id,
+        alert_type: 'suspicious_login' as const,
+        severity: 'medium' as const,
+        message: `Suspicious activity detected: ${activity.action}`,
+        metadata: activity.metadata || {},
+        created_at: activity.created_at,
+        resolved: false
+      }));
 
       return {
         failed_logins_last_hour: failedLogins?.length || 0,
         active_sessions: 0, // Would need session tracking
-        suspicious_activities: 0, // Would need activity analysis
-        security_alerts: (alerts || []) as SecurityAlert[]
+        suspicious_activities: suspiciousActivities?.length || 0,
+        security_alerts: mockAlerts
       };
     },
     refetchInterval: 30000, // Refresh every 30 seconds
@@ -125,25 +136,21 @@ export const useSecurityMonitoring = () => {
         .eq('action', activity.action)
         .gte('created_at', fiveMinutesAgo);
 
-      // Alert if more than 20 of the same action in 5 minutes
+      // Log security event if more than 20 of the same action in 5 minutes
       if ((recentActions?.length || 0) > 20) {
-        const { error: alertError } = await supabase
-          .from('security_alerts')
-          .insert({
-            user_id: activity.userId,
-            alert_type: 'unusual_activity',
+        logSecurityEvent({
+          action: 'unusual_activity_detected',
+          resourceType: 'user_behavior',
+          resourceId: activity.userId,
+          success: false,
+          metadata: {
+            action: activity.action,
+            count: recentActions?.length,
+            timeframe: '5_minutes',
             severity: 'medium',
-            message: `Unusual activity pattern detected: ${activity.action}`,
-            metadata: {
-              action: activity.action,
-              count: recentActions?.length,
-              timeframe: '5_minutes'
-            }
-          });
-
-        if (alertError) {
-          console.error('Failed to create security alert:', alertError);
-        }
+            message: `Unusual activity pattern detected: ${activity.action}`
+          }
+        });
       }
     }
   });
@@ -176,18 +183,14 @@ export const useSecurityMonitoring = () => {
         details: `${failedLoginRate} failed logins in last hour`
       });
 
-      // Check 3: Unresolved security alerts
-      const { data: unresolvedAlerts } = await supabase
-        .from('security_alerts')
-        .select('*')
-        .eq('resolved', false);
-
-      const criticalAlerts = unresolvedAlerts?.filter(a => a.severity === 'critical').length || 0;
+      // Check 3: General system health based on error rates
+      const errorEvents = recentEvents?.filter(e => e.success === false) || [];
+      const errorRate = errorEvents.length;
       
       checks.push({
-        name: 'unresolved_alerts',
-        status: criticalAlerts === 0 ? 'healthy' : 'critical',
-        details: `${unresolvedAlerts?.length || 0} unresolved alerts (${criticalAlerts} critical)`
+        name: 'error_rate',
+        status: errorRate === 0 ? 'healthy' : errorRate < 50 ? 'warning' : 'critical',
+        details: `${errorRate} error events in last hour`
       });
 
       return {
