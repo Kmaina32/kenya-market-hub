@@ -156,10 +156,10 @@ const AdvertisementBillboard: React.FC<AdvertisementBillboardProps> = ({
           navigate('/shop');
           break;
         case 'property':
-          navigate(`/properties/${currentAd.id}`);
+          navigate('/properties');
           break;
         case 'service':
-          navigate(`/jobs/${currentAd.id}`);
+          navigate('/jobs');
           break;
         default:
           navigate('/');
