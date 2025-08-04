@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/contexts/AuthContext';
-import { Eye, EyeOff, ArrowLeft, Mail, Lock, User, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, Mail, Lock, User, Phone, Building, Loader2 } from 'lucide-react';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -16,6 +16,8 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -52,6 +54,9 @@ const Auth = () => {
         if (!fullName.trim()) {
           newErrors.fullName = 'Full name is required';
         }
+        if (!phoneNumber.trim()) {
+          newErrors.phoneNumber = 'Phone number is required';
+        }
         if (!acceptTerms) {
           newErrors.terms = 'You must accept the terms and conditions';
         }
@@ -80,12 +85,14 @@ const Auth = () => {
           navigate(from, { replace: true });
         }
       } else {
-        const { error } = await signUp(email, password, fullName);
+        const { error } = await signUp(email, password, fullName, companyName, phoneNumber);
         if (!error) {
           // Keep user on auth page to show success message
           setEmail('');
           setPassword('');
           setFullName('');
+          setCompanyName('');
+          setPhoneNumber('');
           setAcceptTerms(false);
         }
       }
@@ -103,6 +110,8 @@ const Auth = () => {
     setPassword('');
     if (isLogin) {
       setFullName('');
+      setCompanyName('');
+      setPhoneNumber('');
       setAcceptTerms(false);
     }
   };
@@ -183,6 +192,47 @@ const Auth = () => {
                     />
                   </div>
                   {errors.fullName && <p className="text-red-500 text-xs">{errors.fullName}</p>}
+                </div>
+              )}
+
+              {/* Company Name Field (Sign Up Only) */}
+              {!isLogin && !showForgotPassword && (
+                <div className="space-y-2">
+                  <Label htmlFor="companyName" className="text-sm font-medium text-gray-700">
+                    Company Name <span className="text-gray-500">(Optional)</span>
+                  </Label>
+                  <div className="relative">
+                    <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="companyName"
+                      type="text"
+                      placeholder="Enter your company name"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                      className="pl-10 border-gray-200 focus:border-orange-500 focus:ring-orange-500"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Phone Number Field (Sign Up Only) */}
+              {!isLogin && !showForgotPassword && (
+                <div className="space-y-2">
+                  <Label htmlFor="phoneNumber" className="text-sm font-medium text-gray-700">
+                    Phone Number
+                  </Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="phoneNumber"
+                      type="tel"
+                      placeholder="Enter your phone number"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      className={`pl-10 ${errors.phoneNumber ? 'border-red-500' : 'border-gray-200'} focus:border-orange-500 focus:ring-orange-500`}
+                    />
+                  </div>
+                  {errors.phoneNumber && <p className="text-red-500 text-xs">{errors.phoneNumber}</p>}
                 </div>
               )}
 
