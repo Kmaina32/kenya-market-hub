@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -81,48 +82,4 @@ export const useProfile = () => {
     ...query,
     updateProfile
   };
-};
-
-// Hook to update the user's profile (keeping for backward compatibility)
-export const useUpdateProfile = () => {
-  const queryClient = useQueryClient();
-  const { user } = useAuth();
-  const { toast } = useToast();
-
-  return useMutation({
-    mutationFn: async (updates: Partial<Omit<Profile, 'id' | 'email' | 'created_at' | 'updated_at'>>) => {
-      if (!user) throw new Error('User not authenticated');
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', user.id)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error updating profile:', error);
-        throw error;
-      }
-      return data;
-    },
-    onSuccess: async (data) => {
-      await queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
-      // also update user metadata in auth context if full_name changes
-      if (data.full_name) {
-          await supabase.auth.updateUser({ data: { full_name: data.full_name } });
-      }
-      toast({
-        title: 'Profile Updated',
-        description: 'Your profile has been successfully updated.',
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Update Failed',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
 };
