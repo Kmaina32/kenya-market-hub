@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,7 +13,11 @@ export const useForumPosts = (categoryId?: string) => {
     queryFn: async () => {
       let query = supabase
         .from('forum_posts')
-        .select('*')
+        .select(`
+          *,
+          profiles!forum_posts_author_id_fkey(full_name, avatar_url),
+          forum_categories!forum_posts_category_id_fkey(name, color)
+        `)
         .order('created_at', { ascending: false });
 
       if (categoryId) {
@@ -30,23 +35,7 @@ export const useForumPosts = (categoryId?: string) => {
         return [];
       }
 
-      // Get unique author IDs and category IDs
-      const authorIds = [...new Set(posts.map(post => post.author_id))];
-      const categoryIds = [...new Set(posts.map(post => post.category_id))];
-      
-      // Fetch profiles separately
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, full_name, avatar_url')
-        .in('id', authorIds);
-
-      // Fetch categories separately
-      const { data: categories } = await supabase
-        .from('forum_categories')
-        .select('id, name, color')
-        .in('id', categoryIds);
-
-      // Transform posts with author profiles and categories
+      // Transform posts with like status for current user
       const transformedData = await Promise.all(posts.map(async (post) => {
         let has_liked = false;
         
@@ -63,17 +52,14 @@ export const useForumPosts = (categoryId?: string) => {
           has_liked = !!likeData;
         }
 
-        const authorProfile = profiles?.find(p => p.id === post.author_id);
-        const category = categories?.find(c => c.id === post.category_id);
-
         return {
           ...post,
           has_liked,
-          author_profile: authorProfile || { 
+          author_profile: post.profiles || { 
             full_name: 'Unknown User', 
             avatar_url: null 
           },
-          category: category || { 
+          category: post.forum_categories || { 
             name: 'General', 
             color: '#3b82f6' 
           }
@@ -192,6 +178,7 @@ export const useTogglePostLike = () => {
         .maybeSingle();
 
       if (existingLike) {
+        // Unlike the post
         const { error } = await supabase
           .from('forum_post_reactions')
           .delete()
@@ -200,6 +187,7 @@ export const useTogglePostLike = () => {
         if (error) throw error;
         return { action: 'unliked' };
       } else {
+        // Like the post
         const { error } = await supabase
           .from('forum_post_reactions')
           .insert({
@@ -213,6 +201,7 @@ export const useTogglePostLike = () => {
       }
     },
     onSuccess: () => {
+      // Invalidate queries to refresh the UI with updated counts
       queryClient.invalidateQueries({ queryKey: ['forum-posts'] });
     },
     onError: (error: any) => {
@@ -227,6 +216,8 @@ export const useTogglePostLike = () => {
 };
 
 export const useIncrementPostViews = () => {
+  const queryClient = useQueryClient();
+  
   return useMutation({
     mutationFn: async (postId: string) => {
       const { error } = await supabase.rpc('increment_post_views', {
@@ -234,6 +225,10 @@ export const useIncrementPostViews = () => {
       });
 
       if (error) throw error;
+    },
+    onSuccess: () => {
+      // Invalidate queries to refresh the UI with updated view counts
+      queryClient.invalidateQueries({ queryKey: ['forum-posts'] });
     }
   });
 };
