@@ -22,18 +22,14 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     full_name: '',
-    phone: '',
-    address: '',
-    city: ''
+    phone: ''
   });
 
   React.useEffect(() => {
     if (profile) {
       setFormData({
         full_name: profile.full_name || '',
-        phone: profile.phone || '',
-        address: profile.address || '',
-        city: profile.city || ''
+        phone: profile.phone || ''
       });
     }
   }, [profile]);
@@ -107,12 +103,6 @@ const Profile = () => {
                         <span>{profile.phone}</span>
                       </div>
                     )}
-                    {profile?.address && (
-                      <div className="flex items-center gap-2 text-xs text-gray-600">
-                        <MapPin className="h-3 w-3 text-orange-500" />
-                        <span>{profile.address}</span>
-                      </div>
-                    )}
                     <div className="flex items-center gap-2 text-xs text-gray-600">
                       <Calendar className="h-3 w-3 text-orange-500" />
                       <span>Joined {new Date(profile?.created_at || '').toLocaleDateString()}</span>
@@ -181,26 +171,6 @@ const Profile = () => {
                             id="phone"
                             value={formData.phone}
                             onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                            disabled={!isEditing}
-                            className="border-orange-200 focus:border-orange-500 text-sm rounded-lg"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label htmlFor="city" className="text-sm">City</Label>
-                          <Input
-                            id="city"
-                            value={formData.city}
-                            onChange={(e) => setFormData({...formData, city: e.target.value})}
-                            disabled={!isEditing}
-                            className="border-orange-200 focus:border-orange-500 text-sm rounded-lg"
-                          />
-                        </div>
-                        <div className="space-y-1 md:col-span-2">
-                          <Label htmlFor="address" className="text-sm">Address</Label>
-                          <Textarea
-                            id="address"
-                            value={formData.address}
-                            onChange={(e) => setFormData({...formData, address: e.target.value})}
                             disabled={!isEditing}
                             className="border-orange-200 focus:border-orange-500 text-sm rounded-lg"
                           />
