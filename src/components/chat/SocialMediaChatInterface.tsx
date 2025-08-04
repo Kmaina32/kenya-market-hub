@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -79,43 +78,34 @@ const SocialMediaChatInterface = () => {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          {/* Left side - User Avatar */}
-          <div className="flex items-center space-x-2 sm:space-x-4">
-            <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-medium text-sm">
-                {user?.user_metadata?.full_name?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'U'}
-              </span>
-            </div>
-            
-            {/* View Toggle */}
-            <div className="flex items-center bg-gray-100 rounded-lg p-1">
-              <Button
-                variant={selectedView === 'posts' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setSelectedView('posts')}
-                className={`text-sm px-2 sm:px-3 py-1.5 rounded-md ${
-                  selectedView === 'posts' 
-                    ? 'bg-white shadow-sm text-gray-900' 
-                    : 'text-gray-600 hover:text-gray-900 bg-transparent'
-                }`}
-              >
-                <Users className="h-4 w-4 sm:mr-1.5" />
-                <span className="hidden sm:inline">Forums</span>
-              </Button>
-              <Button
-                variant={selectedView === 'messages' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setSelectedView('messages')}
-                className={`text-sm px-2 sm:px-3 py-1.5 rounded-md ${
-                  selectedView === 'messages' 
-                    ? 'bg-white shadow-sm text-gray-900' 
-                    : 'text-gray-600 hover:text-gray-900 bg-transparent'
-                }`}
-              >
-                <MessageSquare className="h-4 w-4 sm:mr-1.5" />
-                <span className="hidden sm:inline">Messages</span>
-              </Button>
-            </div>
+          {/* Left side - View Toggle */}
+          <div className="flex items-center bg-gray-100 rounded-lg p-1">
+            <Button
+              variant={selectedView === 'posts' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setSelectedView('posts')}
+              className={`text-sm px-2 sm:px-3 py-1.5 rounded-md ${
+                selectedView === 'posts' 
+                  ? 'bg-white shadow-sm text-gray-900' 
+                  : 'text-gray-600 hover:text-gray-900 bg-transparent'
+              }`}
+            >
+              <Users className="h-4 w-4 sm:mr-1.5" />
+              <span className="hidden sm:inline">Forums</span>
+            </Button>
+            <Button
+              variant={selectedView === 'messages' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setSelectedView('messages')}
+              className={`text-sm px-2 sm:px-3 py-1.5 rounded-md ${
+                selectedView === 'messages' 
+                  ? 'bg-white shadow-sm text-gray-900' 
+                  : 'text-gray-600 hover:text-gray-900 bg-transparent'
+              }`}
+            >
+              <MessageSquare className="h-4 w-4 sm:mr-1.5" />
+              <span className="hidden sm:inline">Messages</span>
+            </Button>
           </div>
 
           {/* Right side - Search and Actions */}
