@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSecurityAudit } from '@/hooks/useSecurityAudit';
+import { useSecurityAudit, type SecurityEvent } from '@/hooks/useSecurityAudit';
 import { SECURITY_CONFIG } from '@/utils/securityConfig';
 
 interface SecurityContextType {
@@ -57,12 +57,12 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       if (timeSinceActivity > warningTime && !sessionWarning) {
         setSessionWarning(true);
-        logSecurityEvent('session_warning', { timeSinceActivity });
+        logSecurityEvent('session_warning' as SecurityEvent, { timeSinceActivity });
       }
 
       // Auto-logout after timeout
       if (timeSinceActivity > SECURITY_CONFIG.SESSION.TIMEOUT) {
-        logSecurityEvent('session_timeout', { timeSinceActivity });
+        logSecurityEvent('session_timeout' as SecurityEvent, { timeSinceActivity });
         // Force logout will be handled by auth context
       }
     };
