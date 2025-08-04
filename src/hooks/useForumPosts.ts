@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -52,13 +51,14 @@ export const useForumPosts = (categoryId?: string) => {
         let has_liked = false;
         
         if (user) {
+          // Use maybeSingle() instead of single() to avoid 406 errors
           const { data: likeData } = await supabase
             .from('forum_post_reactions')
             .select('id')
             .eq('post_id', post.id)
             .eq('user_id', user.id)
             .eq('reaction_type', 'like')
-            .single();
+            .maybeSingle();
           
           has_liked = !!likeData;
         }
@@ -182,13 +182,14 @@ export const useTogglePostLike = () => {
     mutationFn: async (postId: string) => {
       if (!user) throw new Error('User not authenticated');
 
+      // Use maybeSingle() instead of single() to avoid 406 errors
       const { data: existingLike } = await supabase
         .from('forum_post_reactions')
         .select('id')
         .eq('post_id', postId)
         .eq('user_id', user.id)
         .eq('reaction_type', 'like')
-        .single();
+        .maybeSingle();
 
       if (existingLike) {
         const { error } = await supabase

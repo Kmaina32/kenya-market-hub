@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -41,12 +42,22 @@ export const useProfile = () => {
   });
 
   const updateProfile = useMutation({
-    mutationFn: async (updates: Partial<Omit<Profile, 'id' | 'email'>>) => {
+    mutationFn: async (updates: Partial<Omit<Profile, 'id' | 'email' | 'created_at'>>) => {
       if (!user) throw new Error('User not authenticated');
+      
+      // Only include fields that exist in the profiles table
+      const validUpdates = {
+        ...(updates.full_name !== undefined && { full_name: updates.full_name }),
+        ...(updates.phone !== undefined && { phone: updates.phone }),
+        ...(updates.avatar_url !== undefined && { avatar_url: updates.avatar_url }),
+        updated_at: new Date().toISOString()
+      };
+
+      console.log('Updating profile with:', validUpdates);
       
       const { data, error } = await supabase
         .from('profiles')
-        .update({ ...updates, updated_at: new Date().toISOString() })
+        .update(validUpdates)
         .eq('id', user.id)
         .select()
         .single();
@@ -69,6 +80,7 @@ export const useProfile = () => {
       });
     },
     onError: (error: any) => {
+      console.error('Profile update error:', error);
       toast({
         title: 'Update Failed',
         description: error.message,
@@ -90,12 +102,22 @@ export const useUpdateProfile = () => {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (updates: Partial<Omit<Profile, 'id' | 'email'>>) => {
+    mutationFn: async (updates: Partial<Omit<Profile, 'id' | 'email' | 'created_at'>>) => {
       if (!user) throw new Error('User not authenticated');
+      
+      // Only include fields that exist in the profiles table
+      const validUpdates = {
+        ...(updates.full_name !== undefined && { full_name: updates.full_name }),
+        ...(updates.phone !== undefined && { phone: updates.phone }),
+        ...(updates.avatar_url !== undefined && { avatar_url: updates.avatar_url }),
+        updated_at: new Date().toISOString()
+      };
+
+      console.log('Updating profile with:', validUpdates);
       
       const { data, error } = await supabase
         .from('profiles')
-        .update({ ...updates, updated_at: new Date().toISOString() })
+        .update(validUpdates)
         .eq('id', user.id)
         .select()
         .single();
@@ -118,6 +140,7 @@ export const useUpdateProfile = () => {
       });
     },
     onError: (error: any) => {
+      console.error('Profile update error:', error);
       toast({
         title: 'Update Failed',
         description: error.message,
