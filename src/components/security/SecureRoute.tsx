@@ -2,44 +2,41 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useUserRole } from '@/hooks/useUserRole';
 import { AdminGuard } from '@/components/ui/AdminGuard';
+import { Loader2 } from 'lucide-react';
 
 interface SecureRouteProps {
   children: React.ReactNode;
   requireAuth?: boolean;
   requireAdmin?: boolean;
-  redirectTo?: string;
+  fallback?: React.ReactNode;
 }
 
 export const SecureRoute: React.FC<SecureRouteProps> = ({
   children,
-  requireAuth = true,
+  requireAuth = false,
   requireAdmin = false,
-  redirectTo = '/auth'
+  fallback
 }) => {
   const { user, loading } = useAuth();
-  const { data: userRole, isLoading: roleLoading } = useUserRole();
   const location = useLocation();
 
-  // Show loading while checking authentication
-  if (loading || (requireAdmin && roleLoading)) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
 
-  // Check authentication requirement
   if (requireAuth && !user) {
-    return <Navigate to={redirectTo} state={{ from: location }} replace />;
+    // Redirect to login page with return url
+    return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // Check admin requirement
   if (requireAdmin) {
     return (
-      <AdminGuard fallback={<Navigate to="/" replace />}>
+      <AdminGuard fallback={fallback}>
         {children}
       </AdminGuard>
     );

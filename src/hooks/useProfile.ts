@@ -6,11 +6,8 @@ import { useToast } from '@/hooks/use-toast';
 export interface Profile {
   id: string;
   full_name?: string;
-  email?: string;
+  email: string;
   phone?: string;
-  address?: string;
-  city?: string;
-  country?: string;
   avatar_url?: string;
   created_at?: string;
   updated_at?: string;
@@ -44,7 +41,7 @@ export const useProfile = () => {
   });
 
   const updateProfile = useMutation({
-    mutationFn: async (updates: Partial<Omit<Profile, 'id' | 'email'>>) => {
+    mutationFn: async (updates: Partial<Omit<Profile, 'id' | 'email' | 'created_at' | 'updated_at'>>) => {
       if (!user) throw new Error('User not authenticated');
       
       const { data, error } = await supabase
@@ -93,7 +90,7 @@ export const useUpdateProfile = () => {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (updates: Partial<Omit<Profile, 'id' | 'email'>>) => {
+    mutationFn: async (updates: Partial<Omit<Profile, 'id' | 'email' | 'created_at' | 'updated_at'>>) => {
       if (!user) throw new Error('User not authenticated');
       
       const { data, error } = await supabase
