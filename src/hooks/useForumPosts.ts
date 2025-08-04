@@ -12,7 +12,11 @@ export const useForumPosts = (categoryId?: string) => {
     queryFn: async () => {
       let query = supabase
         .from('forum_posts')
-        .select('*')
+        .select(`
+          *,
+          author_profile:profiles!author_id(id, full_name, avatar_url),
+          category:forum_categories!category_id(id, name, color)
+        `)
         .order('created_at', { ascending: false });
 
       if (categoryId) {
@@ -30,28 +34,11 @@ export const useForumPosts = (categoryId?: string) => {
         return [];
       }
 
-      // Get unique author IDs and category IDs
-      const authorIds = [...new Set(posts.map(post => post.author_id))];
-      const categoryIds = [...new Set(posts.map(post => post.category_id))];
-      
-      // Fetch profiles separately
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, full_name, avatar_url')
-        .in('id', authorIds);
-
-      // Fetch categories separately
-      const { data: categories } = await supabase
-        .from('forum_categories')
-        .select('id, name, color')
-        .in('id', categoryIds);
-
-      // Transform posts with author profiles and categories
+      // Transform posts and add like status
       const transformedData = await Promise.all(posts.map(async (post) => {
         let has_liked = false;
         
         if (user) {
-          // Use maybeSingle() instead of single() to avoid 406 errors
           const { data: likeData } = await supabase
             .from('forum_post_reactions')
             .select('id')
@@ -63,25 +50,36 @@ export const useForumPosts = (categoryId?: string) => {
           has_liked = !!likeData;
         }
 
-        const authorProfile = profiles?.find(p => p.id === post.author_id);
-        const category = categories?.find(c => c.id === post.category_id);
+        // Ensure we have proper author profile with fallback
+        const authorProfile = post.author_profile && post.author_profile.full_name 
+          ? post.author_profile 
+          : { 
+              id: post.author_id,
+              full_name: 'Anonymous User', 
+              avatar_url: null 
+            };
+
+        // Ensure we have proper category with fallback
+        const category = post.category && post.category.name 
+          ? post.category 
+          : { 
+              id: post.category_id,
+              name: 'General', 
+              color: '#3b82f6' 
+            };
 
         return {
           ...post,
           has_liked,
-          author_profile: authorProfile || { 
-            full_name: 'Unknown User', 
-            avatar_url: null 
-          },
-          category: category || { 
-            name: 'General', 
-            color: '#3b82f6' 
-          }
+          author_profile: authorProfile,
+          category: category
         };
       }));
 
       return transformedData as ForumPost[];
-    }
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5 // 5 minutes
   });
 };
 

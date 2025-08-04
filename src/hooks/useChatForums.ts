@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -34,8 +33,8 @@ export const useForumPosts = () => {
         .from('forum_posts')
         .select(`
           *,
-          author_profile:profiles!author_id(full_name, avatar_url),
-          category:forum_categories!category_id(name, color)
+          author_profile:profiles!author_id(id, full_name, avatar_url),
+          category:forum_categories!category_id(id, name, color)
         `)
         .order('created_at', { ascending: false });
 
@@ -44,11 +43,31 @@ export const useForumPosts = () => {
         throw postsError;
       }
 
-      return (posts || []).map(post => ({
-        ...post,
-        author_profile: post.author_profile || { full_name: 'Anonymous' },
-        category: post.category || { name: 'General' }
-      })) as ForumPost[];
+      return (posts || []).map(post => {
+        // Ensure we have proper author profile with fallback
+        const authorProfile = post.author_profile && post.author_profile.full_name 
+          ? post.author_profile 
+          : { 
+              id: post.author_id,
+              full_name: 'Anonymous User', 
+              avatar_url: null 
+            };
+
+        // Ensure we have proper category with fallback
+        const category = post.category && post.category.name 
+          ? post.category 
+          : { 
+              id: post.category_id,
+              name: 'General', 
+              color: '#3b82f6' 
+            };
+
+        return {
+          ...post,
+          author_profile: authorProfile,
+          category: category
+        };
+      }) as ForumPost[];
     },
   });
 };
