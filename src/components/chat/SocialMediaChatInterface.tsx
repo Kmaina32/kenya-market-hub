@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -80,7 +79,7 @@ const SocialMediaChatInterface = () => {
       <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           {/* Left side - User Avatar */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
               <span className="text-white font-medium text-sm">
                 {user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
@@ -93,33 +92,33 @@ const SocialMediaChatInterface = () => {
                 variant={selectedView === 'posts' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setSelectedView('posts')}
-                className={`text-sm px-3 py-1.5 rounded-md ${
+                className={`text-sm px-2 sm:px-3 py-1.5 rounded-md ${
                   selectedView === 'posts' 
                     ? 'bg-white shadow-sm text-gray-900' 
                     : 'text-gray-600 hover:text-gray-900 bg-transparent'
                 }`}
               >
-                <Users className="h-4 w-4 mr-1.5" />
-                Forums
+                <Users className="h-4 w-4 sm:mr-1.5" />
+                <span className="hidden sm:inline">Forums</span>
               </Button>
               <Button
                 variant={selectedView === 'messages' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setSelectedView('messages')}
-                className={`text-sm px-3 py-1.5 rounded-md ${
+                className={`text-sm px-2 sm:px-3 py-1.5 rounded-md ${
                   selectedView === 'messages' 
                     ? 'bg-white shadow-sm text-gray-900' 
                     : 'text-gray-600 hover:text-gray-900 bg-transparent'
                 }`}
               >
-                <MessageSquare className="h-4 w-4 mr-1.5" />
-                Messages
+                <MessageSquare className="h-4 w-4 sm:mr-1.5" />
+                <span className="hidden sm:inline">Messages</span>
               </Button>
             </div>
           </div>
 
           {/* Right side - Search and Actions */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 sm:space-x-3">
             {!showMobileChat && (
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -127,7 +126,7 @@ const SocialMediaChatInterface = () => {
                   placeholder={selectedView === 'posts' ? 'Search posts...' : 'Search conversations...'}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-64 bg-gray-50 border-gray-300 focus:bg-white focus:ring-orange-500 focus:border-orange-500 rounded-lg"
+                  className="pl-10 w-32 sm:w-64 bg-gray-50 border-gray-300 focus:bg-white focus:ring-orange-500 focus:border-orange-500 rounded-lg"
                 />
               </div>
             )}
@@ -137,10 +136,10 @@ const SocialMediaChatInterface = () => {
                 <DialogTrigger asChild>
                   <Button
                     size="sm"
-                    className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg"
+                    className="bg-orange-500 hover:bg-orange-600 text-white px-2 sm:px-4 py-2 rounded-lg"
                   >
-                    <Plus className="h-4 w-4 mr-1.5" />
-                    New Chat
+                    <Plus className="h-4 w-4 sm:mr-1.5" />
+                    <span className="hidden sm:inline">New Chat</span>
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
