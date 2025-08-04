@@ -111,13 +111,13 @@ const SocialMediaChatInterface = () => {
           {/* Right side - Search and Actions */}
           <div className="flex items-center space-x-2 sm:space-x-3">
             {!showMobileChat && (
-              <div className="relative">
+              <div className="relative w-48 sm:w-72">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   placeholder={selectedView === 'posts' ? 'Search posts...' : 'Search conversations...'}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-32 sm:w-64 bg-gray-50 border-gray-300 focus:bg-white focus:ring-orange-500 focus:border-orange-500 rounded-lg"
+                  className="pl-10 w-full bg-gray-50 border-gray-300 focus:bg-white focus:ring-orange-500 focus:border-orange-500 rounded-lg text-center"
                 />
               </div>
             )}
