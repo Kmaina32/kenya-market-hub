@@ -14,7 +14,6 @@ export const useForumPosts = (categoryId?: string) => {
         .from('forum_posts')
         .select(`
           *,
-          author_profile:profiles!author_id(id, full_name, avatar_url),
           category:forum_categories!category_id(id, name, color)
         `)
         .order('created_at', { ascending: false });
@@ -34,6 +33,19 @@ export const useForumPosts = (categoryId?: string) => {
         return [];
       }
 
+      // Fetch profiles separately for all unique author IDs
+      const authorIds = [...new Set(posts.map(post => post.author_id))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', authorIds);
+
+      // Create a map of profiles for quick lookup
+      const profileMap = new Map();
+      profiles?.forEach(profile => {
+        profileMap.set(profile.id, profile);
+      });
+
       // Transform posts and add like status
       const transformedData = await Promise.all(posts.map(async (post) => {
         let has_liked = false;
@@ -50,23 +62,19 @@ export const useForumPosts = (categoryId?: string) => {
           has_liked = !!likeData;
         }
 
-        // Ensure we have proper author profile with fallback
-        const authorProfile = post.author_profile && post.author_profile.full_name 
-          ? post.author_profile 
-          : { 
-              id: post.author_id,
-              full_name: 'Anonymous User', 
-              avatar_url: null 
-            };
+        // Get author profile from the map with fallback
+        const authorProfile = profileMap.get(post.author_id) || {
+          id: post.author_id,
+          full_name: 'Anonymous User',
+          avatar_url: null
+        };
 
         // Ensure we have proper category with fallback
-        const category = post.category && post.category.name 
-          ? post.category 
-          : { 
-              id: post.category_id,
-              name: 'General', 
-              color: '#3b82f6' 
-            };
+        const category = post.category || {
+          id: post.category_id,
+          name: 'General',
+          color: '#3b82f6'
+        };
 
         return {
           ...post,
