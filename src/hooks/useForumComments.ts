@@ -11,10 +11,7 @@ export const useForumComments = (postId: string) => {
     queryFn: async () => {
       const { data: comments, error } = await supabase
         .from('forum_post_comments')
-        .select(`
-          *,
-          profiles!forum_post_comments_author_id_fkey(full_name, avatar_url)
-        `)
+        .select('*')
         .eq('post_id', postId)
         .order('created_at', { ascending: true });
 
@@ -24,14 +21,26 @@ export const useForumComments = (postId: string) => {
         return [];
       }
 
-      // Transform comments with author profiles
-      const commentsWithProfiles = comments.map(comment => ({
-        ...comment,
-        author_profile: comment.profiles || { 
-          full_name: 'Unknown User', 
-          avatar_url: null 
-        }
-      }));
+      // Get unique author IDs
+      const authorIds = [...new Set(comments.map(comment => comment.author_id))];
+      
+      // Fetch profiles separately
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', authorIds);
+
+      // Combine comments with author profiles
+      const commentsWithProfiles = comments.map(comment => {
+        const authorProfile = profiles?.find(p => p.id === comment.author_id);
+        return {
+          ...comment,
+          author_profile: authorProfile || { 
+            full_name: 'Unknown User', 
+            avatar_url: null 
+          }
+        };
+      });
 
       return commentsWithProfiles as ForumComment[];
     },
@@ -62,7 +71,6 @@ export const useCreateForumComment = () => {
       return data;
     },
     onSuccess: (_, { postId }) => {
-      // Invalidate both comments and posts queries to update counts
       queryClient.invalidateQueries({ queryKey: ['forum-comments', postId] });
       queryClient.invalidateQueries({ queryKey: ['forum-posts'] });
       toast({
