@@ -482,3 +482,4 @@ const SocialMediaChatInterface = () => {
 };
 
 export default SocialMediaChatInterface;
+  
