@@ -11,7 +11,9 @@ export type SecurityEvent =
   | 'admin_access' 
   | 'suspicious_activity'
   | 'rate_limit_exceeded'
-  | 'invalid_input_detected';
+  | 'invalid_input_detected'
+  | 'security_violation'
+  | 'admin_action';
 
 export interface SecurityAuditLog {
   id: string;
@@ -31,9 +33,6 @@ export const useSecurityAudit = () => {
     try {
       console.log(`Security Event: ${event}`, details);
       
-      // In a real implementation, this would log to your security audit system
-      // For now, we'll just log to console and could extend to send to backend
-      
       const auditLog: Omit<SecurityAuditLog, 'id'> = {
         event,
         details,
@@ -50,9 +49,25 @@ export const useSecurityAudit = () => {
     }
   };
 
+  // Specific helper methods for common security events
+  const logSecurityViolation = async (message: string, details: Record<string, any> = {}) => {
+    await logSecurityEvent('security_violation', { message, ...details });
+  };
+
+  const logAdminAction = async (action: string, resource: string, userId?: string) => {
+    await logSecurityEvent('admin_action', { action, resource, userId });
+  };
+
+  const logFailedLogin = async (email: string, error: string) => {
+    await logSecurityEvent('login_failure', { email, error });
+  };
+
+  const logSuccessfulLogin = async (userId: string) => {
+    await logSecurityEvent('login_success', { userId });
+  };
+
   const getClientIP = async (): Promise<string> => {
     try {
-      // This is a simple way to get client IP - in production you might want a more robust solution
       const response = await fetch('https://api.ipify.org?format=json');
       const data = await response.json();
       return data.ip || 'unknown';
@@ -61,5 +76,11 @@ export const useSecurityAudit = () => {
     }
   };
 
-  return { logSecurityEvent };
+  return { 
+    logSecurityEvent,
+    logSecurityViolation,
+    logAdminAction,
+    logFailedLogin,
+    logSuccessfulLogin
+  };
 };
