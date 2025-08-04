@@ -9,21 +9,38 @@ interface SecurityEvent {
   success?: boolean;
   errorMessage?: string;
   metadata?: Record<string, any>;
+  severity?: 'low' | 'medium' | 'high' | 'critical';
+  ipAddress?: string;
+  userAgent?: string;
 }
 
 export const useSecurityAudit = () => {
   const logSecurityEvent = useMutation({
     mutationFn: async (event: SecurityEvent) => {
+      const user = (await supabase.auth.getUser()).data.user;
+      
+      // Get client information for security context
+      const clientInfo = {
+        userAgent: navigator.userAgent,
+        language: navigator.language,
+        platform: navigator.platform,
+        timestamp: new Date().toISOString()
+      };
+
       const { error } = await supabase
         .from('security_audit_log')
         .insert({
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          user_id: user?.id || null,
           action: event.action,
           resource_type: event.resourceType,
           resource_id: event.resourceId,
           success: event.success ?? true,
           error_message: event.errorMessage,
-          metadata: event.metadata || {}
+          metadata: {
+            ...event.metadata,
+            ...clientInfo,
+            severity: event.severity || 'medium'
+          }
         });
 
       if (error) {
@@ -32,14 +49,19 @@ export const useSecurityAudit = () => {
     }
   });
 
-  const logFailedLogin = (email: string, reason: string) => {
+  const logFailedLogin = (email: string, reason: string, attempts: number = 1) => {
     logSecurityEvent.mutate({
       action: 'login_failed',
       resourceType: 'auth',
       resourceId: email,
       success: false,
       errorMessage: reason,
-      metadata: { timestamp: new Date().toISOString() }
+      severity: attempts > 3 ? 'high' : 'medium',
+      metadata: { 
+        attempts,
+        timestamp: new Date().toISOString(),
+        potentialBruteForce: attempts > 5
+      }
     });
   };
 
@@ -48,7 +70,8 @@ export const useSecurityAudit = () => {
       action: 'login_success',
       resourceType: 'auth',
       resourceId: userId,
-      success: true
+      success: true,
+      severity: 'low'
     });
   };
 
@@ -57,7 +80,8 @@ export const useSecurityAudit = () => {
       action: `${action}_${resourceType}`,
       resourceType,
       resourceId,
-      success: true
+      success: true,
+      severity: 'low'
     });
   };
 
@@ -67,7 +91,38 @@ export const useSecurityAudit = () => {
       resourceType,
       resourceId,
       success: true,
-      metadata: { admin: true }
+      severity: 'high',
+      metadata: { admin: true, requiresReview: true }
+    });
+  };
+
+  const logSecurityViolation = (violation: string, details?: Record<string, any>) => {
+    logSecurityEvent.mutate({
+      action: 'security_violation',
+      resourceType: 'system',
+      success: false,
+      errorMessage: violation,
+      severity: 'critical',
+      metadata: {
+        ...details,
+        requiresImediateAttention: true,
+        timestamp: new Date().toISOString()
+      }
+    });
+  };
+
+  const logSuspiciousActivity = (activity: string, context?: Record<string, any>) => {
+    logSecurityEvent.mutate({
+      action: 'suspicious_activity',
+      resourceType: 'system',
+      success: false,
+      errorMessage: activity,
+      severity: 'high',
+      metadata: {
+        ...context,
+        flaggedForReview: true,
+        timestamp: new Date().toISOString()
+      }
     });
   };
 
@@ -76,6 +131,8 @@ export const useSecurityAudit = () => {
     logSuccessfulLogin,
     logDataAccess,
     logAdminAction,
+    logSecurityViolation,
+    logSuspiciousActivity,
     logSecurityEvent: logSecurityEvent.mutate
   };
 };
