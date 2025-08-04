@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'; // Assuming SidebarProvider manages sidebar visibility
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -49,8 +50,8 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           On desktop, it will take the space next to the fixed sidebar.
         */}
         <main className="flex-1 flex flex-col overflow-x-hidden"> {/* Added overflow-x-hidden here */}
-          {/* Header */}
-          <div className="sticky top-0 z-40 flex items-center justify-between border-b border-gray-200 bg-white px-3 sm:px-6 py-3 shadow-sm">
+          {/* Header - Enhanced sticky positioning with higher z-index */}
+          <div className="sticky top-0 z-50 flex items-center justify-between border-b border-gray-200 bg-white px-3 sm:px-6 py-3 shadow-sm backdrop-blur-sm">
             <div className="flex items-center gap-2 sm:gap-4 flex-1">
               <SidebarTrigger className="hover:bg-orange-50 hover:text-orange-600" aria-label="Toggle Sidebar" /> 
               {/* Logo & Sokko Sasa text - visible on small screens, hidden on md and up */}
