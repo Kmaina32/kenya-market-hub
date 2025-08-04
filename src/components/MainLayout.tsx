@@ -50,8 +50,8 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           On desktop, it will take the space next to the fixed sidebar.
         */}
         <main className="flex-1 flex flex-col overflow-x-hidden"> {/* Added overflow-x-hidden here */}
-          {/* Header - Enhanced sticky positioning with higher z-index */}
-          <div className="sticky top-0 z-50 flex items-center justify-between border-b border-gray-200 bg-white px-3 sm:px-6 py-3 shadow-sm backdrop-blur-sm">
+          {/* Header - Fixed positioning to always stay visible */}
+          <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between border-b border-gray-200 bg-white px-3 sm:px-6 py-3 shadow-sm backdrop-blur-sm">
             <div className="flex items-center gap-2 sm:gap-4 flex-1">
               <SidebarTrigger className="hover:bg-orange-50 hover:text-orange-600" aria-label="Toggle Sidebar" /> 
               {/* Logo & Sokko Sasa text - visible on small screens, hidden on md and up */}
@@ -96,27 +96,29 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             </div>
           </div>
           
-          {!isOnline && (
-            <Alert className="m-4 border-yellow-200 bg-yellow-50">
-              <WifiOff className="h-4 w-4" />
-              <AlertDescription>
-                You're currently offline. Some features may not be available.
-              </AlertDescription>
-            </Alert>
-          )}
-          
-          {/* Main content area for children. Use padding for inner spacing. */}
-          {/* Added p-4 for general padding to prevent content from touching edges */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6"> 
-            {children}
+          {/* Content area with top padding to account for fixed header */}
+          <div className="pt-16 flex-1 flex flex-col">
+            {!isOnline && (
+              <Alert className="m-4 border-yellow-200 bg-yellow-50">
+                <WifiOff className="h-4 w-4" />
+                <AlertDescription>
+                  You're currently offline. Some features may not be available.
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            {/* Main content area for children. Use padding for inner spacing. */}
+            {/* Added p-4 for general padding to prevent content from touching edges */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6"> 
+              {children}
+            </div>
+            
+            {/* Footer only in MainLayout */}
+            <Footer />
+
+            {/* Newsletter Notification */}
+            <NewsletterNotification />
           </div>
-          
-          {/* Footer only in MainLayout */}
-          <Footer />
-
-          {/* Newsletter Notification */}
-          <NewsletterNotification />
-
         </main>
       </div>
     </SidebarProvider>
