@@ -1,8 +1,9 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSecurityAudit } from './useSecurityAudit';
+import { useSecurityAudit } from '@/hooks/useSecurityAudit';
 import { supabase } from '@/integrations/supabase/client';
+import { SECURITY_CONFIG } from '@/utils/securityConfig';
 
 export const useEnhancedAuth = () => {
   const { user } = useAuth();
@@ -11,8 +12,7 @@ export const useEnhancedAuth = () => {
   const [isLocked, setIsLocked] = useState(false);
   const [lockUntil, setLockUntil] = useState<Date | null>(null);
 
-  const MAX_FAILED_ATTEMPTS = 5;
-  const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
+  const { LOGIN_ATTEMPTS: MAX_FAILED_ATTEMPTS, LOCKOUT_DURATION } = SECURITY_CONFIG.RATE_LIMITS;
 
   useEffect(() => {
     if (lockUntil && new Date() > lockUntil) {
@@ -65,7 +65,10 @@ export const useEnhancedAuth = () => {
     if (!user) return false;
 
     try {
-      const { data, error } = await supabase.rpc('is_admin', { check_user_id: user.id });
+      const { data, error } = await supabase.rpc('has_role', { 
+        _user_id: user.id, 
+        _role: 'admin' 
+      });
 
       if (error) {
         console.error('Admin check failed:', error);
@@ -83,6 +86,7 @@ export const useEnhancedAuth = () => {
     handleLoginAttempt,
     checkAdminAccess,
     failedAttempts,
+    maxAttempts: MAX_FAILED_ATTEMPTS,
     isLocked,
     lockUntil
   };
