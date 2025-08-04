@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,6 +31,7 @@ import { QuantitySelector } from '@/components/shop/QuantitySelector';
 import { toast } from 'sonner';
 import { Slider } from '@/components/ui/slider';
 import SEOManager from '@/components/seo/SEOManager';
+import LazyImage from '@/components/LazyImage';
 
 // --- Interfaces for better type safety and clarity ---
 interface Product {
@@ -68,7 +68,7 @@ const Shop: React.FC = () => {
   const [sortBy, setSortBy] = useState<string>('newest');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]); 
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000]); 
   const [showFilters, setShowFilters] = useState(false);
 
   const { addToWishlist, isInWishlist } = useWishlist();
@@ -82,13 +82,27 @@ const Shop: React.FC = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  // Get unique values for filters
+  const { data: filterOptions } = useQuery({
+    queryKey: ['filter-options'],
+    queryFn: async () => {
+      const { data: allProducts } = await supabase
+        .from('products')
+        .select('category')
+        .eq('in_stock', true);
+
+      const categories = [...new Set(allProducts?.map(p => p.category).filter(Boolean))];
+      return { categories };
+    }
+  });
+
   const { data: products, isLoading, isFetching, refetch } = useQuery<Product[]>({
-    queryKey: ['products', debouncedSearchTerm, selectedCategory, sortBy, priceRange],
+    queryKey: ['products', searchTerm, selectedCategory, sortBy, priceRange],
     queryFn: async () => {
       let query = supabase.from('products').select(`*, vendors ( business_name, logo_url )`).eq('in_stock', true);
 
-      if (debouncedSearchTerm) {
-        query = query.or(`name.ilike.%${debouncedSearchTerm}%,description.ilike.%${debouncedSearchTerm}%`);
+      if (searchTerm) {
+        query = query.or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
       }
       if (selectedCategory !== 'all') {
         query = query.eq('category', selectedCategory);
@@ -96,8 +110,8 @@ const Shop: React.FC = () => {
       query = query.gte('price', priceRange[0]).lte('price', priceRange[1]);
 
       switch (sortBy) {
-        case 'price_low': query = query.order('price', { ascending: true }); break;
-        case 'price_high': query = query.order('price', { ascending: false }); break;
+        case 'price-low': query = query.order('price', { ascending: true }); break;
+        case 'price-high': query = query.order('price', { ascending: false }); break;
         case 'rating': query = query.order('rating', { ascending: false, nullsFirst: false }); break; 
         case 'name': query = query.order('name', { ascending: true }); break;
         default: query = query.order('created_at', { ascending: false });
@@ -129,14 +143,19 @@ const Shop: React.FC = () => {
     handleAddToCart(product);
   }, [handleAddToCart]);
 
-  const handleClearFilters = useCallback(() => {
+  const resetFilters = useCallback(() => {
     setSearchTerm('');
     setSelectedCategory('all');
     setSortBy('newest');
-    setPriceRange([0, 5000]);
+    setPriceRange([0, 100000]);
     refetch(); 
-    toast.info("Filters cleared!");
+    toast.success("Filters cleared!");
   }, [refetch]);
+
+  const handleProductClick = useCallback((product: Product) => {
+    setSelectedProduct(product);
+    setIsQuickViewOpen(true);
+  }, []);
 
   return (
     <MainLayout>
@@ -151,10 +170,7 @@ const Shop: React.FC = () => {
       <div className="space-y-8">
         {/* Header */}
         <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl p-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-            <ShoppingBag className="h-9 w-9" />
-            Shop Products
-          </h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Products</h1>
           <p className="text-gray-600 text-lg">Discover amazing products from trusted vendors across Kenya</p>
         </div>
 
@@ -176,9 +192,11 @@ const Shop: React.FC = () => {
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
-                {SORT_OPTIONS.map(option => (
-                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                ))}
+                <SelectItem value="newest">Newest First</SelectItem>
+                <SelectItem value="price-low">Price: Low to High</SelectItem>
+                <SelectItem value="price-high">Price: High to Low</SelectItem>
+                <SelectItem value="rating">Highest Rated</SelectItem>
+                <SelectItem value="name">Name: A-Z</SelectItem>
               </SelectContent>
             </Select>
 
@@ -204,7 +222,7 @@ const Shop: React.FC = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Categories</SelectItem>
-                      {PRODUCT_CATEGORIES.map(category => (
+                      {filterOptions?.categories.map((category) => (
                         <SelectItem key={category} value={category}>{category}</SelectItem>
                       ))}
                     </SelectContent>
@@ -213,14 +231,14 @@ const Shop: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Price Range: KSh {priceRange[0].toLocaleString()} - KSh {priceRange[1].toLocaleString()}
+                    Price Range: KSH {priceRange[0].toLocaleString()} - KSH {priceRange[1].toLocaleString()}
                   </label>
                   <Slider
                     value={priceRange}
-                    onValueChange={setPriceRange}
-                    max={50000}
+                    onValueChange={(value) => setPriceRange(value as [number, number])}
+                    max={100000}
                     min={0}
-                    step={500}
+                    step={1000}
                     className="w-full"
                   />
                 </div>
@@ -230,7 +248,7 @@ const Shop: React.FC = () => {
                 <div className="text-sm text-gray-600">
                   {products?.length || 0} products found
                 </div>
-                <Button variant="outline" size="sm" onClick={handleClearFilters}>
+                <Button variant="outline" size="sm" onClick={resetFilters}>
                   Clear Filters
                 </Button>
               </div>
@@ -239,7 +257,7 @@ const Shop: React.FC = () => {
         </div>
 
         {/* Products Grid */}
-        {isLoading || isFetching ? (
+        {isLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {[...Array(8)].map((_, i) => (
               <Card key={i} className="animate-pulse">
@@ -251,22 +269,25 @@ const Shop: React.FC = () => {
               </Card>
             ))}
           </div>
-        ) : products && products.length > 0 ? (
+        ) : products?.length === 0 ? (
+          <div className="text-center py-16">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">No products found</h2>
+            <p className="text-gray-600">Try adjusting your search or filters.</p>
+          </div>
+        ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {products.map((product, index) => (
+            {products?.map((product) => (
               <Card 
                 key={product.id} 
                 className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-0 shadow-lg overflow-hidden cursor-pointer"
-                style={{ animationDelay: `${index * 0.05}s` }}
-                onClick={() => handleQuickView(product)}
+                onClick={() => handleProductClick(product)}
               >
                 <CardContent className="p-0">
                   <div className="relative">
-                    <img
-                      src={product.image_url || '/placeholder.svg'}
+                    <LazyImage 
+                      src={product.image_url || '/placeholder.svg'} 
                       alt={product.name}
                       className="w-full h-48 object-cover"
-                      loading="lazy"
                     />
                     <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button 
@@ -275,7 +296,7 @@ const Shop: React.FC = () => {
                         className="p-2 rounded-full bg-white/90 hover:bg-white shadow-sm" 
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleQuickView(product);
+                          handleProductClick(product);
                         }} 
                         aria-label="Quick View"
                       >
@@ -287,7 +308,8 @@ const Shop: React.FC = () => {
                         className={`p-2 rounded-full bg-white/90 hover:bg-white shadow-sm ${isInWishlist(product.id) ? 'text-red-500' : ''}`}
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleAddToWishlistCallback(product);
+                          addToWishlist(product);
+                          toast.success(`${product.name} added to wishlist!`);
                         }}
                         aria-label="Add to Wishlist"
                       >
@@ -297,63 +319,50 @@ const Shop: React.FC = () => {
                   </div>
                   
                   <div className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200 text-xs">
-                        {product.category}
-                      </Badge>
-                      {product.rating && (
-                        <div className="flex items-center">
-                          <Star className="h-4 w-4 text-yellow-500 mr-1" />
-                          <span className="text-sm">{Number(product.rating).toFixed(1)}</span>
-                          <span className="text-gray-500 ml-1 text-sm">({product.total_reviews || 0})</span>
-                        </div>
-                      )}
+                    <h4 className="font-semibold text-gray-900 mb-1 text-sm line-clamp-2">{product.name}</h4>
+                    <p className="text-xs text-gray-600 mb-2">{product.vendors?.business_name || 'Sokko Sasa'}</p>
+                    
+                    <div className="flex items-center mb-2">
+                      <div className="flex items-center">
+                        {[...Array(5)].map((_, i) => (
+                          <Star 
+                            key={i} 
+                            className={`h-3 w-3 ${
+                              i < Math.floor(product.rating || 0) 
+                                ? 'fill-yellow-400 text-yellow-400' 
+                                : 'text-gray-300'
+                            }`} 
+                          />
+                        ))}
+                        <span className="text-xs text-gray-600 ml-1">
+                          ({product.total_reviews || 0})
+                        </span>
+                      </div>
                     </div>
                     
-                    <h4 className="font-semibold text-gray-900 mb-1 text-sm line-clamp-2">{product.name}</h4>
-                    <p className="text-xs text-gray-600 mb-2">{product.vendors?.business_name || 'Unknown Vendor'}</p>
-                    
                     <div className="flex items-center justify-between">
-                      <span className="text-base font-bold text-gray-900">
-                        KSh {Number(product.price).toLocaleString()}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <QuantitySelector 
-                          quantity={getQuantity(product.id)} 
-                          onQuantityChange={(qty) => setQuantity(product.id, qty)} 
-                          size="sm" 
-                        />
-                        <Button 
-                          size="sm" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAddToCartCallback(product);
-                          }}
-                          disabled={!product.in_stock || getQuantity(product.id) === 0}
-                          className="bg-orange-600 hover:bg-orange-700 text-xs px-3 py-1"
-                        >
-                          <ShoppingCart className="h-3 w-3 mr-1" />
-                          Add
-                        </Button>
+                      <div className="flex flex-col">
+                        <span className="text-base font-bold text-gray-900">
+                          KSH {Number(product.price).toLocaleString()}
+                        </span>
                       </div>
+                      <Button 
+                        size="sm" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddToCart(product);
+                        }}
+                        disabled={!product.in_stock}
+                        className="bg-orange-600 hover:bg-orange-700 text-xs px-3 py-1"
+                      >
+                        <ShoppingCart className="h-3 w-3 mr-1" />
+                        Add
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             ))}
-          </div>
-        ) : (
-          <div className="text-center py-16">
-            <Package2 className="h-20 w-20 text-gray-300 mx-auto mb-6" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">No products found</h2>
-            <p className="text-gray-600">
-              {searchTerm || selectedCategory !== 'all' 
-                ? 'No products match your current search and filter criteria. Try adjusting them!'
-                : 'Products will appear here once they are added to the platform.'}
-            </p>
-            <Button onClick={handleClearFilters} className="mt-6 bg-orange-500 hover:bg-orange-600">
-              <Filter className="h-4 w-4 mr-2" /> Clear All Filters
-            </Button>
           </div>
         )}
       </div>
@@ -362,8 +371,11 @@ const Shop: React.FC = () => {
         product={selectedProduct}
         isOpen={isQuickViewOpen}
         onClose={() => setIsQuickViewOpen(false)}
-        onAddToCart={handleAddToCartCallback}
-        onAddToWishlist={handleAddToWishlistCallback}
+        onAddToCart={handleAddToCart}
+        onAddToWishlist={(product) => {
+          addToWishlist(product);
+          toast.success(`${product.name} added to wishlist!`);
+        }}
       />
     </MainLayout>
   );
