@@ -1,4 +1,3 @@
-
 // src/pages/Checkout.tsx
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -87,10 +86,9 @@ const Checkout = () => {
         city: isEventBooking ? 'N/A' : prev.city
       }));
     } else if (user && user.user_metadata) {
+      // Only use fields that are safely accessible from user metadata
       setShippingInfo(prev => ({
         ...prev,
-        address: prev.address || user.user_metadata.address || '',
-        city: prev.city || user.user_metadata.city || '',
         phone: prev.phone || user.phone || '',
         email: prev.email || user.email || ''
       }));

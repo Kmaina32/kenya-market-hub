@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,18 +39,16 @@ const Profile = () => {
 
   const handleSave = async () => {
     try {
-      await updateProfile.mutateAsync(formData);
+      // Only include valid profile fields
+      const validUpdates = {
+        full_name: formData.full_name,
+        phone: formData.phone
+      };
+      
+      await updateProfile.mutateAsync(validUpdates);
       setIsEditing(false);
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been updated successfully."
-      });
     } catch (error) {
-      toast({
-        title: "Update failed",
-        description: "Failed to update profile. Please try again.",
-        variant: "destructive"
-      });
+      console.error('Profile update error:', error);
     }
   };
 
