@@ -25,11 +25,40 @@ export const useConversations = () => {
 
       if (error) throw error;
       
-      // Transform data to match ChatConversation interface
-      const conversations = (data || []).map(conv => ({
+      if (!data || data.length === 0) return [];
+
+      // Get all unique participant IDs
+      const participantIds = new Set<string>();
+      data.forEach(conv => {
+        participantIds.add(conv.participant1_id);
+        participantIds.add(conv.participant2_id);
+      });
+
+      // Fetch profiles for all participants
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', Array.from(participantIds));
+
+      // Create a map for quick profile lookup
+      const profileMap = new Map();
+      profiles?.forEach(profile => {
+        profileMap.set(profile.id, profile);
+      });
+      
+      // Transform conversations with proper participant data
+      const conversations = data.map(conv => ({
         ...conv,
-        participant1: { full_name: 'User 1', avatar_url: null },
-        participant2: { full_name: 'User 2', avatar_url: null }
+        participant1: profileMap.get(conv.participant1_id) || {
+          id: conv.participant1_id,
+          full_name: 'Unknown User',
+          avatar_url: null
+        },
+        participant2: profileMap.get(conv.participant2_id) || {
+          id: conv.participant2_id,
+          full_name: 'Unknown User', 
+          avatar_url: null
+        }
       }));
       
       return conversations as ChatConversation[];
@@ -73,6 +102,10 @@ export const useCreateConversation = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      toast({
+        title: 'Success',
+        description: 'Conversation started successfully.',
+      });
     },
     onError: (error: any) => {
       console.error('Error creating conversation:', error);

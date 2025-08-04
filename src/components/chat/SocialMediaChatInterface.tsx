@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Search, Plus, MessageSquare, Users, User } from 'lucide-react';
 import { ChatInterface } from './ChatInterface';
-import { useConversations } from '@/hooks/useChat';
+import { useConversations, useCreateConversation } from '@/hooks/useChat';
 import { useUserSearch } from '@/hooks/useChatForums';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatDistanceToNow } from 'date-fns';
@@ -22,6 +22,7 @@ const SocialMediaChatInterface = () => {
   const { user } = useAuth();
   const { data: conversations = [], isLoading: conversationsLoading } = useConversations();
   const { data: searchResults = [] } = useUserSearch(userSearchTerm);
+  const createConversation = useCreateConversation();
 
   // Filter conversations based on search
   const filteredConversations = conversations.filter(conv => {
@@ -38,6 +39,18 @@ const SocialMediaChatInterface = () => {
   const handleBackToList = () => {
     setSelectedConversationId(null);
     setShowMobileChat(false);
+  };
+
+  const handleStartNewChat = async (targetUserId: string) => {
+    try {
+      const newConversation = await createConversation.mutateAsync(targetUserId);
+      setSelectedConversationId(newConversation.id);
+      setShowMobileChat(true);
+      setIsNewChatOpen(false);
+      setUserSearchTerm('');
+    } catch (error) {
+      console.error('Error starting conversation:', error);
+    }
   };
 
   return (
@@ -77,11 +90,7 @@ const SocialMediaChatInterface = () => {
                       <div
                         key={searchUser.id}
                         className="flex items-center gap-3 p-3 rounded-lg hover:bg-orange-50 cursor-pointer transition-colors"
-                        onClick={() => {
-                          // Handle starting new conversation
-                          setIsNewChatOpen(false);
-                          setUserSearchTerm('');
-                        }}
+                        onClick={() => handleStartNewChat(searchUser.id)}
                       >
                         <Avatar className="h-10 w-10">
                           <AvatarImage src={searchUser.avatar_url} />
