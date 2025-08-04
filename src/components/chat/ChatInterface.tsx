@@ -68,7 +68,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedConversati
   };
 
   return (
-    <Card className="h-full flex flex-col shadow-lg border-0 rounded-lg overflow-hidden chat-container"> {/* Added chat-container class */}
+    <Card className="h-full flex flex-col shadow-lg border-0 rounded-lg overflow-hidden chat-container">
       {selectedConversationId && selectedConversationData ? (
         <>
           {/* Chat Header */}
@@ -92,10 +92,70 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedConversati
                 <p className="text-sm text-orange-100">Online</p>
               </div>
             </div>
+            
+            {/* New Chat Button in Header */}
+            <Dialog open={isNewChatOpen} onOpenChange={setIsNewChatOpen}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Chat
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="text-gray-900">Start New Chat</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Search users..."
+                      value={userSearchTerm}
+                      onChange={(e) => setUserSearchTerm(e.target.value)}
+                      className="pl-10 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                  </div>
+
+                  <div className="max-h-60 overflow-y-auto space-y-2">
+                    {searchedUsers?.filter(u => u.id !== user?.id).map((searchUser) => (
+                      <div
+                        key={searchUser.id}
+                        onClick={() => handleStartNewChat(searchUser.id)}
+                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-orange-50 cursor-pointer transition-colors"
+                      >
+                        <Avatar className="h-8 w-8 border border-gray-200">
+                          <AvatarImage src={searchUser.avatar_url} />
+                          <AvatarFallback className="bg-gray-200 text-gray-700">
+                            <User className="h-4 w-4" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate text-gray-900">{searchUser.full_name}</p>
+                          <p className="text-sm text-gray-500 truncate">{searchUser.email}</p>
+                        </div>
+                      </div>
+                    ))}
+
+                    {userSearchTerm && searchedUsers?.length === 0 && (
+                      <div className="text-center py-4 text-gray-500">
+                        <Users className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                        <p>No users found</p>
+                      </div>
+                    )}
+
+                    {!userSearchTerm && (
+                      <div className="text-center py-4 text-gray-500">
+                        <p className="text-sm">Type to search for users</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </CardHeader>
 
           {/* Chat Messages Area */}
-          <CardContent className="flex-1 p-4 overflow-y-auto space-y-4 bg-gray-50 chat-messages-area"> {/* Added chat-messages-area class */}
+          <CardContent className="flex-1 p-4 overflow-y-auto space-y-4 bg-gray-50 chat-messages-area">
             {messagesLoading ? (
               <div className="flex justify-center items-center h-32">
                 <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
@@ -160,71 +220,92 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ selectedConversati
           </div>
         </>
       ) : (
-        // No conversation selected view
+        // No conversation selected view with New Chat functionality
         <CardContent className="flex-1 flex items-center justify-center bg-gray-50">
-          <div className="text-center">
+          <div className="text-center max-w-md">
             <MessageCircle className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Select a conversation</h3>
-            <p className="text-gray-600 mb-4">Choose a conversation from the left to start chatting</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Start a conversation</h3>
+            <p className="text-gray-600 mb-6">Connect with other users by starting a new chat conversation</p>
             
-            <Dialog open={isNewChatOpen} onOpenChange={setIsNewChatOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white shadow-md">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Start New Chat
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle className="text-gray-900">Start New Chat</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="Search users..."
-                      value={userSearchTerm}
-                      onChange={(e) => setUserSearchTerm(e.target.value)}
-                      className="pl-10 focus:ring-orange-500 focus:border-orange-500"
-                    />
-                  </div>
+            {/* Prominent New Chat Section */}
+            <div className="space-y-4">
+              <Dialog open={isNewChatOpen} onOpenChange={setIsNewChatOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white shadow-md w-full">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Start New Chat
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="text-gray-900">Start New Chat</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        placeholder="Search users by name or email..."
+                        value={userSearchTerm}
+                        onChange={(e) => setUserSearchTerm(e.target.value)}
+                        className="pl-10 focus:ring-orange-500 focus:border-orange-500"
+                      />
+                    </div>
 
-                  <div className="max-h-60 overflow-y-auto space-y-2">
-                    {searchedUsers?.filter(u => u.id !== user?.id).map((searchUser) => (
-                      <div
-                        key={searchUser.id}
-                        onClick={() => handleStartNewChat(searchUser.id)}
-                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-orange-50 cursor-pointer transition-colors"
-                      >
-                        <Avatar className="h-8 w-8 border border-gray-200">
-                          <AvatarImage src={searchUser.avatar_url} />
-                          <AvatarFallback className="bg-gray-200 text-gray-700">
-                            <User className="h-4 w-4" />
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate text-gray-900">{searchUser.full_name}</p>
-                          <p className="text-sm text-gray-500 truncate">{searchUser.email}</p>
+                    <div className="max-h-60 overflow-y-auto space-y-2">
+                      {userSearchTerm && searchedUsers?.filter(u => u.id !== user?.id).map((searchUser) => (
+                        <div
+                          key={searchUser.id}
+                          onClick={() => handleStartNewChat(searchUser.id)}
+                          className="flex items-center gap-3 p-3 rounded-lg hover:bg-orange-50 cursor-pointer transition-colors border border-gray-100"
+                        >
+                          <Avatar className="h-10 w-10 border border-gray-200">
+                            <AvatarImage src={searchUser.avatar_url} />
+                            <AvatarFallback className="bg-gray-200 text-gray-700">
+                              <User className="h-5 w-5" />
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate text-gray-900">{searchUser.full_name}</p>
+                            <p className="text-sm text-gray-500 truncate">{searchUser.email}</p>
+                          </div>
+                          <div className="text-orange-500">
+                            <MessageCircle className="h-4 w-4" />
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
 
-                    {userSearchTerm && searchedUsers?.length === 0 && (
-                      <div className="text-center py-4 text-gray-500">
-                        <Users className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                        <p>No users found</p>
-                      </div>
-                    )}
+                      {userSearchTerm && searchedUsers?.filter(u => u.id !== user?.id).length === 0 && (
+                        <div className="text-center py-8 text-gray-500">
+                          <Users className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                          <p className="font-medium">No users found</p>
+                          <p className="text-sm">Try searching with a different term</p>
+                        </div>
+                      )}
 
-                    {!userSearchTerm && (
-                      <div className="text-center py-4 text-gray-500">
-                        <p className="text-sm">Type to search for users</p>
-                      </div>
-                    )}
+                      {!userSearchTerm && (
+                        <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
+                          <Search className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                          <p className="text-sm font-medium mb-1">Find someone to chat with</p>
+                          <p className="text-xs">Type a name or email to search for users</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
+              
+              {/* Quick search input visible by default */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Quick search users..."
+                  value={userSearchTerm}
+                  onChange={(e) => setUserSearchTerm(e.target.value)}
+                  onFocus={() => setIsNewChatOpen(true)}
+                  className="pl-10 focus:ring-orange-500 focus:border-orange-500"
+                />
+              </div>
+            </div>
           </div>
         </CardContent>
       )}
