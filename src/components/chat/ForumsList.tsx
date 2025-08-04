@@ -93,12 +93,12 @@ const ForumsList: React.FC<ForumsListProps> = ({ searchTerm }) => {
   return (
     <div className="space-y-6">
       {/* Post Composer */}
-      <Card className="shadow-sm border border-gray-200">
+      <Card className="shadow-sm border border-gray-200 rounded-xl overflow-hidden">
         <CardContent className="p-4">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
               <span className="text-white font-medium text-sm">
-                {user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
+                {user?.user_metadata?.full_name?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'U'}
               </span>
             </div>
             <div className="flex-1">
@@ -196,7 +196,7 @@ const ForumsList: React.FC<ForumsListProps> = ({ searchTerm }) => {
 
       {/* Posts List */}
       {filteredPosts.length === 0 ? (
-        <Card className="shadow-sm border border-gray-200">
+        <Card className="shadow-sm border border-gray-200 rounded-xl overflow-hidden">
           <CardContent className="text-center py-12">
             <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">No posts found</h3>
@@ -216,14 +216,14 @@ const ForumsList: React.FC<ForumsListProps> = ({ searchTerm }) => {
           {filteredPosts.map((post) => (
             <Card 
               key={post.id} 
-              className="shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+              className="shadow-sm border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow cursor-pointer bg-white"
               onClick={() => handlePostClick(post.id)}
             >
               <CardContent className="p-6">
                 {/* Header */}
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
+                    <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-white font-medium text-sm">
                         {post.author_profile?.full_name?.charAt(0)?.toUpperCase() || 'U'}
                       </span>
@@ -236,7 +236,7 @@ const ForumsList: React.FC<ForumsListProps> = ({ searchTerm }) => {
                         {post.category && (
                           <Badge 
                             style={{ backgroundColor: post.category.color }}
-                            className="text-white text-xs px-2 py-0.5"
+                            className="text-white text-xs px-2 py-0.5 rounded-full"
                           >
                             {post.category.name}
                           </Badge>

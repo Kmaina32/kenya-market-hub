@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -82,7 +83,7 @@ const SocialMediaChatInterface = () => {
           <div className="flex items-center space-x-2 sm:space-x-4">
             <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
               <span className="text-white font-medium text-sm">
-                {user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
+                {user?.user_metadata?.full_name?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'U'}
               </span>
             </div>
             
