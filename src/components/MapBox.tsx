@@ -20,6 +20,7 @@ interface MapBoxProps {
     path?: google.maps.LatLng[];
   };
   className?: string;
+  // FIX: Add style prop to interface
   style?: React.CSSProperties; 
 }
 
@@ -30,7 +31,7 @@ const MapBox: React.FC<MapBoxProps> = ({
   onMapClick,
   showRoute,
   className = "w-full h-96",
-  style
+  style // Receive the style prop
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -54,7 +55,7 @@ const MapBox: React.FC<MapBoxProps> = ({
         disableDefaultUI: false,
       };
 
-      mapRef.current = new googleMaps.maps.Map(mapContainerRef.current, mapOptions);
+      mapRef.current = new googleMaps.Map(mapContainerRef.current, mapOptions);
 
       mapRef.current.addListener('click', (e: google.maps.MapMouseEvent) => {
         if (onMapClick && e.latLng) {
@@ -118,6 +119,7 @@ const MapBox: React.FC<MapBoxProps> = ({
 
         const bounds = new google.maps.LatLngBounds();
         showRoute.path.forEach(point => bounds.extend(point));
+        // FIX: Change padding object literal to use directional properties
         mapRef.current.fitBounds(bounds, { top: 50, bottom: 50, left: 50, right: 50 }); 
 
       } else {
@@ -144,6 +146,7 @@ const MapBox: React.FC<MapBoxProps> = ({
               polylineRef.current.setMap(mapRef.current);
               const bounds = new google.maps.LatLngBounds();
               path.forEach(point => bounds.extend(point));
+              // FIX: Change padding object literal to use directional properties
               mapRef.current.fitBounds(bounds, { top: 50, bottom: 50, left: 50, right: 50 });
             } else {
               console.error('Directions request failed due to ' + status);
@@ -154,6 +157,7 @@ const MapBox: React.FC<MapBoxProps> = ({
     }
   }, [showRoute, mapLoaded]);
 
+  // Pass the style prop directly to the div
   return <div ref={mapContainerRef} className={className} style={style} />;
 };
 

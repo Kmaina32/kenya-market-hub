@@ -1,118 +1,76 @@
 
-// Enhanced validation utilities with security focus
+import { z } from 'zod';
 
+// Input validation schemas
+export const emailSchema = z.string().email('Invalid email format');
+
+export const phoneSchema = z.string()
+  .regex(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number format')
+  .optional();
+
+export const userInputSchema = z.object({
+  name: z.string()
+    .min(2, 'Name must be at least 2 characters')
+    .max(100, 'Name must be less than 100 characters')
+    .regex(/^[a-zA-Z\s]+$/, 'Name can only contain letters and spaces'),
+  email: emailSchema,
+  phone: phoneSchema,
+});
+
+export const productSchema = z.object({
+  name: z.string()
+    .min(3, 'Product name must be at least 3 characters')
+    .max(200, 'Product name must be less than 200 characters'),
+  description: z.string()
+    .max(2000, 'Description must be less than 2000 characters')
+    .optional(),
+  price: z.number().positive('Price must be positive'),
+  category: z.string().min(1, 'Category is required'),
+});
+
+export const reviewSchema = z.object({
+  rating: z.number().min(1).max(5),
+  comment: z.string()
+    .max(1000, 'Comment must be less than 1000 characters')
+    .optional(),
+});
+
+export const forumPostSchema = z.object({
+  title: z.string()
+    .min(5, 'Title must be at least 5 characters')
+    .max(200, 'Title must be less than 200 characters'),
+  content: z.string()
+    .min(10, 'Content must be at least 10 characters')
+    .max(10000, 'Content must be less than 10000 characters'),
+});
+
+// HTML sanitization function
 export const sanitizeHtml = (input: string): string => {
-  if (typeof input !== 'string') return '';
-  
+  // Remove script tags and dangerous attributes
   return input
-    .replace(/<script[^>]*>.*?<\/script>/gi, '')
-    .replace(/<[^>]*>/g, '')
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
     .replace(/javascript:/gi, '')
-    .replace(/on\w+\s*=/gi, '')
-    .replace(/expression\s*\(/gi, '')
-    .replace(/vbscript:/gi, '')
-    .replace(/data:text\/html/gi, '')
-    .trim();
+    .replace(/on\w+="[^"]*"/gi, '')
+    .replace(/on\w+='[^']*'/gi, '')
+    .replace(/<iframe/gi, '&lt;iframe')
+    .replace(/<object/gi, '&lt;object')
+    .replace(/<embed/gi, '&lt;embed');
 };
 
-export const validateEmail = (email: string): boolean => {
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  return emailRegex.test(email) && email.length <= 254;
-};
-
-export const validatePassword = (password: string): { 
-  isValid: boolean; 
-  errors: string[] 
-} => {
-  const errors: string[] = [];
-  
-  if (password.length < 8) {
-    errors.push('Password must be at least 8 characters long');
+// File validation
+export const validateFileUpload = (file: File, allowedTypes: string[], maxSizeMB: number = 10): boolean => {
+  if (!allowedTypes.includes(file.type)) {
+    throw new Error(`File type ${file.type} is not allowed`);
   }
   
-  if (!/[a-z]/.test(password)) {
-    errors.push('Password must contain at least one lowercase letter');
+  if (file.size > maxSizeMB * 1024 * 1024) {
+    throw new Error(`File size must be less than ${maxSizeMB}MB`);
   }
   
-  if (!/[A-Z]/.test(password)) {
-    errors.push('Password must contain at least one uppercase letter');
-  }
-  
-  if (!/\d/.test(password)) {
-    errors.push('Password must contain at least one number');
-  }
-  
-  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-    errors.push('Password must contain at least one special character');
-  }
-  
-  if (password.length > 128) {
-    errors.push('Password must not exceed 128 characters');
-  }
-  
-  return {
-    isValid: errors.length === 0,
-    errors
-  };
+  return true;
 };
 
-export const sanitizeFilename = (filename: string): string => {
-  return filename
-    .replace(/[^a-zA-Z0-9._-]/g, '_')
-    .substring(0, 255);
-};
-
-export const validatePhoneNumber = (phone: string): boolean => {
-  // Kenyan phone number format validation
-  const phoneRegex = /^(\+254|0)[1-9]\d{8}$/;
-  return phoneRegex.test(phone.replace(/\s/g, ''));
-};
-
-export const sanitizeInput = (input: string, maxLength: number = 1000): string => {
-  if (typeof input !== 'string') return '';
-  
-  return input
-    .trim()
-    .substring(0, maxLength)
-    .replace(/[\x00-\x1F\x7F]/g, ''); // Remove control characters
-};
-
-export const validateUrl = (url: string): boolean => {
-  try {
-    const urlObj = new URL(url);
-    return ['http:', 'https:'].includes(urlObj.protocol);
-  } catch {
-    return false;
-  }
-};
-
-export const escapeRegExp = (string: string): string => {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-};
-
-export const validateCreditCard = (cardNumber: string): boolean => {
-  // Basic Luhn algorithm validation
-  const digits = cardNumber.replace(/\D/g, '');
-  if (digits.length < 13 || digits.length > 19) return false;
-  
-  let sum = 0;
-  let isEven = false;
-  
-  for (let i = digits.length - 1; i >= 0; i--) {
-    let digit = parseInt(digits[i]);
-    
-    if (isEven) {
-      digit *= 2;
-      if (digit > 9) digit -= 9;
-    }
-    
-    sum += digit;
-    isEven = !isEven;
-  }
-  
-  return sum % 10 === 0;
-};
-
-export const rateLimitKey = (identifier: string, action: string): string => {
-  return `rate_limit:${identifier}:${action}`;
+// SQL injection prevention (additional layer)
+export const sanitizeSqlInput = (input: string): string => {
+  return input.replace(/['";\\]/g, '');
 };

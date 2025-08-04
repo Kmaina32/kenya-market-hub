@@ -1829,7 +1829,10 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
           avatar_url: string | null
+          city: string | null
+          country: string | null
           created_at: string | null
           email: string
           full_name: string | null
@@ -1838,7 +1841,10 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          address?: string | null
           avatar_url?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string | null
           email: string
           full_name?: string | null
@@ -1847,7 +1853,10 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          address?: string | null
           avatar_url?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string | null
           email?: string
           full_name?: string | null
@@ -2913,7 +2922,22 @@ export type Database = {
           following_id?: string
           id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_follows_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_follows_following_id_fkey"
+            columns: ["following_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_mentions: {
         Row: {
@@ -3359,6 +3383,45 @@ export type Database = {
       update_product_rating: {
         Args: { product_id: number; rating: number }
         Returns: undefined
+      }
+      update_profile: {
+        Args: {
+          input_full_name?: string
+          input_avatar_url?: string
+          input_phone?: string
+        }
+        Returns: {
+          address: string | null
+          avatar_url: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string | null
+        }
+      }
+      upsert_profile: {
+        Args: {
+          p_user_id: string
+          p_email: string
+          p_full_name?: string
+          p_avatar_url?: string
+        }
+        Returns: {
+          address: string | null
+          avatar_url: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string | null
+        }[]
       }
       upsert_recently_viewed: {
         Args: { p_user_id: string; p_product_id: string }

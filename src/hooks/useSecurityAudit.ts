@@ -1,86 +1,81 @@
 
-export type SecurityEvent = 
-  | 'login_attempt' 
-  | 'login_success' 
-  | 'login_failure' 
-  | 'logout' 
-  | 'session_warning' 
-  | 'session_timeout' 
-  | 'password_change' 
-  | 'profile_update' 
-  | 'admin_access' 
-  | 'suspicious_activity'
-  | 'rate_limit_exceeded'
-  | 'invalid_input_detected'
-  | 'security_violation'
-  | 'admin_action';
+import { useMutation } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
-export interface SecurityAuditLog {
-  id: string;
-  user_id?: string;
-  event: SecurityEvent;
-  details: Record<string, any>;
-  ip_address?: string;
-  user_agent?: string;
-  timestamp: string;
+interface SecurityEvent {
+  action: string;
+  resourceType: string;
+  resourceId?: string;
+  success?: boolean;
+  errorMessage?: string;
+  metadata?: Record<string, any>;
 }
 
 export const useSecurityAudit = () => {
-  const logSecurityEvent = async (
-    event: SecurityEvent, 
-    details: Record<string, any> = {}
-  ) => {
-    try {
-      console.log(`Security Event: ${event}`, details);
-      
-      const auditLog: Omit<SecurityAuditLog, 'id'> = {
-        event,
-        details,
-        ip_address: await getClientIP(),
-        user_agent: navigator.userAgent,
-        timestamp: new Date().toISOString(),
-      };
-      
-      // Could send to backend security service here
-      // await supabase.from('security_audit_logs').insert(auditLog);
-      
-    } catch (error) {
-      console.error('Failed to log security event:', error);
+  const logSecurityEvent = useMutation({
+    mutationFn: async (event: SecurityEvent) => {
+      const { error } = await supabase
+        .from('security_audit_log')
+        .insert({
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+          action: event.action,
+          resource_type: event.resourceType,
+          resource_id: event.resourceId,
+          success: event.success ?? true,
+          error_message: event.errorMessage,
+          metadata: event.metadata || {}
+        });
+
+      if (error) {
+        console.error('Failed to log security event:', error);
+      }
     }
+  });
+
+  const logFailedLogin = (email: string, reason: string) => {
+    logSecurityEvent.mutate({
+      action: 'login_failed',
+      resourceType: 'auth',
+      resourceId: email,
+      success: false,
+      errorMessage: reason,
+      metadata: { timestamp: new Date().toISOString() }
+    });
   };
 
-  // Specific helper methods for common security events
-  const logSecurityViolation = async (message: string, details: Record<string, any> = {}) => {
-    await logSecurityEvent('security_violation', { message, ...details });
+  const logSuccessfulLogin = (userId: string) => {
+    logSecurityEvent.mutate({
+      action: 'login_success',
+      resourceType: 'auth',
+      resourceId: userId,
+      success: true
+    });
   };
 
-  const logAdminAction = async (action: string, resource: string, userId?: string) => {
-    await logSecurityEvent('admin_action', { action, resource, userId });
+  const logDataAccess = (resourceType: string, resourceId: string, action: string) => {
+    logSecurityEvent.mutate({
+      action: `${action}_${resourceType}`,
+      resourceType,
+      resourceId,
+      success: true
+    });
   };
 
-  const logFailedLogin = async (email: string, error: string) => {
-    await logSecurityEvent('login_failure', { email, error });
+  const logAdminAction = (action: string, resourceType: string, resourceId?: string) => {
+    logSecurityEvent.mutate({
+      action: `admin_${action}`,
+      resourceType,
+      resourceId,
+      success: true,
+      metadata: { admin: true }
+    });
   };
 
-  const logSuccessfulLogin = async (userId: string) => {
-    await logSecurityEvent('login_success', { userId });
-  };
-
-  const getClientIP = async (): Promise<string> => {
-    try {
-      const response = await fetch('https://api.ipify.org?format=json');
-      const data = await response.json();
-      return data.ip || 'unknown';
-    } catch {
-      return 'unknown';
-    }
-  };
-
-  return { 
-    logSecurityEvent,
-    logSecurityViolation,
-    logAdminAction,
+  return {
     logFailedLogin,
-    logSuccessfulLogin
+    logSuccessfulLogin,
+    logDataAccess,
+    logAdminAction,
+    logSecurityEvent: logSecurityEvent.mutate
   };
 };
