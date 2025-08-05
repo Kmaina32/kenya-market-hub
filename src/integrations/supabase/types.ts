@@ -2639,6 +2639,72 @@ export type Database = {
         }
         Relationships: []
       }
+      service_provider_applications: {
+        Row: {
+          admin_notes: string | null
+          business_address: string
+          business_description: string
+          business_email: string
+          business_name: string
+          business_phone: string
+          created_at: string
+          documents: Json | null
+          experience_years: number | null
+          id: string
+          license_number: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          service_areas: string[] | null
+          service_type: string
+          status: string
+          submitted_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          business_address: string
+          business_description: string
+          business_email: string
+          business_name: string
+          business_phone: string
+          created_at?: string
+          documents?: Json | null
+          experience_years?: number | null
+          id?: string
+          license_number?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          service_areas?: string[] | null
+          service_type: string
+          status?: string
+          submitted_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          business_address?: string
+          business_description?: string
+          business_email?: string
+          business_name?: string
+          business_phone?: string
+          created_at?: string
+          documents?: Json | null
+          experience_years?: number | null
+          id?: string
+          license_number?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          service_areas?: string[] | null
+          service_type?: string
+          status?: string
+          submitted_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       service_provider_profiles: {
         Row: {
           business_name: string
@@ -3222,6 +3288,10 @@ export type Database = {
         Args: { p_application_id: string }
         Returns: string
       }
+      approve_service_provider_application: {
+        Args: { p_application_id: string }
+        Returns: string
+      }
       approve_vendor_application: {
         Args: Record<PropertyKey, never> | { application_id: string }
         Returns: string
@@ -3348,6 +3418,10 @@ export type Database = {
       }
       reject_medical_provider_application: {
         Args: { p_application_id: string; p_admin_notes: string }
+        Returns: undefined
+      }
+      reject_service_provider_application: {
+        Args: { p_application_id: string; p_admin_notes?: string }
         Returns: undefined
       }
       reject_vendor_application: {

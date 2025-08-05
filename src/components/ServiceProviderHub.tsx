@@ -17,15 +17,69 @@ import {
 } from 'lucide-react';
 import { useMyVendorProfile } from '@/hooks/useVendors';
 import { useAllServiceProviderProfiles } from '@/hooks/useServiceProviders';
+import { useMyServiceProviderApplication } from '@/hooks/useServiceProviderApplications';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 
 const ServiceProviderHub = () => {
+  const { user } = useAuth();
   const { data: vendorProfile } = useMyVendorProfile();
   const { data: allProfiles } = useAllServiceProviderProfiles();
+  const { data: myServiceProviderApp } = useMyServiceProviderApplication();
+
+  // Get driver application status
+  const { data: driverApplication } = useQuery({
+    queryKey: ['my-driver-application', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from('driver_applications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('submitted_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user
+  });
+
+  // Get medical provider application status
+  const { data: medicalApplication } = useQuery({
+    queryKey: ['my-medical-application', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from('medical_provider_applications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('submitted_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user
+  });
 
   // Helper function to get profile by provider type
   const getProfileByType = (type: string) => {
     return allProfiles?.find(profile => profile.provider_type === type);
+  };
+
+  // Get application status for service provider
+  const getServiceProviderStatus = () => {
+    const profile = getProfileByType('service_provider');
+    if (profile?.verification_status === 'approved') return 'approved';
+    if (myServiceProviderApp?.status) return myServiceProviderApp.status;
+    return null;
   };
 
   const serviceTypes = [
@@ -35,6 +89,7 @@ const ServiceProviderHub = () => {
       icon: ShoppingBag,
       description: 'Sell products on our marketplace',
       profile: vendorProfile,
+      applicationStatus: null, // Vendors use different system
       color: 'orange',
       dashboardPath: '/vendor',
       registrationPath: '/vendor-registration'
@@ -45,6 +100,7 @@ const ServiceProviderHub = () => {
       icon: Car,
       description: 'Provide taxi or motorbike rides',
       profile: getProfileByType('driver'),
+      applicationStatus: driverApplication?.status,
       color: 'blue',
       dashboardPath: '/driver-app',
       registrationPath: '/driver-registration'
@@ -55,6 +111,7 @@ const ServiceProviderHub = () => {
       icon: HomeIcon,
       description: 'List properties for sale or rent',
       profile: getProfileByType('property_owner'),
+      applicationStatus: null, // No application system yet
       color: 'purple',
       dashboardPath: '/property-owner',
       registrationPath: '/property-owner-registration'
@@ -65,9 +122,10 @@ const ServiceProviderHub = () => {
       icon: Wrench,
       description: 'Offer professional services',
       profile: getProfileByType('service_provider'),
+      applicationStatus: getServiceProviderStatus(),
       color: 'green',
       dashboardPath: '/services-app',
-      registrationPath: '/service-provider-registration'
+      registrationPath: '/service-provider-registration?type=service_provider'
     },
     {
       id: 'medical_provider',
@@ -75,13 +133,45 @@ const ServiceProviderHub = () => {
       icon: Stethoscope,
       description: 'Provide healthcare services',
       profile: null,
+      applicationStatus: medicalApplication?.status,
       color: 'red',
       dashboardPath: '/medical-provider',
       registrationPath: '/medical-provider-registration'
     }
   ];
 
-  const getStatusBadge = (status?: string) => {
+  const getStatusBadge = (service: any) => {
+    // For vendor, check profile verification status
+    if (service.id === 'vendor' && service.profile?.verification_status) {
+      const status = service.profile.verification_status;
+      switch (status) {
+        case 'approved':
+          return (
+            <Badge className="bg-green-100 text-green-800 border-green-200">
+              <CheckCircle className="w-3 h-3 mr-1" />
+              Approved
+            </Badge>
+          );
+        case 'pending':
+          return (
+            <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+              <Clock className="w-3 h-3 mr-1" />
+              Pending
+            </Badge>
+          );
+        case 'rejected':
+          return (
+            <Badge className="bg-red-100 text-red-800 border-red-200">
+              <XCircle className="w-3 h-3 mr-1" />
+              Rejected
+            </Badge>
+          );
+      }
+    }
+
+    // For others, check application status or profile verification
+    const status = service.applicationStatus || service.profile?.verification_status;
+    
     switch (status) {
       case 'approved':
         return (
@@ -114,9 +204,13 @@ const ServiceProviderHub = () => {
   };
 
   const getActionButton = (service: any) => {
-    const isApproved = service.profile?.verification_status === 'approved';
-    const isPending = service.profile?.verification_status === 'pending';
-    const isRejected = service.profile?.verification_status === 'rejected';
+    const applicationStatus = service.applicationStatus;
+    const profileStatus = service.profile?.verification_status;
+    
+    // Check if approved (either through application or direct profile)
+    const isApproved = applicationStatus === 'approved' || profileStatus === 'approved';
+    const isPending = applicationStatus === 'pending';
+    const isRejected = applicationStatus === 'rejected';
 
     if (isApproved) {
       return (
@@ -185,7 +279,7 @@ const ServiceProviderHub = () => {
                     <div className={`p-3 rounded-xl bg-${service.color}-100`}>
                       <ServiceIcon className={`h-6 w-6 text-${service.color}-600`} />
                     </div>
-                    {getStatusBadge(service.profile?.verification_status)}
+                    {getStatusBadge(service)}
                   </div>
                   <CardTitle className="text-xl group-hover:text-blue-600 transition-colors">
                     {service.title}
