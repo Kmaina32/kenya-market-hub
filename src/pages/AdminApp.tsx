@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ModernAdminLayout from '@/components/admin/ModernAdminLayout';
@@ -18,6 +19,8 @@ import AdminAgents from '@/pages/admin/AdminAgents';
 import AdminRides from '@/pages/admin/AdminRides';
 import AdminServiceBookings from '@/pages/admin/AdminServiceBookings';
 import AdminProperties from '@/pages/admin/AdminProperties';
+import AdminPropertyInquiries from '@/pages/admin/AdminPropertyInquiries';
+import AdminPropertyViewings from '@/pages/admin/AdminPropertyViewings';
 import AdminMedical from '@/pages/admin/AdminMedical';
 import AdminInsurance from '@/pages/admin/AdminInsurance';
 import AdminFoodDelivery from '@/pages/admin/AdminFoodDelivery';
@@ -28,18 +31,18 @@ import AdminReports from '@/pages/admin/AdminReports';
 import AdminNotifications from '@/pages/admin/AdminNotifications';
 import AdminSettings from '@/pages/admin/AdminSettings';
 import AdminApprovals from '@/pages/admin/AdminApprovals';
+import AdminForums from '@/pages/admin/AdminForums';
 
 const AdminApp = () => {
   return (
     <ModernAdminLayout>
       <Routes>
-        <Route index element={<AdminDashboard />} />
-        <Route path="dashboard" element={<AdminDashboard />} />
+        <Route index element={<AdminModernDashboard />} />
+        <Route path="dashboard" element={<AdminModernDashboard />} />
         <Route path="users" element={<AdminUsers />} />
         <Route path="products" element={<AdminProducts />} />
         <Route path="orders" element={<AdminOrders />} />
         <Route path="vendors" element={<AdminVendors />} />
-        <Route path="vendor-applications" element={<AdminVendorApplications />} />
         <Route path="drivers" element={<AdminDrivers />} />
         <Route path="agents" element={<AdminAgents />} />
         <Route path="properties" element={<AdminProperties />} />
@@ -50,7 +53,6 @@ const AdminApp = () => {
         <Route path="service-bookings" element={<AdminServiceBookings />} />
         <Route path="medical" element={<AdminMedical />} />
         <Route path="rides" element={<AdminRides />} />
-        <Route path="ride-pricing" element={<AdminRidePricing />} />
         <Route path="jobs" element={<AdminJobs />} />
         <Route path="employers" element={<AdminEmployers />} />
         <Route path="events" element={<AdminEvents />} />
