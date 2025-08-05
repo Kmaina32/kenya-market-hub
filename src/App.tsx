@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import {
   BrowserRouter as Router,
@@ -7,39 +8,14 @@ import {
   useLocation,
 } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { ThemeProvider } from "@/components/theme-provider"
-import { useTheme } from 'next-themes'
 
-import AuthPage from '@/pages/AuthPage';
-import HomePage from '@/pages/HomePage';
-import ProfilePage from '@/pages/ProfilePage';
-import AdminPage from '@/pages/AdminPage';
-import VendorDashboard from '@/pages/VendorDashboard';
-import VendorRegistrationPage from '@/pages/VendorRegistrationPage';
-import DriverDashboard from '@/pages/DriverDashboard';
-import DriverRegistrationPage from '@/pages/DriverRegistrationPage';
-import PropertyOwnerDashboard from '@/pages/PropertyOwnerDashboard';
-import PropertyOwnerRegistrationPage from '@/pages/PropertyOwnerRegistrationPage';
-import MedicalProviderDashboard from '@/pages/MedicalProviderDashboard';
-import MedicalProviderRegistrationPage from '@/pages/MedicalProviderRegistrationPage';
-import ResetPasswordPage from '@/pages/ResetPasswordPage';
-import UpdatePasswordPage from '@/pages/UpdatePasswordPage';
-import ServicesApp from '@/components/ServiceProviderApp';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import ProtectedVendorRoute from '@/components/ProtectedVendorRoute';
-import ProtectedDriverRoute from '@/components/ProtectedDriverRoute';
-import ProtectedPropertyOwnerRoute from '@/components/ProtectedPropertyOwnerRoute';
-import ProtectedServiceProviderRoute from '@/components/ProtectedServiceProviderRoute';
-import { AuthProvider } from '@/contexts/AuthContext';
-import { RoleRedirect } from '@/components/RoleRedirect';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRoleRedirection } from '@/hooks/useRoleRedirection';
-import { SecurityAuditProvider } from '@/contexts/SecurityAuditContext';
-import { Toaster } from "@/components/ui/toaster"
 import ProtectedServiceHubRoute from '@/components/ProtectedServiceHubRoute';
 import ServiceProviderHub from '@/components/ServiceProviderHub';
 import ServiceProviderDashboard from '@/pages/ServiceProviderDashboard';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRoleRedirection } from '@/hooks/useRoleRedirection';
+import { Toaster } from "@/components/ui/toaster"
 
 const queryClient = new QueryClient();
 
@@ -47,16 +23,11 @@ const AppRoutes = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <SecurityAuditProvider>
-          <ThemeProvider defaultTheme="system" storageKey="vite-react-theme">
-            <Router>
-              <AppContent />
-            </Router>
-            <Toaster />
-          </ThemeProvider>
-        </SecurityAuditProvider>
+        <Router>
+          <AppContent />
+        </Router>
+        <Toaster />
       </AuthProvider>
-      <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
 };
@@ -75,95 +46,35 @@ const AppContent = () => {
 
   return (
     <Routes>
-      <Route path="/auth" element={<AuthPage />} />
-      <Route path="/reset-password" element={<ResetPasswordPage />} />
-      <Route path="/update-password" element={<UpdatePasswordPage />} />
-      <Route path="/" element={<HomePage />} />
-
-      {/* Protected Routes */}
-      <Route
-        path="/profile"
+      {/* Service Provider Hub - Protected Route */}
+      <Route 
+        path="/service-provider-hub" 
         element={
-          <ProtectedRoute>
-            <ProfilePage />
-          </ProtectedRoute>
-        }
+          <ProtectedServiceHubRoute>
+            <ServiceProviderHub />
+          </ProtectedServiceHubRoute>
+        } 
       />
-      <Route
-        path="/admin"
+      
+      {/* Service Provider Dashboard - Protected Route */}
+      <Route 
+        path="/services-app" 
         element={
-          <ProtectedRoute requireAdmin={true}>
-            <AdminPage />
-          </ProtectedRoute>
-        }
+          <ProtectedServiceHubRoute>
+            <ServiceProviderDashboard />
+          </ProtectedServiceHubRoute>
+        } 
       />
 
-      {/* Vendor Routes */}
-      <Route
-        path="/vendor"
-        element={
-          <ProtectedVendorRoute>
-            <VendorDashboard />
-          </ProtectedVendorRoute>
-        }
-      />
-      <Route path="/vendor-registration" element={<VendorRegistrationPage />} />
-
-      {/* Driver Routes */}
-      <Route
-        path="/driver"
-        element={
-          <ProtectedDriverRoute>
-            <DriverDashboard />
-          </ProtectedDriverRoute>
-        }
-      />
-      <Route path="/driver-registration" element={<DriverRegistrationPage />} />
-
-      {/* Property Owner Routes */}
-      <Route
-        path="/property-owner"
-        element={
-          <ProtectedPropertyOwnerRoute>
-            <PropertyOwnerDashboard />
-          </ProtectedPropertyOwnerRoute>
-        }
-      />
-      <Route path="/property-owner-registration" element={<PropertyOwnerRegistrationPage />} />
-
-      {/* Medical Provider Routes */}
-       <Route path="/medical-provider" element={<MedicalProviderDashboard />} />
-      <Route path="/medical-provider-registration" element={<MedicalProviderRegistrationPage />} />
-
-      {/* Service Provider App Routes - Example for Plumber */}
-      <Route
-        path="/plumber-app"
-        element={
-          <ProtectedServiceProviderRoute>
-            <ServicesApp serviceType="plumber" />
-          </ProtectedServiceProviderRoute>
-        }
-      />
-
-        {/* Service Provider Hub - Protected Route */}
-        <Route 
-          path="/service-provider-hub" 
-          element={
-            <ProtectedServiceHubRoute>
-              <ServiceProviderHub />
-            </ProtectedServiceHubRoute>
-          } 
-        />
-        
-        {/* Service Provider Dashboard - Protected Route */}
-        <Route 
-          path="/services-app" 
-          element={
-            <ProtectedServiceProviderRoute>
-              <ServiceProviderDashboard />
-            </ProtectedServiceProviderRoute>
-          } 
-        />
+      {/* Fallback route */}
+      <Route path="*" element={
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Welcome to Sokko Sasa</h1>
+            <p className="text-gray-600">Please navigate to the service provider hub to get started.</p>
+          </div>
+        </div>
+      } />
     </Routes>
   );
 };
