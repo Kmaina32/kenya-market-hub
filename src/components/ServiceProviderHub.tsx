@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -134,7 +135,7 @@ const ServiceProviderHub = () => {
       profile: null,
       applicationStatus: medicalApplication?.status,
       color: 'red',
-      dashboardPath: '/medical-provider-dashboard',
+      dashboardPath: '/medical-provider',
       registrationPath: '/medical-provider-registration'
     }
   ];
@@ -236,33 +237,16 @@ const ServiceProviderHub = () => {
         <Button asChild variant="outline" className="w-full border-red-200 text-red-600 hover:bg-red-50">
           <Link to={service.registrationPath}>
             <span>Reapply Now</span>
-            <ArrowRight className="w-4 w-4 ml-2" />
+            <ArrowRight className="w-4 h-4 ml-2" />
           </Link>
         </Button>
       );
     }
 
-    // Not registered or no status - Fix the registration paths
-    const getRegistrationPath = (serviceId: string) => {
-      switch (serviceId) {
-        case 'vendor':
-          return '/vendor-registration';
-        case 'driver':
-          return '/driver-registration';
-        case 'property_owner':
-          return '/property-owner-registration';
-        case 'service_provider':
-          return '/service-provider-registration?type=service_provider';
-        case 'medical_provider':
-          return '/medical-provider-registration';
-        default:
-          return service.registrationPath;
-      }
-    };
-
+    // Not registered or no status
     return (
       <Button asChild variant="outline" className="w-full">
-        <Link to={getRegistrationPath(service.id)}>
+        <Link to={service.registrationPath}>
           <span>Apply Now</span>
           <ArrowRight className="w-4 h-4 ml-2" />
         </Link>
