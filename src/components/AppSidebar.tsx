@@ -26,7 +26,8 @@ import {
   UtensilsCrossed,
   Calendar,
   MessageCircle,
-  Settings
+  Settings,
+  Cog
 } from 'lucide-react';
 
 const AppSidebar = () => {
@@ -55,7 +56,8 @@ const AppSidebar = () => {
     { icon: Building, label: 'Real Estate', path: '/real-estate' },
     { icon: Stethoscope, label: 'Medical', path: '/medical' },
     { icon: Briefcase, label: 'Jobs', path: '/jobs' },
-    { icon: Shield, label: 'Insurance', path: '/insurance' }
+    { icon: Shield, label: 'Insurance', path: '/insurance' },
+    { icon: Cog, label: 'Service Hub', path: '/service-provider-hub' }
   ];
 
   const userItems = [
