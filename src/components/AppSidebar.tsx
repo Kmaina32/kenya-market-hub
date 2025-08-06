@@ -51,13 +51,13 @@ const AppSidebar = () => {
   ];
 
     const servicesItems = [
-      { icon: Car, label: 'Rides', path: '/rides' },
-      { icon: Wrench, label: 'Services', path: '/service-hub' },
-      { icon: Building, label: 'Real Estate', path: '/real-estate' },
-      { icon: Stethoscope, label: 'Medical', path: '/medical' },
-      { icon: Briefcase, label: 'Jobs', path: '/jobs' },
-      { icon: Shield, label: 'Insurance', path: '/insurance' },
-      { icon: Cog, label: 'Service Hub', path: '/service-hub' }
+      { key: 'rides', icon: Car, label: 'Rides', path: '/rides' },
+      { key: 'services', icon: Wrench, label: 'Services', path: '/service-hub' },
+      { key: 'real-estate', icon: Building, label: 'Real Estate', path: '/real-estate' },
+      { key: 'medical', icon: Stethoscope, label: 'Medical', path: '/medical' },
+      { key: 'jobs', icon: Briefcase, label: 'Jobs', path: '/jobs' },
+      { key: 'insurance', icon: Shield, label: 'Insurance', path: '/insurance' },
+      { key: 'service-hub', icon: Cog, label: 'Service Hub', path: '/service-hub' }
     ];
 
   const userItems = [
