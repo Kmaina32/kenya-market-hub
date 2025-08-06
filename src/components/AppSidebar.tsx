@@ -50,15 +50,15 @@ const AppSidebar = () => {
     { icon: MessageCircle, label: 'Sokko Chat', path: '/chat-forums' }
   ];
 
-  const servicesItems = [
-    { icon: Car, label: 'Rides', path: '/rides' },
-    { icon: Wrench, label: 'Services', path: '/services' },
-    { icon: Building, label: 'Real Estate', path: '/real-estate' },
-    { icon: Stethoscope, label: 'Medical', path: '/medical' },
-    { icon: Briefcase, label: 'Jobs', path: '/jobs' },
-    { icon: Shield, label: 'Insurance', path: '/insurance' },
-    { icon: Cog, label: 'Service Hub', path: '/service-hub' }
-  ];
+    const servicesItems = [
+      { icon: Car, label: 'Rides', path: '/rides' },
+      { icon: Wrench, label: 'Services', path: '/service-hub' },
+      { icon: Building, label: 'Real Estate', path: '/real-estate' },
+      { icon: Stethoscope, label: 'Medical', path: '/medical' },
+      { icon: Briefcase, label: 'Jobs', path: '/jobs' },
+      { icon: Shield, label: 'Insurance', path: '/insurance' },
+      { icon: Cog, label: 'Service Hub', path: '/service-hub' }
+    ];
 
   const userItems = [
     { icon: Heart, label: 'Wishlist', path: '/wishlist' },

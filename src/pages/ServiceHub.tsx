@@ -301,7 +301,7 @@ const ServiceHub = () => {
       navigate('/auth');
       return;
     }
-    navigate(`/service-provider-registration?category=${categoryId}`);
+    navigate(`/service-provider-registration?type=${categoryId}`);
   };
 
   const handleAccessDashboard = (categoryId: string) => {
