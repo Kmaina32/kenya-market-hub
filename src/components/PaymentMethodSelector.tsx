@@ -6,7 +6,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { CreditCard, Smartphone, DollarSign, Loader2 } from 'lucide-react';
 import MpesaPayment from '@/components/MpesaPayment';
-import { PaymentData } from '@/hooks/usePayments';
+import { PaymentData, usePayPalPayment } from '@/hooks/usePayments';
 
 export interface PaymentMethodSelectorProps {
   paymentData: PaymentData;
@@ -23,6 +23,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
 }) => {
   const [selectedMethod, setSelectedMethod] = useState<'mpesa' | 'paypal' | 'stripe'>('mpesa');
   const [isProcessing, setIsProcessing] = useState(false);
+  const paypalPayment = usePayPalPayment();
 
   const handleMpesaSuccess = (transactionId: string) => {
     onPaymentSuccess({ transactionId, paymentMethod: 'mpesa' });
@@ -32,7 +33,28 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
     console.error('M-Pesa payment error:', error);
   };
 
+  const handlePayPalPayment = async () => {
+    setIsProcessing(true);
+    try {
+      await paypalPayment.mutateAsync(paymentData);
+      // PayPal will handle the redirect, we'll handle success on return
+      onPaymentSuccess({ 
+        transactionId: `PAYPAL_${Date.now()}`, 
+        paymentMethod: 'paypal' 
+      });
+    } catch (error) {
+      console.error('PayPal payment error:', error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleOtherPayment = async () => {
+    if (selectedMethod === 'paypal') {
+      await handlePayPalPayment();
+      return;
+    }
+    
     setIsProcessing(true);
     
     // Simulate other payment methods
@@ -76,12 +98,12 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
             </Label>
           </div>
 
-          <div className="flex items-center space-x-2 p-3 border rounded-lg opacity-60">
-            <RadioGroupItem value="paypal" id="paypal" disabled />
+          <div className="flex items-center space-x-2 p-3 border rounded-lg">
+            <RadioGroupItem value="paypal" id="paypal" />
             <Label htmlFor="paypal" className="flex items-center gap-2 cursor-pointer flex-1">
               <DollarSign className="h-4 w-4 text-blue-600" />
               <div>
-                <div className="font-medium">PayPal (Coming Soon)</div>
+                <div className="font-medium">PayPal</div>
                 <div className="text-sm text-gray-600">Pay with PayPal account</div>
               </div>
             </Label>

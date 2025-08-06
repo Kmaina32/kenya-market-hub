@@ -58,13 +58,35 @@ export const usePayPalPayment = () => {
 
   return useMutation({
     mutationFn: async (paymentData: PaymentData) => {
-      // Simulate PayPal payment
-      return { approvalUrl: '#' };
+      const { data, error } = await supabase.functions.invoke('paypal-payment', {
+        body: {
+          amount: paymentData.amount,
+          currency: paymentData.currency,
+          orderId: paymentData.orderId,
+          description: paymentData.description,
+          returnUrl: `${window.location.origin}/payment-success`,
+          cancelUrl: `${window.location.origin}/payment-cancel`,
+        }
+      });
+
+      if (error) throw error;
+      if (!data.success) throw new Error(data.error || 'PayPal payment failed');
+      
+      return data;
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Redirecting to PayPal",
+        description: "You will be redirected to complete your payment.",
+      });
+      
+      // Redirect to PayPal approval URL
+      window.open(data.approvalUrl, '_blank');
     },
     onError: (error: any) => {
       toast({
         title: "PayPal Payment Failed",
-        description: error.message,
+        description: error.message || "Failed to initiate PayPal payment",
         variant: "destructive",
       });
     },
