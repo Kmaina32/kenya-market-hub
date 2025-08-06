@@ -57,7 +57,7 @@ const AppSidebar = () => {
     { icon: Stethoscope, label: 'Medical', path: '/medical' },
     { icon: Briefcase, label: 'Jobs', path: '/jobs' },
     { icon: Shield, label: 'Insurance', path: '/insurance' },
-    { icon: Cog, label: 'Service Hub', path: '/service-provider-hub' }
+    { icon: Cog, label: 'Service Hub', path: '/service-hub' }
   ];
 
   const userItems = [
