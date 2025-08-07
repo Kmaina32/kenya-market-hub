@@ -64,8 +64,8 @@ export const usePayPalPayment = () => {
           currency: paymentData.currency,
           orderId: paymentData.orderId,
           description: paymentData.description,
-          returnUrl: `${window.location.origin}/payment-success`,
-          cancelUrl: `${window.location.origin}/payment-cancel`,
+          returnUrl: `${window.location.origin}/payment/success`,
+          cancelUrl: `${window.location.origin}/payment/cancel`,
         }
       });
 
@@ -74,14 +74,8 @@ export const usePayPalPayment = () => {
       
       return data;
     },
-    onSuccess: (data) => {
-      toast({
-        title: "Redirecting to PayPal",
-        description: "You will be redirected to complete your payment.",
-      });
-      
-      // Redirect to PayPal approval URL
-      window.open(data.approvalUrl, '_blank');
+    onSuccess: () => {
+      // Let caller handle redirect UX
     },
     onError: (error: any) => {
       toast({

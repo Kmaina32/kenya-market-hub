@@ -36,12 +36,12 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   const handlePayPalPayment = async () => {
     setIsProcessing(true);
     try {
-      await paypalPayment.mutateAsync(paymentData);
-      // PayPal will handle the redirect, we'll handle success on return
-      onPaymentSuccess({ 
-        transactionId: `PAYPAL_${Date.now()}`, 
-        paymentMethod: 'paypal' 
-      });
+      const result: any = await paypalPayment.mutateAsync(paymentData);
+      // Persist pending payment data so success page can complete the order
+      sessionStorage.setItem('pendingPayment', JSON.stringify(paymentData));
+      // Redirect in the same tab to maintain app state on return
+      window.location.href = result.approvalUrl;
+      return; // Do not call onPaymentSuccess here; complete after redirect
     } catch (error) {
       console.error('PayPal payment error:', error);
     } finally {

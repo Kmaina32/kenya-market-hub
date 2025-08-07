@@ -186,7 +186,7 @@ const Checkout = () => {
   const paymentData: PaymentData = useMemo(() => ({
     orderId: isEventBooking ? eventBookingData.orderId : uuidv4(),
     amount: totalAmount,
-    currency: 'KSh',
+    currency: 'KES',
     description: isEventBooking 
       ? `Event Tickets: ${eventBookingData.eventData.eventTitle} - ${eventBookingData.eventData.tickets} ticket(s)`
       : `Order from Kenya Market Hub - Total: KSh ${totalAmount.toLocaleString()}`,

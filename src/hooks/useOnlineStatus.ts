@@ -30,10 +30,8 @@ export const useOnlineStatus = () => {
           updated_at: new Date().toISOString()
         };
         
-        // Update online status - update all profiles since we can't check if columns exist
-        if (status === 'online') {
-          updates.city = user.user_metadata?.city || null; // Safe update
-        }
+        // No-op: we only update the timestamp to infer online status
+
 
         await supabase
           .from('profiles')
