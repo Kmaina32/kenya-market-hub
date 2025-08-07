@@ -15,9 +15,9 @@ import Shop from "./pages/Shop";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
-import Orders from "./pages/Orders";
+
 import Profile from "./pages/Profile";
-import VendorRegistration from "./pages/VendorRegistration";
+
 import VendorDashboard from "./pages/VendorDashboard";
 import ServiceHub from "./pages/ServiceHub";
 import ServiceProviderRegistration from "./pages/ServiceProviderRegistration";
@@ -61,7 +61,7 @@ function App() {
                   <Route path="/product/:id" element={<ProductDetail />} />
                   <Route path="/cart" element={<Cart />} />
                   <Route path="/checkout" element={<Checkout />} />
-                  <Route path="/orders" element={<Orders />} />
+                  
                   <Route path="/profile" element={<Profile />} />
                   
                   {/* Service Provider routes */}
@@ -71,7 +71,7 @@ function App() {
                   <Route path="/service-provider-hub" element={<ServiceProviderHub />} />
                   
                   {/* Vendor routes */}
-                  <Route path="/vendor-registration" element={<VendorRegistration />} />
+                  
                   <Route path="/vendor-dashboard" element={<VendorDashboard />} />
                   <Route path="/vendor" element={<VendorDashboard />} />
                   

@@ -96,22 +96,25 @@ const ServiceProviderRegistration = () => {
 
   const submitApplication = useMutation({
     mutationFn: async (data: FormData) => {
-      const { error } = await supabase
-        .from('service_provider_applications')
-        .insert({
-          user_id: user!.id,
-          category: data.category,
-          business_name: data.businessName,
-          business_description: data.businessDescription,
-          business_address: data.businessAddress,
-          business_phone: data.businessPhone,
-          business_email: data.businessEmail,
-          license_number: data.licenseNumber || null,
-          experience_years: data.experienceYears || null,
-          specialization: data.specialization || null,
-          service_areas: data.serviceAreas.length > 0 ? data.serviceAreas : null,
-          documents: data.documents.length > 0 ? data.documents : null
-        });
+      // Use a loose cast to avoid TS coupling to generated types while we finalize DB typings
+      const { error } = await (supabase as any)
+        .from('service_provider_applications' as any)
+        .insert([
+          {
+            user_id: user!.id,
+            service_type: data.category, // map UI category to DB column
+            business_name: data.businessName,
+            business_description: data.businessDescription || null,
+            business_address: data.businessAddress || null,
+            business_phone: data.businessPhone,
+            business_email: data.businessEmail,
+            license_number: data.licenseNumber || null,
+            experience_years: data.experienceYears || null,
+            specialization: data.specialization || null,
+            service_areas: data.serviceAreas && data.serviceAreas.length > 0 ? data.serviceAreas : null,
+            documents: data.documents && data.documents.length > 0 ? data.documents : null
+          }
+        ]);
 
       if (error) throw error;
     },

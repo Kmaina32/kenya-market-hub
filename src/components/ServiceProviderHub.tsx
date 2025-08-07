@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { useMyVendorProfile } from '@/hooks/useVendors';
 import { useAllServiceProviderProfiles } from '@/hooks/useServiceProviders';
-import { useMyServiceProviderApplication } from '@/hooks/useServiceProviderApplications';
+import { useMyServiceProviderApplications } from '@/hooks/useServiceProviderApplications';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,7 +27,7 @@ const ServiceProviderHub = () => {
   const { user } = useAuth();
   const { data: vendorProfile } = useMyVendorProfile();
   const { data: allProfiles } = useAllServiceProviderProfiles();
-  const { data: myServiceProviderApp } = useMyServiceProviderApplication();
+  const { data: myServiceProviderApps = [] } = useMyServiceProviderApplications();
 
   // Get driver application status
   const { data: driverApplication } = useQuery({
@@ -74,26 +74,27 @@ const ServiceProviderHub = () => {
     return allProfiles?.find(profile => profile.provider_type === type);
   };
 
-  // Get application status for service provider
-  const getServiceProviderStatus = () => {
-    const profile = getProfileByType('service_provider');
-    if (profile?.verification_status === 'approved') return 'approved';
-    if (myServiceProviderApp?.status) return myServiceProviderApp.status;
-    return null;
-  };
+// Get application status for service provider
+const getServiceProviderStatus = () => {
+  const profile = getProfileByType('service_provider');
+  if (profile?.verification_status === 'approved') return 'approved';
+  const app = myServiceProviderApps.find((a: any) => a.service_type === 'service_provider');
+  if (app?.status) return app.status;
+  return null;
+};
 
   const serviceTypes = [
-    {
-      id: 'vendor',
-      title: 'Product Vendor',
-      icon: ShoppingBag,
-      description: 'Sell products on our marketplace',
-      profile: vendorProfile,
-      applicationStatus: null, // Vendors use different system
-      color: 'orange',
-      dashboardPath: '/vendor',
-      registrationPath: '/vendor-registration'
-    },
+{
+  id: 'vendor',
+  title: 'Product Vendor',
+  icon: ShoppingBag,
+  description: 'Sell products on our marketplace',
+  profile: vendorProfile,
+  applicationStatus: null, // Vendors use different system
+  color: 'orange',
+  dashboardPath: '/vendor',
+  registrationPath: '/service-provider-registration?category=vendor'
+},
     {
       id: 'driver',
       title: 'Ride Driver',
@@ -116,17 +117,17 @@ const ServiceProviderHub = () => {
       dashboardPath: '/property-owner',
       registrationPath: '/property-owner-registration'
     },
-    {
-      id: 'service_provider',
-      title: 'Service Provider',
-      icon: Wrench,
-      description: 'Offer professional services',
-      profile: getProfileByType('service_provider'),
-      applicationStatus: getServiceProviderStatus(),
-      color: 'green',
-      dashboardPath: '/services-app',
-      registrationPath: '/service-provider-registration?type=service_provider'
-    },
+{
+  id: 'service_provider',
+  title: 'Service Provider',
+  icon: Wrench,
+  description: 'Offer professional services',
+  profile: getProfileByType('service_provider'),
+  applicationStatus: getServiceProviderStatus(),
+  color: 'green',
+  dashboardPath: '/services-app',
+  registrationPath: '/service-provider-registration?category=service_provider'
+},
     {
       id: 'medical_provider',
       title: 'Medical Provider',

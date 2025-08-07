@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 export interface ServiceProviderApplication {
   id: string;
   user_id: string;
-  category: string;
+  service_type: string;
   business_name: string;
   business_description?: string;
   business_address?: string;
@@ -39,15 +39,7 @@ export const useServiceProviderApplications = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('service_provider_applications')
-        .select(`
-          *,
-          user:user_id (
-            email,
-            profiles (
-              full_name
-            )
-          )
-        `)
+        .select('*')
         .order('submitted_at', { ascending: false });
 
       if (error) throw error;
@@ -88,7 +80,7 @@ export const useServiceProviderApplicationsByCategory = (category: string) => {
             )
           )
         `)
-        .eq('category', category)
+        .eq('service_type', category)
         .order('submitted_at', { ascending: false });
 
       if (error) throw error;
@@ -164,29 +156,64 @@ export const useRejectServiceProviderApplication = () => {
   });
 };
 
-// Get application statistics
-export const useServiceProviderApplicationStats = () => {
-  return useQuery({
-    queryKey: ['service-provider-application-stats'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('service_provider_applications')
-        .select('status, category');
+// Create application
+export const useCreateServiceProviderApplication = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
+  return useMutation({
+    mutationFn: async (payload: {
+      service_type: string;
+      business_name: string;
+      business_description?: string;
+      business_address?: string;
+      business_phone: string;
+      business_email: string;
+      license_number?: string | null;
+      experience_years?: number | null;
+      specialization?: string | null;
+      service_areas?: string[] | null;
+      documents?: any;
+    }) => {
+      const { error } = await (supabase as any)
+        .from('service_provider_applications' as any)
+        .insert([{ ...payload }]);
       if (error) throw error;
-
-      const stats = {
-        total: data.length,
-        pending: data.filter(app => app.status === 'pending').length,
-        approved: data.filter(app => app.status === 'approved').length,
-        rejected: data.filter(app => app.status === 'rejected').length,
-        byCategory: data.reduce((acc: any, app) => {
-          acc[app.category] = (acc[app.category] || 0) + 1;
-          return acc;
-        }, {})
-      };
-
-      return stats;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-service-provider-applications'] });
+      queryClient.invalidateQueries({ queryKey: ['service-provider-applications'] });
+      toast({ title: 'Application Submitted', description: 'Your application is under review.' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Submission Failed', description: error.message, variant: 'destructive' });
     }
   });
+};
+
+// Get application statistics
+export const useServiceProviderApplicationStats = () => {
+return useQuery({
+  queryKey: ['service-provider-application-stats'],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from('service_provider_applications')
+      .select('status, service_type');
+
+    if (error) throw error;
+
+    const stats = {
+      total: data.length,
+      pending: data.filter((app: any) => app.status === 'pending').length,
+      approved: data.filter((app: any) => app.status === 'approved').length,
+      rejected: data.filter((app: any) => app.status === 'rejected').length,
+      byCategory: (data as any[]).reduce((acc: any, app: any) => {
+        acc[app.service_type] = (acc[app.service_type] || 0) + 1;
+        return acc;
+      }, {})
+    };
+
+    return stats;
+  }
+});
 };
