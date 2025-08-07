@@ -25,6 +25,15 @@ import ServicesApp from "./pages/ServicesApp";
 import ServiceProviderHub from "./pages/ServiceProviderHub";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
+import Events from "./pages/Events";
+import FoodDelivery from "./pages/FoodDelivery";
+import ChatForums from "./pages/ChatForums";
+import Rides from "./pages/Rides";
+import RealEstate from "./pages/RealEstate";
+import Medical from "./pages/Medical";
+import Jobs from "./pages/Jobs";
+import Insurance from "./pages/Insurance";
+import Wishlist from "./pages/Wishlist";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -63,6 +72,15 @@ function App() {
                   <Route path="/checkout" element={<Checkout />} />
                   
                   <Route path="/profile" element={<Profile />} />
+                  <Route path="/events" element={<Events />} />
+                  <Route path="/food" element={<FoodDelivery />} />
+                  <Route path="/chat-forums" element={<ChatForums />} />
+                  <Route path="/rides" element={<Rides />} />
+                  <Route path="/real-estate" element={<RealEstate />} />
+                  <Route path="/medical" element={<Medical />} />
+                  <Route path="/jobs" element={<Jobs />} />
+                  <Route path="/insurance" element={<Insurance />} />
+                  <Route path="/wishlist" element={<Wishlist />} />
                   
                   {/* Service Provider routes */}
                   <Route path="/service-hub" element={<ServiceHub />} />

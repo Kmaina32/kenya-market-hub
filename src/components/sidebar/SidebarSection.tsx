@@ -34,7 +34,7 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({ title, items, isActive 
       <SidebarGroupContent>
         <SidebarMenu>
           {items.map((item) => (
-            <SidebarMenuItem key={item.path}>
+            <SidebarMenuItem key={`${item.path}-${item.label}`}>
               <SidebarMenuButton
                 onClick={() => handleNavigation(item.path)}
                 isActive={isActive ? isActive(item.path) : defaultIsActive(item.path)}
