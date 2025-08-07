@@ -65,7 +65,7 @@ export const useEnhancedAuth = () => {
     if (!user) return false;
 
     try {
-      const { data, error } = await supabase.rpc('is_admin', { check_user_id: user.id });
+      const { data, error } = await supabase.rpc('is_admin_user', { check_user_id: user.id });
 
       if (error) {
         console.error('Admin check failed:', error);

@@ -35,7 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Check if user has admin role (use RPC to avoid RLS issues)
   const checkAdminStatus = async (_userId: string) => {
     try {
-      const { data, error } = await supabase.rpc('is_admin');
+      const { data, error } = await supabase.rpc('is_admin_user', { check_user_id: _userId });
       if (error) {
         console.error('Admin check failed:', error);
         return false;
