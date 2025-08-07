@@ -64,7 +64,7 @@ const AdminServiceProviderApplications = () => {
      app.business_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
      app.user?.email?.toLowerCase().includes(searchTerm.toLowerCase())) &&
     (selectedStatus ? app.status === selectedStatus : true) &&
-    (selectedCategory ? app.category === selectedCategory : true)
+    (selectedCategory ? app.service_type === selectedCategory : true)
   );
 
   const handleApprove = (applicationId: string) => {
@@ -255,7 +255,7 @@ const AdminServiceProviderApplications = () => {
                         </h3>
                         {getStatusBadge(application.status)}
                         <Badge variant="outline">
-                          {getCategoryDisplayName(application.category)}
+                          {getCategoryDisplayName(application.service_type)}
                         </Badge>
                       </div>
                       
@@ -378,7 +378,7 @@ const AdminServiceProviderApplications = () => {
                                   </div>
                                   <div>
                                     <label className="text-sm font-medium text-gray-700">Category:</label>
-                                    <p className="text-sm">{getCategoryDisplayName(application.category)}</p>
+                                    <p className="text-sm">{getCategoryDisplayName(application.service_type)}</p>
                                   </div>
                                   <div>
                                     <label className="text-sm font-medium text-gray-700">Email:</label>

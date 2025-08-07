@@ -84,7 +84,7 @@ export const useServiceProviderApplicationsByCategory = (category: string) => {
         .order('submitted_at', { ascending: false });
 
       if (error) throw error;
-      return data as ServiceProviderApplication[];
+      return data as unknown as ServiceProviderApplication[];
     },
     enabled: !!category
   });
