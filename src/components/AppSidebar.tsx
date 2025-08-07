@@ -52,7 +52,7 @@ const AppSidebar = () => {
 
     const servicesItems = [
       { key: 'rides', icon: Car, label: 'Rides', path: '/rides' },
-      { key: 'services', icon: Wrench, label: 'Services', path: '/service-hub' },
+      { key: 'services', icon: Wrench, label: 'Services', path: '/services' },
       { key: 'real-estate', icon: Building, label: 'Real Estate', path: '/real-estate' },
       { key: 'medical', icon: Stethoscope, label: 'Medical', path: '/medical' },
       { key: 'jobs', icon: Briefcase, label: 'Jobs', path: '/jobs' },

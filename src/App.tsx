@@ -34,6 +34,7 @@ import Medical from "./pages/Medical";
 import Jobs from "./pages/Jobs";
 import Insurance from "./pages/Insurance";
 import Wishlist from "./pages/Wishlist";
+import Services from "./pages/Services";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -72,6 +73,7 @@ function App() {
                   <Route path="/checkout" element={<Checkout />} />
                   
                   <Route path="/profile" element={<Profile />} />
+                  <Route path="/services" element={<Services />} />
                   <Route path="/events" element={<Events />} />
                   <Route path="/food" element={<FoodDelivery />} />
                   <Route path="/chat-forums" element={<ChatForums />} />
