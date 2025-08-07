@@ -1,154 +1,98 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
 import { CartProvider } from "./contexts/CartContext";
-import ErrorBoundary from "./components/ErrorBoundary";
-import PerformanceMonitor from "./components/PerformanceMonitor";
+import { AuthProvider } from "./contexts/AuthContext";
+import { HelmetProvider } from 'react-helmet-async';
 
-// Import pages
+// Page imports
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import Profile from "./pages/Profile";
-import Products from "./pages/Products";
 import Shop from "./pages/Shop";
+import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
-import RealEstate from "./pages/RealEstate";
-import PropertyDetail from "./pages/PropertyDetail";
-import Services from "./pages/Services";
-import Rides from "./pages/Rides";
-import FoodDelivery from "./pages/FoodDelivery";
-import Insurance from "./pages/Insurance";
-import Medical from "./pages/Medical";
-import Jobs from "./pages/Jobs";
-import JobDetail from "./pages/JobDetail";
-import Events from "./pages/Events";
-import ChatForums from "./pages/ChatForums";
-import Wishlist from "./pages/Wishlist";
-import NotFound from "./pages/NotFound";
-import EmailConfirmation from "./pages/EmailConfirmation";
-import ResetPassword from "./pages/ResetPassword";
-import TermsAndConditions from "./pages/TermsAndConditions";
-import ProductDetail from "./pages/ProductDetail";
+import Orders from "./pages/Orders";
+import Profile from "./pages/Profile";
+import VendorRegistration from "./pages/VendorRegistration";
+import VendorDashboard from "./pages/VendorDashboard";
+import ServiceHub from "./pages/ServiceHub";
+import ServiceProviderRegistration from "./pages/ServiceProviderRegistration";
+import ServicesApp from "./pages/ServicesApp";
+import ServiceProviderHub from "./pages/ServiceProviderHub";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentCancel from "./pages/PaymentCancel";
 
 // Admin pages
-import AdminLogin from "./pages/AdminLogin";
-import AdminDashboard from "./pages/AdminDashboard";
-import NewAdminDashboard from "./pages/NewAdminDashboard";
-import AdminApp from "./pages/AdminApp";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminVendors from "./pages/admin/AdminVendors";
+import AdminProducts from "./pages/admin/AdminProducts";
+import AdminOrders from "./pages/admin/AdminOrders";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminServiceProviderApplications from "./pages/admin/AdminServiceProviderApplications";
 
-// Service provider pages
-import ServiceHub from "./pages/ServiceHub";
-import ServiceHubUnified from "./pages/ServiceHubUnified";
-import ServiceProviderHub from "./pages/ServiceProviderHub";
-import ServiceProviderRegistrationPage from "./pages/ServiceProviderRegistrationPage";
-
-// App-specific pages
-import VendorApp from "./pages/VendorApp";
-import VendorDashboard from "./pages/VendorDashboard";
-import VendorAnalyticsPage from "./pages/VendorAnalyticsPage";
-import DriverApp from "./pages/DriverApp";
-import PropertyOwnerApp from "./pages/PropertyOwnerApp";
-import ServicesApp from "./pages/ServicesApp";
-import ServicesDashboard from "./pages/ServicesDashboard";
-
-// Create a query client with better error handling
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: (failureCount, error: unknown) => {
-        if (
-          typeof error === 'object' &&
-          error !== null &&
-          'response' in error &&
-          typeof (error as { response: unknown }).response === 'object' &&
-          (error as { response: { status?: number } }).response !== null &&
-          'status' in (error as { response: { status: number } }).response
-        ) {
-          const status = (error as { response: { status: number } }).response.status;
-          if (status >= 400 && status < 500) {
-            return false;
-          }
-        }
-        return failureCount < 2;
-      },
-      staleTime: 5 * 60 * 1000,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1,
     },
   },
 });
 
 function App() {
   return (
-    <ErrorBoundary>
+    <HelmetProvider>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <CartProvider>
-            <TooltipProvider>
-              <BrowserRouter
-                future={{
-                  v7_startTransition: true,
-                  v7_relativeSplatPath: true,
-                }}
-              >
-                <div className="min-h-screen bg-background font-sans antialiased">
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/auth" element={<Auth />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/products" element={<Products />} />
-                    <Route path="/shop" element={<Shop />} />
-                    <Route path="/cart" element={<Cart />} />
-                    <Route path="/checkout" element={<Checkout />} />
-                    <Route path="/real-estate" element={<RealEstate />} />
-                    <Route path="/property/:id" element={<PropertyDetail />} />
-                    <Route path="/product/:id" element={<ProductDetail />} />
-                    <Route path="/services" element={<Services />} />
-                    <Route path="/rides" element={<Rides />} />
-                    <Route path="/food-delivery" element={<FoodDelivery />} />
-                    <Route path="/food" element={<FoodDelivery />} />
-                    <Route path="/insurance" element={<Insurance />} />
-                    <Route path="/medical" element={<Medical />} />
-                    <Route path="/jobs" element={<Jobs />} />
-                    <Route path="/job/:id" element={<JobDetail />} />
-                    <Route path="/events" element={<Events />} />
-                    <Route path="/chat-forums" element={<ChatForums />} />
-                    <Route path="/wishlist" element={<Wishlist />} />
-                    <Route path="/email-confirmation" element={<EmailConfirmation />} />
-                    <Route path="/reset-password" element={<ResetPassword />} />
-                    <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
-
-                    <Route path="/admin-login" element={<AdminLogin />} />
-                    <Route path="/admin/*" element={<AdminApp />} />
-                    <Route path="/new-admin/*" element={<NewAdminDashboard />} />
-
-                    <Route path="/service-hub" element={<ServiceHub />} />
-                    <Route path="/service-hub-unified" element={<ServiceHubUnified />} />
-                    <Route path="/service-provider-hub" element={<ServiceProviderHub />} />
-                    <Route path="/service-provider-registration" element={<ServiceProviderRegistrationPage />} />
-
-                    <Route path="/vendor/*" element={<VendorApp />} />
-                    <Route path="/vendor-dashboard" element={<VendorDashboard />} />
-                    <Route path="/vendor-analytics" element={<VendorAnalyticsPage />} />
-                    <Route path="/driver-app/*" element={<DriverApp />} />
-                    <Route path="/property-owner/*" element={<PropertyOwnerApp />} />
-                    <Route path="/services-app/*" element={<ServicesApp />} />
-                    <Route path="/services-dashboard" element={<ServicesDashboard />} />
-
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </div>
-                <Toaster />
-                <Sonner />
-                <PerformanceMonitor />
+        <TooltipProvider>
+          <AuthProvider>
+            <CartProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  {/* Public routes */}
+                  <Route path="/" element={<Index />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/shop" element={<Shop />} />
+                  <Route path="/product/:id" element={<ProductDetail />} />
+                  <Route path="/cart" element={<Cart />} />
+                  <Route path="/checkout" element={<Checkout />} />
+                  <Route path="/orders" element={<Orders />} />
+                  <Route path="/profile" element={<Profile />} />
+                  
+                  {/* Service Provider routes */}
+                  <Route path="/service-hub" element={<ServiceHub />} />
+                  <Route path="/service-provider-registration" element={<ServiceProviderRegistration />} />
+                  <Route path="/services-app" element={<ServicesApp />} />
+                  <Route path="/service-provider-hub" element={<ServiceProviderHub />} />
+                  
+                  {/* Vendor routes */}
+                  <Route path="/vendor-registration" element={<VendorRegistration />} />
+                  <Route path="/vendor-dashboard" element={<VendorDashboard />} />
+                  <Route path="/vendor" element={<VendorDashboard />} />
+                  
+                  {/* Payment routes */}
+                  <Route path="/payment/success" element={<PaymentSuccess />} />
+                  <Route path="/payment/cancel" element={<PaymentCancel />} />
+                  
+                  {/* Admin routes */}
+                  <Route path="/admin" element={<AdminDashboard />} />
+                  <Route path="/admin/vendors" element={<AdminVendors />} />
+                  <Route path="/admin/products" element={<AdminProducts />} />
+                  <Route path="/admin/orders" element={<AdminOrders />} />
+                  <Route path="/admin/users" element={<AdminUsers />} />
+                  <Route path="/admin/service-applications" element={<AdminServiceProviderApplications />} />
+                </Routes>
               </BrowserRouter>
-            </TooltipProvider>
-          </CartProvider>
-        </AuthProvider>
+            </CartProvider>
+          </AuthProvider>
+        </TooltipProvider>
       </QueryClientProvider>
-    </ErrorBoundary>
+    </HelmetProvider>
   );
 }
 

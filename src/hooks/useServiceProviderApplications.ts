@@ -1,34 +1,65 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 export interface ServiceProviderApplication {
   id: string;
   user_id: string;
-  service_type: string;
+  category: string;
   business_name: string;
-  business_description: string;
-  business_address: string;
+  business_description?: string;
+  business_address?: string;
   business_phone: string;
   business_email: string;
   license_number?: string;
   experience_years?: number;
+  specialization?: string;
   service_areas?: string[];
   documents?: any;
-  status: 'pending' | 'approved' | 'rejected' | 'suspended';
+  status: 'pending' | 'approved' | 'rejected';
+  admin_notes?: string;
   submitted_at: string;
   reviewed_at?: string;
   reviewed_by?: string;
-  admin_notes?: string;
   created_at: string;
   updated_at: string;
+  user?: {
+    email: string;
+    profiles?: {
+      full_name?: string;
+    };
+  };
 }
 
+// Get all applications (admin only)
 export const useServiceProviderApplications = () => {
   return useQuery({
     queryKey: ['service-provider-applications'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('service_provider_applications')
+        .select(`
+          *,
+          user:user_id (
+            email,
+            profiles (
+              full_name
+            )
+          )
+        `)
+        .order('submitted_at', { ascending: false });
+
+      if (error) throw error;
+      return data as ServiceProviderApplication[];
+    }
+  });
+};
+
+// Get user's own applications
+export const useMyServiceProviderApplications = () => {
+  return useQuery({
+    queryKey: ['my-service-provider-applications'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('service_provider_applications')
@@ -41,71 +72,33 @@ export const useServiceProviderApplications = () => {
   });
 };
 
-export const useMyServiceProviderApplication = () => {
-  const { user } = useAuth();
-  
+// Get applications by category
+export const useServiceProviderApplicationsByCategory = (category: string) => {
   return useQuery({
-    queryKey: ['my-service-provider-application', user?.id],
+    queryKey: ['service-provider-applications', category],
     queryFn: async () => {
-      if (!user) return null;
-
       const { data, error } = await supabase
         .from('service_provider_applications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('submitted_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .select(`
+          *,
+          user:user_id (
+            email,
+            profiles (
+              full_name
+            )
+          )
+        `)
+        .eq('category', category)
+        .order('submitted_at', { ascending: false });
 
       if (error) throw error;
-      return data as ServiceProviderApplication | null;
+      return data as ServiceProviderApplication[];
     },
-    enabled: !!user
+    enabled: !!category
   });
 };
 
-export const useCreateServiceProviderApplication = () => {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-  const { user } = useAuth();
-
-  return useMutation({
-    mutationFn: async (applicationData: Omit<ServiceProviderApplication, 'id' | 'user_id' | 'status' | 'submitted_at' | 'reviewed_at' | 'reviewed_by' | 'admin_notes' | 'created_at' | 'updated_at'>) => {
-      if (!user) throw new Error('User not authenticated');
-
-      const { data, error } = await supabase
-        .from('service_provider_applications')
-        .insert({
-          ...applicationData,
-          user_id: user.id,
-          status: 'pending',
-          submitted_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['service-provider-applications'] });
-      queryClient.invalidateQueries({ queryKey: ['my-service-provider-application'] });
-      queryClient.invalidateQueries({ queryKey: ['all-service-provider-profiles'] });
-      toast({
-        title: 'Application Submitted Successfully!',
-        description: 'Your service provider application has been submitted for review.',
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to submit application',
-        variant: 'destructive',
-      });
-    },
-  });
-};
-
+// Approve application
 export const useApproveServiceProviderApplication = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -122,10 +115,11 @@ export const useApproveServiceProviderApplication = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-provider-applications'] });
       queryClient.invalidateQueries({ queryKey: ['service-providers'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-service-providers'] });
+      queryClient.invalidateQueries({ queryKey: ['my-service-provider-applications'] });
+      queryClient.invalidateQueries({ queryKey: ['my-service-providers'] });
       toast({
         title: 'Application Approved',
-        description: 'Service provider application has been approved and provider account created.'
+        description: 'Service provider application has been approved successfully.'
       });
     },
     onError: (error: any) => {
@@ -138,6 +132,7 @@ export const useApproveServiceProviderApplication = () => {
   });
 };
 
+// Reject application
 export const useRejectServiceProviderApplication = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -146,13 +141,14 @@ export const useRejectServiceProviderApplication = () => {
     mutationFn: async ({ applicationId, notes }: { applicationId: string; notes?: string }) => {
       const { error } = await supabase.rpc('reject_service_provider_application', {
         p_application_id: applicationId,
-        p_admin_notes: notes
+        p_admin_notes: notes || null
       });
 
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-provider-applications'] });
+      queryClient.invalidateQueries({ queryKey: ['my-service-provider-applications'] });
       toast({
         title: 'Application Rejected',
         description: 'Service provider application has been rejected.'
@@ -164,6 +160,33 @@ export const useRejectServiceProviderApplication = () => {
         description: error.message,
         variant: 'destructive'
       });
+    }
+  });
+};
+
+// Get application statistics
+export const useServiceProviderApplicationStats = () => {
+  return useQuery({
+    queryKey: ['service-provider-application-stats'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('service_provider_applications')
+        .select('status, category');
+
+      if (error) throw error;
+
+      const stats = {
+        total: data.length,
+        pending: data.filter(app => app.status === 'pending').length,
+        approved: data.filter(app => app.status === 'approved').length,
+        rejected: data.filter(app => app.status === 'rejected').length,
+        byCategory: data.reduce((acc: any, app) => {
+          acc[app.category] = (acc[app.category] || 0) + 1;
+          return acc;
+        }, {})
+      };
+
+      return stats;
     }
   });
 };

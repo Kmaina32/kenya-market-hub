@@ -1,600 +1,477 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import FrontendLayout from '@/components/layouts/FrontendLayout';
+
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ResponsiveContainer, ResponsiveGrid } from '@/components/ui/responsive-container';
+import MainLayout from '@/components/MainLayout';
+import { 
+  ShoppingBag, 
+  Car, 
+  Home as HomeIcon, 
   Wrench,
-  User,
-  Star,
-  MapPin,
-  Phone,
   Calendar,
-  CheckCircle,
-  Clock,
-  DollarSign,
-  Loader2,
-  ShoppingBag,
-  Car,
-  Building,
   Stethoscope,
   Shield,
-  PartyPopper,
-  Home,
-  Users,
-  AlertCircle,
+  CheckCircle,
+  Clock,
+  XCircle,
   ArrowRight,
-  Plus
+  Users,
+  TrendingUp
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
-import AppointmentBookingModal from '@/components/AppointmentBookingModal';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Link } from 'react-router-dom';
 
-interface ServiceCategory {
+interface ServiceProviderApplication {
   id: string;
-  name: string;
-  icon: any;
-  description: string;
-  color: string;
-  requirements?: string[];
+  category: string;
+  status: 'pending' | 'approved' | 'rejected';
+  business_name: string;
+  submitted_at: string;
 }
 
 interface ServiceProvider {
   id: string;
-  user_id: string;
-  business_name: string;
-  total_reviews?: number | null;
-  avatar_url?: string | null;
-  email?: string | null;
-  is_active?: boolean | null;
-  verification_status?: string | null;
-  created_at?: string | null;
-  updated_at?: string | null;
-  location_address?: string | null;
-  location_coordinates?: any | null;
-  rating?: number | null;
-  completed_jobs?: number | null;
-  location?: string | null;
-  hourly_rate?: number | null;
-}
-
-interface ApplicationStatus {
   category: string;
-  status: 'none' | 'pending' | 'approved' | 'rejected';
-  application_id?: string;
-}
-
-interface ServiceBookingData {
-  providerId: string;
-  serviceName: string;
-  bookingDate: Date;
-  timeSlot: string;
+  verification_status: 'approved' | 'pending' | 'rejected';
+  business_name: string;
+  is_active: boolean;
 }
 
 const ServiceHub = () => {
-  const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
-  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const [selectedTab, setSelectedTab] = useState('browse');
 
-  const [isBookingModalOpen, setIsBookingModal] = useState(false);
-  const [selectedProviderForBooking, setSelectedProviderForBooking] = useState<ServiceProvider | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-
-  // Service provider categories
-  const serviceCategories: ServiceCategory[] = [
-    {
-      id: 'vendor',
-      name: 'Product Vendor',
-      icon: ShoppingBag,
-      description: 'Sell products on our marketplace platform',
-      color: 'from-orange-500 to-red-600',
-      requirements: ['Valid business license', 'Product catalog', 'Tax compliance']
-    },
-    {
-      id: 'driver',
-      name: 'Ride Driver',
-      icon: Car,
-      description: 'Provide taxi, motorbike or delivery services',
-      color: 'from-blue-500 to-indigo-600',
-      requirements: ['Valid driving license', 'Vehicle registration', 'Insurance cover']
-    },
-    {
-      id: 'property_agent',
-      name: 'Real Estate Agent',
-      icon: Building,
-      description: 'Help clients buy, sell or rent properties',
-      color: 'from-purple-500 to-violet-600',
-      requirements: ['Real estate license', 'Professional certification', 'Property portfolio']
-    },
-    {
-      id: 'service_provider',
-      name: 'Service Provider',
-      icon: Wrench,
-      description: 'Offer professional services like plumbing, electrical work',
-      color: 'from-green-500 to-teal-600',
-      requirements: ['Professional certification', 'Insurance cover', 'Work portfolio']
-    },
-    {
-      id: 'medical_provider',
-      name: 'Medical Professional',
-      icon: Stethoscope,
-      description: 'Provide healthcare and medical consultation services',
-      color: 'from-red-500 to-pink-600',
-      requirements: ['Medical license', 'Professional registration', 'Insurance cover']
-    },
-    {
-      id: 'insurance_broker',
-      name: 'Insurance Broker',
-      icon: Shield,
-      description: 'Help clients find the best insurance coverage',
-      color: 'from-indigo-500 to-blue-600',
-      requirements: ['Broker license', 'Professional certification', 'Regulatory compliance']
-    },
-    {
-      id: 'event_promoter',
-      name: 'Event Promoter',
-      icon: PartyPopper,
-      description: 'Organize and promote events and entertainment',
-      color: 'from-pink-500 to-rose-600',
-      requirements: ['Event management certification', 'Portfolio of events', 'Vendor network']
-    }
-  ];
-
-  // Fetch user's application statuses
-  const { data: applicationStatuses, isLoading: statusLoading } = useQuery<ApplicationStatus[]>({
-    queryKey: ['userApplicationStatuses', user?.id],
+  // Fetch user's applications
+  const { data: myApplications = [] } = useQuery({
+    queryKey: ['my-service-applications', user?.id],
     queryFn: async () => {
       if (!user) return [];
       
-      const statuses: ApplicationStatus[] = [];
-      
-      // Check vendor applications
-      const { data: vendorApp } = await supabase
-        .from('vendor_applications')
-        .select('id, status')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      
-      statuses.push({
-        category: 'vendor',
-        status: vendorApp ? (vendorApp.status as 'pending' | 'approved' | 'rejected') : 'none',
-        application_id: vendorApp?.id
-      });
-
-      // Check driver applications
-      const { data: driverApp } = await supabase
-        .from('driver_applications')
-        .select('id, status')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      
-      statuses.push({
-        category: 'driver',
-        status: driverApp ? (driverApp.status as 'pending' | 'approved' | 'rejected') : 'none',
-        application_id: driverApp?.id
-      });
-
-      // Check service provider applications
-      const { data: serviceApp } = await supabase
+      const { data, error } = await supabase
         .from('service_provider_applications')
-        .select('id, status')
+        .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      
-      statuses.push({
-        category: 'service_provider',
-        status: serviceApp ? (serviceApp.status as 'pending' | 'approved' | 'rejected') : 'none',
-        application_id: serviceApp?.id
-      });
-
-      // Check medical provider applications
-      const { data: medicalApp } = await supabase
-        .from('medical_provider_applications')
-        .select('id, status')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      
-      statuses.push({
-        category: 'medical_provider',
-        status: medicalApp ? (medicalApp.status as 'pending' | 'approved' | 'rejected') : 'none',
-        application_id: medicalApp?.id
-      });
-
-      // For other categories, default to 'none' for now
-      ['property_agent', 'insurance_broker', 'event_promoter'].forEach(category => {
-        statuses.push({
-          category,
-          status: 'none'
-        });
-      });
-
-      return statuses;
-    },
-    enabled: !!user,
-    staleTime: 2 * 60 * 1000,
-  });
-
-  const { data: featuredProviders, isLoading: providersLoading, error: providersError } = useQuery<ServiceProvider[]>({
-    queryKey: ['featuredProviders'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('service_provider_profiles')
-        .select(`
-          id, user_id, business_name, email,
-          is_active, created_at, updated_at,
-          location_address, verification_status
-        `)
-        .eq('is_active', true)
-        .limit(2);
-
-      if (error) {
-        console.error("Error fetching featured providers:", error.message);
-        toast.error("Failed to load featured providers.");
-        throw error;
-      }
-      return data || [];
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const bookServiceMutation = useMutation({
-    mutationFn: async ({ providerId, serviceName, bookingDate, timeSlot }: ServiceBookingData) => {
-      if (!user) throw new Error("User not authenticated.");
-
-      const { data, error } = await supabase
-        .from('service_bookings')
-        .insert({
-          user_id: user.id,
-          provider_id: providerId,
-          booking_date: bookingDate.toISOString().split('T')[0],
-          time_slot: timeSlot,
-          status: 'pending'
-        })
-        .select()
-        .single();
+        .order('submitted_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as ServiceProviderApplication[];
     },
-    onSuccess: () => {
-      toast.success("Service booked successfully! Awaiting provider confirmation.");
-      setIsBookingModal(false);
-      queryClient.invalidateQueries({ queryKey: ['serviceBookings', user?.id] });
-    },
-    onError: (error: any) => {
-      console.error("Error booking service:", error.message);
-      toast.error(`Failed to book service: ${error.message}`);
-    },
+    enabled: !!user
   });
 
-  const getApplicationStatus = (categoryId: string): ApplicationStatus => {
-    return applicationStatuses?.find(status => status.category === categoryId) || { category: categoryId, status: 'none' };
+  // Fetch user's approved service provider profiles
+  const { data: myServiceProviders = [] } = useQuery({
+    queryKey: ['my-service-providers', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('service_providers')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      return data as ServiceProvider[];
+    },
+    enabled: !!user
+  });
+
+  const serviceCategories = [
+    {
+      id: 'vendor',
+      title: 'Product Vendor',
+      icon: ShoppingBag,
+      description: 'Sell products on our marketplace platform',
+      color: 'orange',
+      dashboardPath: '/vendor-dashboard',
+      benefits: ['Access to thousands of customers', 'Built-in payment processing', 'Inventory management tools']
+    },
+    {
+      id: 'event_promoter',
+      title: 'Event Promoter',
+      icon: Calendar,
+      description: 'Organize and promote events in your community',
+      color: 'purple',
+      dashboardPath: '/event-dashboard',
+      benefits: ['Event management tools', 'Ticketing system', 'Marketing support']
+    },
+    {
+      id: 'driver',
+      title: 'Ride Driver',
+      icon: Car,
+      description: 'Provide transportation services (taxi, boda boda)',
+      color: 'blue',
+      dashboardPath: '/driver-dashboard',
+      benefits: ['Flexible working hours', 'GPS navigation', 'Real-time earnings tracking']
+    },
+    {
+      id: 'service_provider',
+      title: 'Service Provider',
+      icon: Wrench,
+      description: 'Offer professional services (repair, maintenance, etc.)',
+      color: 'green',
+      dashboardPath: '/services-dashboard',
+      benefits: ['Job matching system', 'Customer reviews', 'Secure payments']
+    },
+    {
+      id: 'real_estate_agent',
+      title: 'Real Estate Agent',
+      icon: HomeIcon,
+      description: 'List and manage property sales and rentals',
+      color: 'teal',
+      dashboardPath: '/real-estate-dashboard',
+      benefits: ['Property listing tools', 'Lead management', 'Market analytics']
+    },
+    {
+      id: 'medical_provider',
+      title: 'Medical Provider',
+      icon: Stethoscope,
+      description: 'Provide healthcare services and consultations',
+      color: 'red',
+      dashboardPath: '/medical-dashboard',
+      benefits: ['Patient management', 'Appointment scheduling', 'Telemedicine support']
+    },
+    {
+      id: 'insurance_broker',
+      title: 'Insurance Broker',
+      icon: Shield,
+      description: 'Offer insurance products and advisory services',
+      color: 'indigo',
+      dashboardPath: '/insurance-dashboard',
+      benefits: ['Policy management', 'Claims processing', 'Customer portal']
+    }
+  ];
+
+  // Get application status for a category
+  const getApplicationStatus = (category: string) => {
+    const application = myApplications.find(app => app.category === category);
+    const provider = myServiceProviders.find(sp => sp.category === category);
+    
+    if (provider && provider.verification_status === 'approved') return 'approved';
+    if (application) return application.status;
+    return null;
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string | null) => {
     switch (status) {
       case 'approved':
-        return <Badge className="bg-green-100 text-green-800">Approved</Badge>;
+        return (
+          <Badge className="bg-green-100 text-green-800 border-green-200">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            Approved
+          </Badge>
+        );
       case 'pending':
-        return <Badge className="bg-yellow-100 text-yellow-800">Pending Review</Badge>;
+        return (
+          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+            <Clock className="w-3 h-3 mr-1" />
+            Pending Review
+          </Badge>
+        );
       case 'rejected':
-        return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
+        return (
+          <Badge className="bg-red-100 text-red-800 border-red-200">
+            <XCircle className="w-3 h-3 mr-1" />
+            Rejected
+          </Badge>
+        );
       default:
-        return <Badge className="bg-gray-100 text-gray-800">Not Applied</Badge>;
+        return (
+          <Badge variant="outline" className="text-gray-600">
+            Not Applied
+          </Badge>
+        );
     }
   };
 
-  const handleApplyForCategory = (categoryId: string) => {
-    if (!user) {
-      toast.warning("Please log in to apply");
-      navigate('/auth');
-      return;
+  const getActionButton = (category: string, status: string | null) => {
+    if (status === 'approved') {
+      const service = serviceCategories.find(s => s.id === category);
+      return (
+        <Button asChild className="w-full bg-green-600 hover:bg-green-700">
+          <Link to={service?.dashboardPath || '/dashboard'}>
+            <span>Access Dashboard</span>
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Link>
+        </Button>
+      );
     }
-    navigate(`/service-provider-registration?type=${categoryId}`);
+
+    if (status === 'pending') {
+      return (
+        <Button disabled className="w-full bg-yellow-100 text-yellow-800 cursor-not-allowed">
+          <Clock className="w-4 h-4 mr-2" />
+          <span>Under Review</span>
+        </Button>
+      );
+    }
+
+    const buttonText = status === 'rejected' ? 'Reapply Now' : 'Apply Now';
+    return (
+      <Button asChild variant="outline" className="w-full">
+        <Link to={`/service-provider-registration?category=${category}`}>
+          <span>{buttonText}</span>
+          <ArrowRight className="w-4 h-4 ml-2" />
+        </Link>
+      </Button>
+    );
   };
 
-  const handleAccessDashboard = (categoryId: string) => {
-    switch (categoryId) {
-      case 'vendor':
-        navigate('/vendor-dashboard');
-        break;
-      case 'driver':
-        navigate('/driver-dashboard');
-        break;
-      case 'property_agent':
-        navigate('/property-owner-dashboard');
-        break;
-      case 'medical_provider':
-        navigate('/medical-dashboard');
-        break;
-      default:
-        navigate('/services-dashboard');
-    }
-  };
-
-  const handleContactProvider = useCallback((provider: ServiceProvider) => {
-    if (provider.email) {
-      alert(`Emailing ${provider.business_name} at ${provider.email}.`);
-    } else {
-      toast.info(`No direct contact info available for ${provider.business_name}.`);
-    }
-  }, []);
-
-  const handleBookService = useCallback((provider: ServiceProvider) => {
-    if (authLoading) {
-      toast.info("Loading user data, please wait...");
-      return;
-    }
-    if (!user) {
-      toast.warning("Please log in to book a service.");
-      navigate('/auth');
-      return;
-    }
-    setSelectedProviderForBooking(provider);
-    setIsBookingModal(true);
-  }, [user, authLoading, navigate]);
-
-  const heroImageUrl = "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?auto=format&fit=crop&w=2070&q=80";
-  const heroTitle = "Service Provider Hub";
-  const heroSubtitle = "Join Our Marketplace";
-  const heroDescription = "Apply to become a service provider across multiple categories and grow your business with Kenya's largest marketplace.";
+  // Stats for approved providers
+  const approvedCount = myServiceProviders.filter(sp => sp.verification_status === 'approved').length;
+  const pendingCount = myApplications.filter(app => app.status === 'pending').length;
 
   return (
-    <FrontendLayout>
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        {/* Hero Section */}
-        <div
-          className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-600 to-red-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4 px-4 sm:px-6 lg:px-8 shadow-xl"
-          style={{
-            backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('${heroImageUrl}')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }}
-        >
-          <div className="relative z-10 flex items-center justify-center h-full px-6 sm:px-8 lg:px-12">
-            <div className="text-center text-white max-w-3xl mx-auto">
-              <Wrench className="h-16 w-16 mx-auto mb-4 text-orange-100 drop-shadow-lg" />
-              <h1 className="text-3xl md:text-4xl font-bold mb-3 drop-shadow-lg">{heroTitle}</h1>
-              <p className="text-lg text-orange-100 font-light leading-relaxed">
-                {heroSubtitle}
-                {heroDescription && <span className="block">{heroDescription}</span>}
-              </p>
-            </div>
+    <MainLayout>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <ResponsiveContainer className="py-8">
+          {/* Header */}
+          <div className="text-center space-y-4 mb-8">
+            <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Service Provider Hub
+            </h1>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Join our platform as a service provider and connect with thousands of customers across Kenya
+            </p>
           </div>
-        </div>
 
-        {/* Main Content Wrapper */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          {/* Service Provider Categories Grid */}
-          <div className="mb-12">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Service Provider Categories</h2>
-              <p className="text-gray-600 max-w-2xl mx-auto">
-                Choose your category and apply to join our marketplace. Each category has specific requirements and benefits.
-              </p>
+          {user && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <Card className="bg-gradient-to-r from-green-500 to-teal-600 text-white">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-green-100 text-sm">Active Services</p>
+                      <p className="text-3xl font-bold">{approvedCount}</p>
+                    </div>
+                    <CheckCircle className="h-10 w-10 text-green-200" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-r from-orange-500 to-yellow-600 text-white">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-orange-100 text-sm">Pending Applications</p>
+                      <p className="text-3xl font-bold">{pendingCount}</p>
+                    </div>
+                    <Clock className="h-10 w-10 text-orange-200" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-r from-purple-500 to-pink-600 text-white">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-purple-100 text-sm">Categories Available</p>
+                      <p className="text-3xl font-bold">{serviceCategories.length}</p>
+                    </div>
+                    <Users className="h-10 w-10 text-purple-200" />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
+          )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {serviceCategories.map((category) => {
-                const status = getApplicationStatus(category.id);
-                const IconComponent = category.icon;
-                
-                return (
-                  <Card key={category.id} className="hover:shadow-lg transition-all duration-300 border-2 hover:border-orange-200">
-                    <CardContent className="p-6">
-                      <div className="text-center">
-                        <div className={`inline-flex p-4 rounded-full bg-gradient-to-r ${category.color} text-white mb-4`}>
-                          <IconComponent className="h-8 w-8" />
-                        </div>
-                        
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">{category.name}</h3>
-                        <p className="text-sm text-gray-600 mb-4">{category.description}</p>
-                        
-                        <div className="mb-4">
-                          {getStatusBadge(status.status)}
-                        </div>
+          <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
+              <TabsTrigger value="browse">Browse Services</TabsTrigger>
+              <TabsTrigger value="my-services">My Services</TabsTrigger>
+            </TabsList>
 
-                        {/* Requirements */}
-                        <div className="text-left mb-4">
-                          <h4 className="text-xs font-medium text-gray-700 mb-2">Requirements:</h4>
-                          <ul className="text-xs text-gray-600 space-y-1">
-                            {category.requirements?.slice(0, 2).map((req, index) => (
-                              <li key={index} className="flex items-center">
+            <TabsContent value="browse">
+              <ResponsiveGrid cols={{ default: 1, md: 2, xl: 3 }}>
+                {serviceCategories.map((service) => {
+                  const ServiceIcon = service.icon;
+                  const status = getApplicationStatus(service.id);
+                  
+                  return (
+                    <Card key={service.id} className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-blue-200 bg-white/80 backdrop-blur-sm">
+                      <CardHeader className="pb-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className={`p-4 rounded-2xl bg-${service.color}-100 group-hover:scale-110 transition-transform`}>
+                            <ServiceIcon className={`h-8 w-8 text-${service.color}-600`} />
+                          </div>
+                          {getStatusBadge(status)}
+                        </div>
+                        <CardTitle className="text-xl group-hover:text-blue-600 transition-colors">
+                          {service.title}
+                        </CardTitle>
+                        <p className="text-gray-600 text-sm leading-relaxed">
+                          {service.description}
+                        </p>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                          <h4 className="font-medium text-gray-800">Benefits:</h4>
+                          <ul className="space-y-1">
+                            {service.benefits.map((benefit, index) => (
+                              <li key={index} className="flex items-center text-sm text-gray-600">
                                 <CheckCircle className="h-3 w-3 text-green-500 mr-2 flex-shrink-0" />
-                                {req}
+                                {benefit}
                               </li>
                             ))}
-                            {category.requirements && category.requirements.length > 2 && (
-                              <li className="text-gray-500">+{category.requirements.length - 2} more...</li>
-                            )}
                           </ul>
                         </div>
+                        
+                        <div className="pt-2">
+                          {getActionButton(service.id, status)}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </ResponsiveGrid>
+            </TabsContent>
 
-                        {/* Action Button */}
-                        {status.status === 'approved' ? (
-                          <Button 
-                            onClick={() => handleAccessDashboard(category.id)}
-                            className={`w-full bg-gradient-to-r ${category.color} hover:opacity-90`}
-                          >
-                            <ArrowRight className="h-4 w-4 mr-2" />
-                            Access Dashboard
-                          </Button>
-                        ) : status.status === 'pending' ? (
-                          <Button variant="outline" disabled className="w-full">
-                            <Clock className="h-4 w-4 mr-2" />
-                            Under Review
-                          </Button>
-                        ) : status.status === 'rejected' ? (
-                          <Button 
-                            onClick={() => handleApplyForCategory(category.id)}
-                            variant="outline"
-                            className="w-full border-orange-300 text-orange-700 hover:bg-orange-50"
-                          >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Reapply
-                          </Button>
-                        ) : (
-                          <Button 
-                            onClick={() => handleApplyForCategory(category.id)}
-                            className={`w-full bg-gradient-to-r ${category.color} hover:opacity-90`}
-                          >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Apply Now
-                          </Button>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
+            <TabsContent value="my-services">
+              {!user ? (
+                <Card className="text-center py-12">
+                  <CardContent>
+                    <h3 className="text-xl font-semibold mb-4">Sign In Required</h3>
+                    <p className="text-gray-600 mb-6">Please sign in to view your service applications and dashboards</p>
+                    <Button asChild>
+                      <Link to="/auth">Sign In</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-6">
+                  {/* Active Services */}
+                  {myServiceProviders.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <TrendingUp className="h-5 w-5 text-green-600" />
+                          Active Services
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ResponsiveGrid cols={{ default: 1, md: 2, lg: 3 }}>
+                          {myServiceProviders.map((provider) => {
+                            const service = serviceCategories.find(s => s.id === provider.category);
+                            if (!service) return null;
+                            
+                            const ServiceIcon = service.icon;
+                            
+                            return (
+                              <Card key={provider.id} className="border-green-200 bg-green-50">
+                                <CardHeader className="pb-4">
+                                  <div className="flex items-center gap-3">
+                                    <div className={`p-3 rounded-xl bg-${service.color}-100`}>
+                                      <ServiceIcon className={`h-6 w-6 text-${service.color}-600`} />
+                                    </div>
+                                    <div>
+                                      <h3 className="font-semibold">{service.title}</h3>
+                                      <Badge className="bg-green-100 text-green-800 border-green-200">
+                                        <CheckCircle className="w-3 h-3 mr-1" />
+                                        Active
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                </CardHeader>
+                                <CardContent>
+                                  <Button asChild className="w-full">
+                                    <Link to={service.dashboardPath}>
+                                      Access Dashboard
+                                      <ArrowRight className="w-4 h-4 ml-2" />
+                                    </Link>
+                                  </Button>
+                                </CardContent>
+                              </Card>
+                            );
+                          })}
+                        </ResponsiveGrid>
+                      </CardContent>
+                    </Card>
+                  )}
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-            <Card className="text-center p-6">
-              <Users className="h-12 w-12 text-orange-500 mx-auto mb-4" />
-              <h3 className="text-2xl font-bold text-gray-900">5,000+</h3>
-              <p className="text-gray-600">Active Providers</p>
-            </Card>
-            <Card className="text-center p-6">
-              <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
-              <h3 className="text-2xl font-bold text-gray-900">15,000+</h3>
-              <p className="text-gray-600">Jobs Completed</p>
-            </Card>
-            <Card className="text-center p-6">
-              <Star className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-              <h3 className="text-2xl font-bold text-gray-900">4.8</h3>
-              <p className="text-gray-600">Average Rating</p>
-            </Card>
-            <Card className="text-center p-6">
-              <DollarSign className="h-12 w-12 text-purple-500 mx-auto mb-4" />
-              <h3 className="text-2xl font-bold text-gray-900">KSh 2M+</h3>
-              <p className="text-gray-600">Total Earnings</p>
-            </Card>
-          </div>
+                  {/* Pending Applications */}
+                  {myApplications.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Clock className="h-5 w-5 text-orange-600" />
+                          Application Status
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {myApplications.map((application) => {
+                            const service = serviceCategories.find(s => s.id === application.category);
+                            if (!service) return null;
+                            
+                            const ServiceIcon = service.icon;
+                            
+                            return (
+                              <div key={application.id} className="flex items-center justify-between p-4 border rounded-lg">
+                                <div className="flex items-center gap-3">
+                                  <div className={`p-2 rounded-lg bg-${service.color}-100`}>
+                                    <ServiceIcon className={`h-5 w-5 text-${service.color}-600`} />
+                                  </div>
+                                  <div>
+                                    <h4 className="font-medium">{service.title}</h4>
+                                    <p className="text-sm text-gray-600">
+                                      Applied on {new Date(application.submitted_at).toLocaleDateString()}
+                                    </p>
+                                  </div>
+                                </div>
+                                {getStatusBadge(application.status)}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
 
-          {/* How It Works */}
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold text-gray-900 text-center mb-8">How to Join as a Service Provider</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <User className="h-8 w-8 text-orange-600" />
+                  {myServiceProviders.length === 0 && myApplications.length === 0 && (
+                    <Card className="text-center py-12">
+                      <CardContent>
+                        <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                        <h3 className="text-xl font-semibold mb-4">No Services Yet</h3>
+                        <p className="text-gray-600 mb-6">
+                          You haven't applied for any services yet. Browse available categories and start your journey as a service provider.
+                        </p>
+                        <Button onClick={() => setSelectedTab('browse')}>
+                          Browse Services
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
-                <h3 className="text-lg font-semibold mb-2">1. Choose Category</h3>
-                <p className="text-gray-600">Select the service category that matches your expertise and business.</p>
-              </div>
-              <div className="text-center">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle className="h-8 w-8 text-blue-600" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">2. Submit Application</h3>
-                <p className="text-gray-600">Complete the application form with your business details and requirements.</p>
-              </div>
-              <div className="text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Star className="h-8 w-8 text-green-600" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">3. Start Earning</h3>
-                <p className="text-gray-600">Once approved, access your dashboard and start receiving bookings.</p>
-              </div>
-            </div>
-          </div>
+              )}
+            </TabsContent>
+          </Tabs>
 
-          {/* Provider Benefits */}
-          <Card className="bg-gradient-to-r from-orange-100 to-red-100 border-orange-200 mb-8">
-            <CardHeader>
-              <CardTitle className="text-2xl text-center text-gray-900">
-                Why Join Our Marketplace?
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <DollarSign className="h-8 w-8 text-white" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">Earn More</h3>
-                  <p className="text-gray-600">Set your own rates and increase your income by reaching more customers across multiple categories.</p>
-                </div>
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Clock className="h-8 w-8 text-white" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">Flexible Schedule</h3>
-                  <p className="text-gray-600">Work on your own terms and choose jobs that fit your schedule and expertise.</p>
-                </div>
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Users className="h-8 w-8 text-white" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">Multiple Categories</h3>
-                  <p className="text-gray-600">Apply for multiple service categories and diversify your income streams.</p>
-                </div>
-              </div>
+          {/* Call to Action */}
+          <Card className="bg-gradient-to-r from-blue-600 to-purple-600 text-white mt-12">
+            <CardContent className="py-12 text-center">
+              <h2 className="text-3xl font-bold mb-4">Ready to Start Your Business Journey?</h2>
+              <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+                Join thousands of successful service providers on our platform and grow your business with powerful tools and dedicated support.
+              </p>
+              {!user ? (
+                <Button size="lg" variant="secondary" asChild>
+                  <Link to="/auth">Get Started Today</Link>
+                </Button>
+              ) : (
+                <Button size="lg" variant="secondary" onClick={() => setSelectedTab('browse')}>
+                  Explore Service Categories
+                </Button>
+              )}
             </CardContent>
           </Card>
-
-          {/* CTA Section */}
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Ready to Start Your Journey?</h2>
-            <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
-              Join thousands of service providers who are growing their businesses with our platform. 
-              Apply today and start earning tomorrow.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                onClick={() => !user ? navigate('/auth') : window.scrollTo({ top: 0, behavior: 'smooth' })}
-                className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-8 py-3 text-lg"
-              >
-                {user ? 'Choose Category Above' : 'Sign Up to Apply'}
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => navigate('/auth')}
-                className="border-orange-300 text-orange-700 hover:bg-orange-50 px-8 py-3 text-lg"
-              >
-                Learn More
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Appointment Booking Modal */}
-        {selectedProviderForBooking && (
-          <AppointmentBookingModal
-            open={isBookingModalOpen}
-            onOpenChange={(open) => {
-              setIsBookingModal(open);
-              if (!open) setSelectedProviderForBooking(null);
-            }}
-            providerName={selectedProviderForBooking.business_name}
-            serviceType="Service Provider"
-            onBookingSubmit={({ date, time }) => {
-              bookServiceMutation.mutate({
-                providerId: selectedProviderForBooking.id,
-                serviceName: selectedProviderForBooking.business_name,
-                bookingDate: date,
-                timeSlot: time,
-              });
-            }}
-            isLoading={bookServiceMutation.isPending}
-          />
-        )}
+        </ResponsiveContainer>
       </div>
-    </FrontendLayout>
+    </MainLayout>
   );
 };
 
