@@ -35,14 +35,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Check if user has admin role (use RPC to avoid RLS issues)
   const checkAdminStatus = async (_userId: string) => {
     try {
+      // Primary check using user_id
       const { data, error } = await supabase.rpc('is_admin_user', { check_user_id: _userId });
-      if (error) {
-        console.error('Admin check failed:', error);
-        return false;
+      if (error) throw error;
+      if (data === true) return true;
+
+      // Fallback: check by email (handles rare function/permission edge cases)
+      const email = supabase.auth.getUser ? (await supabase.auth.getUser()).data.user?.email : null;
+      if (email) {
+        const { data: emailCheck, error: emailErr } = await supabase.rpc('is_user_admin', { check_email: email });
+        if (emailErr) throw emailErr;
+        return emailCheck === true;
       }
-      return data === true;
-    } catch (error) {
-      console.error('Admin check error:', error);
+      return false;
+    } catch (err: any) {
+      console.error('Admin check failed:', err?.message || err);
       return false;
     }
   };
