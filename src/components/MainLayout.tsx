@@ -39,10 +39,10 @@ const LayoutContent: React.FC<MainLayoutProps> = ({ children }) => {
       {/* Header - Fixed positioning to always stay visible */}
       <div
         className={cn(
-          "fixed top-0 right-0 z-30 flex items-center justify-between border-b border-gray-200 bg-white px-3 sm:px-6 py-3 shadow-sm backdrop-blur-sm",
+          "fixed top-0 right-0 z-30 flex items-center justify-between border-b border-gray-200/80 bg-white/80 backdrop-blur-md px-3 sm:px-6 py-2 shadow-sm",
           !isMobile && state === "expanded" && "md:left-[var(--sidebar-width)]",
           !isMobile && state === "collapsed" && "md:left-[var(--sidebar-width-icon)]",
-          isMobile && "left-0 w-full" // Ensure header spans full width on mobile
+          isMobile && "left-0 w-full"
         )}
       >
         <div className="flex items-center gap-2 sm:gap-4 flex-1">
@@ -89,8 +89,8 @@ const LayoutContent: React.FC<MainLayoutProps> = ({ children }) => {
         </div>
       </div>
 
-      {/* Content area with top padding to account for fixed header */}
-      <div className="pt-16 flex-1 flex flex-col">
+      {/* Content area with reduced top padding for better space utilization */}
+      <div className="pt-12 flex-1 flex flex-col">
         {!isOnline && (
           <Alert className="m-4 border-yellow-200 bg-yellow-50">
             <WifiOff className="h-4 w-4" />
@@ -100,8 +100,8 @@ const LayoutContent: React.FC<MainLayoutProps> = ({ children }) => {
           </Alert>
         )}
 
-        {/* Main content area for children. Use padding for inner spacing. */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+        {/* Main content area with optimized padding */}
+        <div className="flex-1 overflow-y-auto p-3 sm:p-4">
           {children}
         </div>
 
