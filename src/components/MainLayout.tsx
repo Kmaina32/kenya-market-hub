@@ -100,8 +100,8 @@ const LayoutContent: React.FC<MainLayoutProps> = ({ children }) => {
           </Alert>
         )}
 
-        {/* Main content area with optimized padding and center alignment */}
-        <div className="flex-1 overflow-y-auto p-3 sm:p-4 flex flex-col items-center">
+        {/* Main content area with optimized padding */}
+        <div className="flex-1 overflow-y-auto p-3 sm:p-4">
           {children}
         </div>
 

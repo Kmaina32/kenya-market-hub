@@ -6,7 +6,9 @@ import SocialMediaChatInterface from '@/components/chat/SocialMediaChatInterface
 function ChatForums() {
   return (
     <MainLayout>
-      <SocialMediaChatInterface />
+      <div className="max-w-7xl mx-auto">
+        <SocialMediaChatInterface />
+      </div>
     </MainLayout>
   );
 }

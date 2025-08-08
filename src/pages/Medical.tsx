@@ -419,7 +419,7 @@ const Medical: React.FC = () => {
 
   return (
     <MainLayout>
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
+      <div className="max-w-7xl mx-auto">
         {/* Hero Section */}
         <div
           className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-600 to-red-700 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4 shadow-xl"

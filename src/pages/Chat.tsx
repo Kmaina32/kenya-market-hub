@@ -7,7 +7,7 @@ import { MessageCircle } from 'lucide-react';
 function Chat() {
   return (
     <MainLayout>
-      <div className="container mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto py-8">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
