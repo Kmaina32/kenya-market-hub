@@ -36,13 +36,9 @@ import Insurance from "./pages/Insurance";
 import Wishlist from "./pages/Wishlist";
 import Services from "./pages/Services";
 
-// Admin pages
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminVendors from "./pages/admin/AdminVendors";
-import AdminProducts from "./pages/admin/AdminProducts";
-import AdminOrders from "./pages/admin/AdminOrders";
-import AdminUsers from "./pages/admin/AdminUsers";
-import AdminServiceProviderApplications from "./pages/admin/AdminServiceProviderApplications";
+// Admin pages - Import AdminApp instead of individual components
+import AdminApp from "./pages/AdminApp";
+import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -99,14 +95,12 @@ function App() {
                   <Route path="/payment/success" element={<PaymentSuccess />} />
                   <Route path="/payment/cancel" element={<PaymentCancel />} />
                   
-  {/* Admin routes */}
-  <Route path="/admin" element={<AdminDashboard />} />
-  <Route path="/admin/dashboard" element={<AdminDashboard />} />
-  <Route path="/admin/vendors" element={<AdminVendors />} />
-  <Route path="/admin/products" element={<AdminProducts />} />
-  <Route path="/admin/orders" element={<AdminOrders />} />
-  <Route path="/admin/users" element={<AdminUsers />} />
-  <Route path="/admin/service-applications" element={<AdminServiceProviderApplications />} />
+  {/* Admin routes - Use AdminApp with protected route */}
+  <Route path="/admin/*" element={
+    <ProtectedAdminRoute>
+      <AdminApp />
+    </ProtectedAdminRoute>
+  } />
                 </Routes>
               </BrowserRouter>
             </CartProvider>
