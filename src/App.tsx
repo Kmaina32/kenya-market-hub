@@ -99,13 +99,14 @@ function App() {
                   <Route path="/payment/success" element={<PaymentSuccess />} />
                   <Route path="/payment/cancel" element={<PaymentCancel />} />
                   
-                  {/* Admin routes */}
-                  <Route path="/admin" element={<AdminDashboard />} />
-                  <Route path="/admin/vendors" element={<AdminVendors />} />
-                  <Route path="/admin/products" element={<AdminProducts />} />
-                  <Route path="/admin/orders" element={<AdminOrders />} />
-                  <Route path="/admin/users" element={<AdminUsers />} />
-                  <Route path="/admin/service-applications" element={<AdminServiceProviderApplications />} />
+  {/* Admin routes */}
+  <Route path="/admin" element={<AdminDashboard />} />
+  <Route path="/admin/dashboard" element={<AdminDashboard />} />
+  <Route path="/admin/vendors" element={<AdminVendors />} />
+  <Route path="/admin/products" element={<AdminProducts />} />
+  <Route path="/admin/orders" element={<AdminOrders />} />
+  <Route path="/admin/users" element={<AdminUsers />} />
+  <Route path="/admin/service-applications" element={<AdminServiceProviderApplications />} />
                 </Routes>
               </BrowserRouter>
             </CartProvider>
