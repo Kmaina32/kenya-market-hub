@@ -35,10 +35,10 @@ const Jobs = () => {
 
   return (
     <MainLayout>
-      <div className="max-w-7xl mx-auto">
+      <div className="w-full">
         {/* Hero Section with Background Image - Added proper padding and rounded borders */}
         <div 
-          className="relative h-64 overflow-hidden bg-gradient-to-r from-blue-600 to-purple-700 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4"
+          className="relative h-64 overflow-hidden bg-gradient-to-r from-blue-600 to-purple-700 rounded-3xl mx-auto max-w-7xl mt-4"
           style={{
             backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1486312338219-ce68e2c6b696?ixlib=rb-4.0.3&auto=format&fit=crop&w=2072&q=80')`,
             backgroundSize: 'cover',

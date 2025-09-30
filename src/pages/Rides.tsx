@@ -419,7 +419,7 @@ const Rides: React.FC = () => {
 
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
         {/* Hero Section - Updated with orange-red theme */}
-        <div className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-500 to-red-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-6 shadow-xl">
+        <div className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-500 to-red-600 rounded-3xl mx-auto max-w-7xl mt-6 shadow-xl">
           <div 
             className="absolute inset-0 bg-cover bg-center opacity-50"
             style={{

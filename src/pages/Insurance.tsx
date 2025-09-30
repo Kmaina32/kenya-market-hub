@@ -155,7 +155,7 @@ const Insurance: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
         {/* Hero Section - Increased height to prevent search bar overlap */}
         <div
-          className="relative h-80 overflow-hidden bg-gradient-to-r from-orange-600 to-red-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4 px-4 sm:px-6 lg:px-8 shadow-xl"
+          className="relative h-80 overflow-hidden bg-gradient-to-r from-orange-600 to-red-600 rounded-3xl mx-auto max-w-7xl mt-4 shadow-xl"
           style={{
             backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('${heroImageUrl}')`,
             backgroundSize: 'cover',

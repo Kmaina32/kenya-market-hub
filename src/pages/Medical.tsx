@@ -419,10 +419,10 @@ const Medical: React.FC = () => {
 
   return (
     <MainLayout>
-      <div className="max-w-7xl mx-auto">
+      <div className="w-full">
         {/* Hero Section */}
         <div
-          className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-600 to-red-700 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4 shadow-xl"
+          className="relative h-64 overflow-hidden bg-gradient-to-r from-orange-600 to-red-700 rounded-3xl mx-auto max-w-7xl mt-4 shadow-xl"
           style={{
             backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')`,
             backgroundSize: 'cover',

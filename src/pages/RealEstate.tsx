@@ -38,22 +38,14 @@ const RealEstate = () => {
         title="Rent or Buy Houses in Nairobi & Kenya | Sokko Sasa Real Estate"
         description="Discover houses, apartments, and commercial properties for rent and sale in Nairobi and across Kenya. Find your dream home or investment with Sokko Sasa."
         keywords="rent house Nairobi, buy house Nairobi, apartments for rent Nairobi, houses for sale Kenya, property Nairobi, real estate Kenya, Sokko Sasa property"
-        url={`${window.location.origin}/real-estate`} // Replace with your actual domain
+        url={`${window.location.origin}/real-estate`}
         type="website"
-        // If you have specific structured data for a listing page, you can add it here.
-        // structuredData={{
-        //   "@context": "https://schema.org",
-        //   "@type": "WebPage", // Or CollectionPage if it's a listing of properties
-        //   "name": "Sokko Sasa Real Estate Listings",
-        //   "description": "Browse houses and apartments for sale or rent in Kenya.",
-        //   "url": `${window.location.origin}/real-estate`,
-        // }}
       />
 
-      <div className="max-w-7xl mx-auto">
+      <div className="w-full">
         {/* Hero Section with Background Image */}
         <div 
-          className="relative h-64 overflow-hidden bg-gradient-to-r from-green-600 to-blue-600 rounded-3xl mx-4 sm:mx-6 lg:mx-8 mt-4"
+          className="relative h-64 overflow-hidden bg-gradient-to-r from-green-600 to-blue-600 rounded-3xl mx-auto max-w-7xl mt-4"
           style={{
             backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=2073&q=80')`,
             backgroundSize: 'cover',
