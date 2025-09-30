@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -3300,8 +3300,8 @@ export type Database = {
         Args: {
           p_coupon_code: string
           p_order_amount: number
-          p_user_id: string
           p_product_categories?: string[]
+          p_user_id: string
         }
         Returns: Json
       }
@@ -3316,8 +3316,8 @@ export type Database = {
       create_admin_user: {
         Args: {
           admin_email: string
-          admin_password: string
           admin_full_name: string
+          admin_password: string
         }
         Returns: string
       }
@@ -3329,12 +3329,12 @@ export type Database = {
         Args: {
           pickup_lat: number
           pickup_lng: number
-          vehicle_type_param: Database["public"]["Enums"]["vehicle_type"]
           radius_km?: number
+          vehicle_type_param: Database["public"]["Enums"]["vehicle_type"]
         }
         Returns: {
-          driver_id: string
           distance_km: number
+          driver_id: string
           estimated_pickup_minutes: number
         }[]
       }
@@ -3349,17 +3349,17 @@ export type Database = {
       get_popular_routes: {
         Args: Record<PropertyKey, never> | { limit_count: number }
         Returns: {
-          from_address: string
-          to_address: string
-          ride_count: number
-          avg_fare: number
           avg_duration_minutes: number
+          avg_fare: number
+          from_address: string
+          ride_count: number
+          to_address: string
         }[]
       }
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["user_role"]
+          _user_id: string
         }
         Returns: boolean
       }
@@ -3386,42 +3386,42 @@ export type Database = {
       list_backups: {
         Args: Record<PropertyKey, never>
         Returns: {
-          id: string
           backup_name: string
           backup_type: string
           created_at: string
           created_by: string
           file_path: string
-          tables_count: number
-          status: string
           file_size_mb: number
+          id: string
+          status: string
+          tables_count: number
         }[]
       }
       place_order_with_stock_update: {
         Args: {
-          p_user_id: string
-          p_total_amount: number
+          p_cart_items: Json
+          p_contact_email: string
+          p_contact_phone: string
+          p_payment_method: string
+          p_payment_status: string
           p_shipping_address: string
           p_shipping_city: string
-          p_contact_phone: string
-          p_contact_email: string
-          p_payment_method: string
+          p_total_amount: number
           p_transaction_id: string
-          p_payment_status: string
-          p_cart_items: Json
+          p_user_id: string
         }
         Returns: string
       }
       reject_driver_application: {
-        Args: { p_application_id: string; p_admin_notes?: string }
+        Args: { p_admin_notes?: string; p_application_id: string }
         Returns: undefined
       }
       reject_medical_provider_application: {
-        Args: { p_application_id: string; p_admin_notes: string }
+        Args: { p_admin_notes: string; p_application_id: string }
         Returns: undefined
       }
       reject_service_provider_application: {
-        Args: { p_application_id: string; p_admin_notes?: string }
+        Args: { p_admin_notes?: string; p_application_id: string }
         Returns: undefined
       }
       reject_vendor_application: {
@@ -3435,7 +3435,7 @@ export type Database = {
         Returns: undefined
       }
       upsert_recently_viewed: {
-        Args: { p_user_id: string; p_product_id: string }
+        Args: { p_product_id: string; p_user_id: string }
         Returns: undefined
       }
     }
